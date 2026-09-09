@@ -13,10 +13,15 @@ gana.
 
 ## 1. Pantallas
 
-`prototipos/` contiene cuatro pantallas aprobadas en HTML. Son la
-referencia visual y de interacción para todo lo demás: cuando una
-descripción de esta sección y un prototipo no coincidan, gana el prototipo.
-No son código a reutilizar.
+`prototipos/` contiene cuatro pantallas en HTML —Hoy, Asistencia, Pegar la
+lista y Ficha de alumno— que son la referencia visual y de interacción para
+todo lo demás. No son código a reutilizar.
+
+Están **a la espera de aprobación**: se reconstruyeron a partir de este
+documento y de la identidad visual del proyecto, no son los prototipos
+aprobados originales. Hasta que se aprueben, cuando una descripción de esta
+sección y un prototipo no coincidan, gana el documento. Aprobadas, se
+invierte: gana el prototipo.
 
 ### 1.1 Navegación
 
@@ -173,6 +178,21 @@ rompe. Como no hay backend con datos, la única red de seguridad es una
 **exportación manual a archivo** desde Ajustes, con su importación
 correspondiente. Es parte del alcance, no un extra.
 
+El formato es **un archivo JSON con versión de esquema**:
+
+```
+{ "version": 1, "exportadoEn": "2026-09-09T14:30:00-03:00", "datos": { ... } }
+```
+
+`version` es lo que permite que una exportación vieja se pueda importar
+después de un cambio de modelo: sin ese número, la primera migración deja
+inservibles todas las copias anteriores. La importación rechaza una
+`version` que no conoce, en vez de adivinar.
+
+El archivo contiene nombres reales de alumnos. Se guarda con el selector de
+archivos del sistema, donde la docente elige dónde ponerlo, y no en una
+carpeta pública ni en una ruta fija de la app.
+
 ---
 
 ## 3. Filtro de anonimización
@@ -295,13 +315,51 @@ tokens, token de instalación. **Nunca el cuerpo del pedido ni el de la
 respuesta.** Esto se decide ahora porque un log de cuerpos agregado más
 tarde "para depurar" es exactamente la forma en que se filtra un texto.
 
-### 4.4 Proveedor
+### 4.4 Proveedor y modelo
+
+**Claude API de Anthropic**, modelo `claude-opus-5`, a través del SDK
+oficial `@anthropic-ai/sdk` desde el proxy — nunca desde la app, que no
+tiene la clave.
+
+Configuración de partida:
+
+- `thinking: { type: "adaptive" }` y `output_config: { effort: "low" }`.
+  Redactar una observación o un mensaje es trabajo corto: el esfuerzo alto
+  no mejora el resultado y cuesta más. Se sube sólo si se mide que hace
+  falta, y por caso de uso, no en general.
+- Respuesta en streaming, para que el texto aparezca de a poco en el
+  teléfono en vez de dejar la pantalla quieta.
+- `stop_reason` se lee **antes** que el contenido: si el clasificador del
+  modelo rechaza un pedido, la respuesta llega con `stop_reason: "refusal"`
+  y sin texto útil. Se habilita el respaldo del servidor
+  (`fallbacks: "default"`) para que un rechazo no deje la pantalla vacía.
+- Sin prefill del turno del asistente: `claude-opus-5` lo rechaza. El
+  formato de la respuesta se controla desde la instrucción de sistema.
 
 Se contrata con retención cero de datos donde esté disponible, y sin uso de
 lo enviado para entrenamiento. Aun así, el filtro de la sección 3 no se
 relaja: el compromiso del proveedor es una segunda capa, no la primera.
 
-### 4.5 Sin red
+### 4.5 Forma de los prompts
+
+Tres reglas que la instrucción de sistema tiene que fijar, porque cada una
+sostiene una regla del proyecto:
+
+1. **Los alumnos llegan como `Estudiante A`, `Estudiante B`.** El modelo usa
+   exactamente esos identificadores y no inventa nombres propios. Si
+   inventara uno, la re-personalización de la respuesta (3.5) lo dejaría
+   pasar como si fuera un alumno real.
+2. **No se califica a la persona.** El texto describe hechos observables —
+   qué entregó, qué dijo, a qué faltó— y no atribuye estados de ánimo,
+   actitudes ni rasgos. Vale para la salida del modelo igual que para el
+   resto de la app.
+3. **Nada de salud ni de diagnóstico**, ni siquiera si el texto del docente
+   lo insinúa.
+
+Los prompts se versionan con el código, en archivos propios, no incrustados
+entre la lógica de la pantalla.
+
+### 4.6 Sin red
 
 El asistente es la **única** función que necesita conexión. Sin red, la app
 funciona completa: asistencia, notas, agenda, observaciones y dictado. El
@@ -321,20 +379,62 @@ sigue andando.
 | El dictado cae a reconocimiento por servidor | Cambio de plugin, cambio de versión de Android, respaldo automático del plugin | Módulo propio que verifica disponibilidad local; si no hay reconocimiento local, el micrófono no aparece (regla innegociable 2) |
 | Un nombre de alumno aparece en una notificación en la pantalla bloqueada | Recordatorio que incluye el texto de la entrada de agenda | Las notificaciones muestran materia y curso, nunca nombres |
 | Pérdida total de datos | Desalojo de IndexedDB, teléfono roto o perdido | Exportación manual a archivo (2.7); no hay copia remota por diseño |
+| El archivo exportado, que sí tiene nombres reales, queda en un lugar poco cuidado | Exportación guardada en una carpeta que se sincroniza sola a la nube | Se guarda con el selector de archivos del sistema, elegido por la docente; la pantalla de exportación dice qué contiene el archivo |
 | "Hoy" muestra el día equivocado | Uso de UTC en una fecha de calendario | Fechas locales como texto (2.6); tests con zona `America/Argentina/Buenos_Aires` a las 23:30 |
 | Un registro duplicado hace mentir el promedio | Doble toque | Índices únicos y upsert por par en la capa de datos (2.3) |
 | La IA devuelve una etiqueta sobre un alumno | Redacción asistida de observaciones | Instrucción de sistema que prohíbe calificar personas; el docente edita antes de guardar; ningún texto de la app califica a un alumno |
 | Rechazo o revisión extra en Play Store | Política de datos de menores | La app no recolecta ni transmite datos personales; declarar con precisión qué viaja al asistente y qué no |
-| Alguien mira el teléfono del docente | Uso en sala de profesores | Fuera del MVP; evaluar bloqueo de la app con biometría más adelante |
+| Alguien mira el teléfono del docente | Uso en sala de profesores | Fuera del MVP; bloqueo con la credencial del dispositivo más adelante (6.2) |
 
 ---
 
-## 6. Lo que este documento no define
+## 6. Decisiones técnicas
 
-- Framework de interfaz y manejo de estado.
-- Proveedor de IA concreto y forma de los prompts.
-- Diseño de la exportación (formato del archivo).
-- Bloqueo de la app con biometría.
+### 6.1 Interfaz y manejo de estado
 
-Se resuelven cuando toque construir cada parte, siguiendo el orden de
-trabajo de la especificación.
+**React + TypeScript sobre Vite**, con **Dexie** para IndexedDB.
+
+Qué aporta cada pieza, y por qué esa y no otra:
+
+- **Vite** empaqueta la web app que Capacitor mete en el APK. Arranque
+  rápido en desarrollo, salida estática, sin servidor.
+- **Dexie** expresa los índices únicos compuestos de la sección 2.3
+  —`[claseSesionId+alumnoId]` y `[evaluacionId+alumnoId]`— de forma
+  directa, y da migraciones de esquema versionadas, que es exactamente lo
+  que la exportación de 2.7 necesita para seguir siendo importable.
+- Las **consultas reactivas** de Dexie (`liveQuery`) hacen que las
+  pantallas se actualicen solas cuando cambia la base. Con eso, casi todo
+  el estado de la app es la base de datos.
+
+**No hay librería de manejo de estado global, y menos con persistencia.**
+No es sólo una preferencia: un store persistido es la forma más probable de
+que el mapa alias → alumno de la sección 3.4 termine escrito en disco sin
+que nadie lo haya decidido. El poco estado que no es la base —la sesión del
+asistente— vive en memoria y muere con la pantalla.
+
+Por la misma razón, si más adelante se agrega reporte de fallos, se revisa
+antes que no capture el estado de la aplicación.
+
+### 6.2 Bloqueo de la app
+
+**Fuera del MVP.** El riesgo que cubre —alguien mira el teléfono en la sala
+de profesores— es real pero menor frente al costo de sumar una pantalla de
+desbloqueo a una app que se usa entre dos clases, apurada, con una mano.
+
+Cuando entre, entra así: con la **credencial del dispositivo** (el mismo
+PIN, patrón o huella que desbloquea el teléfono), nunca con un PIN propio
+de la app, y detrás de un módulo propio como cualquier otra API nativa.
+
+### 6.3 Lo demás, ya resuelto en su sección
+
+- Formato de la exportación: sección 2.7.
+- Proveedor de IA, modelo y forma de los prompts: secciones 4.4 y 4.5.
+
+## 7. Lo que sigue sin definir
+
+- Estados de asistencia más allá de presente, ausente y tarde (¿justificada?
+  ¿retiro anticipado?). Se decide con la pantalla de asistencia en la mano.
+- Escalas de calificación por materia.
+- Texto exacto de las notificaciones de recordatorio.
+
+Ninguno bloquea el orden de trabajo: se resuelven al construir cada parte.

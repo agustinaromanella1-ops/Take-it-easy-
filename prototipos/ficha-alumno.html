@@ -1,0 +1,149 @@
+<!doctype html>
+<html lang="es-AR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Take It Easy — Ficha de alumno</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --fondo:#FFF9F5; --superficie:#FFFFFF; --borde:#F0E8E1;
+    --texto:#2E2A45; --secundario:#6E6880; --primario:#7B5EA7;
+    --lila:#E3D5F5; --lila-osc:#6B4E9E;
+    --rosa:#FBD5E3; --rosa-osc:#B54A75;
+    --durazno:#FFDCC2; --durazno-osc:#C4652A;
+    --celeste:#CFE7F5; --celeste-osc:#2C7196;
+    --noche:#D3D8F0; --noche-osc:#3A4380;
+    --salvia:#8FC4A8; --salvia-osc:#3D7A5E;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{
+    font-family:'Nunito',system-ui,-apple-system,sans-serif;
+    background:var(--fondo);color:var(--texto);
+    -webkit-font-smoothing:antialiased;
+  }
+  .telefono{max-width:420px;margin:0 auto;min-height:100vh;padding:0 0 108px}
+  .barra{display:flex;align-items:center;gap:12px;padding:18px 20px 10px}
+  .atras{
+    width:34px;height:34px;border-radius:10px;border:1px solid var(--borde);
+    background:var(--superficie);color:var(--texto);font-size:17px;
+    display:flex;align-items:center;justify-content:center;cursor:pointer;flex:none;
+  }
+  .subtitulo{font-size:13px;color:var(--secundario)}
+  h1{font-size:28px;font-weight:700;padding:8px 20px 10px;letter-spacing:-.3px}
+  .materias{padding:0 20px 18px;display:flex;gap:7px;flex-wrap:wrap}
+  .chip{font-size:12px;font-weight:600;padding:5px 11px;border-radius:999px}
+  .chip.lila{background:var(--lila);color:var(--lila-osc)}
+  .chip.celeste{background:var(--celeste);color:var(--celeste-osc)}
+  .tarjetas{padding:0 20px 20px;display:flex;gap:10px}
+  .tarjeta{
+    flex:1;background:var(--superficie);border:1px solid var(--borde);
+    border-radius:14px;padding:14px;
+  }
+  .rotulo{font-size:12px;color:var(--secundario);margin-bottom:5px}
+  .valor{font-size:22px;font-weight:700;letter-spacing:-.3px}
+  .detalle{font-size:12px;color:var(--secundario);margin-top:3px}
+  h2{
+    font-size:13px;font-weight:700;color:var(--secundario);
+    text-transform:uppercase;letter-spacing:.7px;padding:4px 20px 10px;
+  }
+  .obs{padding:0 20px;display:flex;flex-direction:column;gap:10px}
+  .observacion{
+    background:var(--superficie);border:1px solid var(--borde);
+    border-radius:14px;padding:14px;
+  }
+  .cabecera{display:flex;align-items:center;gap:9px;margin-bottom:7px}
+  .fecha{font-size:13px;color:var(--secundario);flex:1}
+  .capa{
+    font-size:11px;font-weight:700;padding:3px 9px;border-radius:999px;
+    background:var(--lila);color:var(--lila-osc);
+  }
+  .texto{font-size:15px;line-height:1.55}
+  .pie{
+    position:fixed;bottom:0;left:0;right:0;max-width:420px;margin:0 auto;
+    background:var(--fondo);padding:12px 20px 20px;border-top:1px solid var(--borde);
+  }
+  .primario{
+    display:block;width:100%;padding:15px;
+    background:var(--primario);color:#fff;border:none;border-radius:12px;
+    font-family:inherit;font-size:16px;font-weight:700;cursor:pointer;
+  }
+  .nota{
+    padding:20px;font-size:12px;color:var(--secundario);line-height:1.6;
+    border-top:1px dashed var(--borde);margin-top:24px;
+  }
+</style>
+</head>
+<body>
+<div class="telefono">
+
+  <div class="barra">
+    <button class="atras" aria-label="Volver">←</button>
+    <p class="subtitulo">Historia · 4.º A</p>
+  </div>
+
+  <h1>Delfina Cabrera</h1>
+
+  <div class="materias">
+    <span class="chip celeste">Historia · 4.º A</span>
+    <span class="chip lila">Lengua · 5.º C</span>
+  </div>
+
+  <div class="tarjetas">
+    <div class="tarjeta">
+      <p class="rotulo">Asistencia</p>
+      <p class="valor">22 de 24</p>
+      <p class="detalle">1 ausente · 1 tarde</p>
+    </div>
+    <div class="tarjeta">
+      <p class="rotulo">Promedio</p>
+      <p class="valor">7,50</p>
+      <p class="detalle">4 evaluaciones</p>
+    </div>
+  </div>
+
+  <h2>Observaciones</h2>
+  <div class="obs">
+
+    <article class="observacion">
+      <div class="cabecera">
+        <span class="fecha">2 de septiembre</span>
+        <span class="capa">Privada</span>
+      </div>
+      <p class="texto">No entregó el trabajo sobre la Revolución de Mayo. Pidió una semana más.</p>
+    </article>
+
+    <article class="observacion">
+      <div class="cabecera">
+        <span class="fecha">21 de agosto</span>
+        <span class="capa">Privada</span>
+      </div>
+      <p class="texto">Expuso en el grupo de la línea de tiempo. Habló del contexto sin leer las fichas.</p>
+    </article>
+
+    <article class="observacion">
+      <div class="cabecera">
+        <span class="fecha">6 de agosto</span>
+        <span class="capa">Privada</span>
+      </div>
+      <p class="texto">Faltó al primer parcial. Trajo el certificado el lunes siguiente.</p>
+    </article>
+
+  </div>
+
+  <p class="nota">
+    Prototipo — propuesta a revisar, no aprobada todavía. Nombres ficticios.<br>
+    Toda observación nace en la capa privada y lo dice en la tarjeta. Los textos
+    describen hechos, no califican a la persona. No hay foto, ni datos de contacto,
+    ni nada parecido a un campo de salud.
+  </p>
+
+  <div class="pie">
+    <button class="primario">Anotar una observación</button>
+  </div>
+
+</div>
+</body>
+</html>
