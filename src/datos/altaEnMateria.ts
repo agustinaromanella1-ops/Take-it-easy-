@@ -1,4 +1,5 @@
 import { altaMasiva, deshacerAlta, type AlumnoNuevo } from './alumnos';
+import { db } from './db';
 import { deshacerInscripcion, inscribir, type ResultadoInscripcion } from './inscripciones';
 import type { Alumno, Id } from './tipos';
 import { hoy, type FechaLocal } from '../fecha';
@@ -19,17 +20,22 @@ export async function agregarAlumnosAMateria(
   nuevos: AlumnoNuevo[],
   fecha: FechaLocal,
 ): Promise<AltaEnMateria> {
-  const alta = await altaMasiva(nuevos);
+  // Una sola transacción para las dos escrituras: si la app muere entre el
+  // alta y la inscripción, quedarían alumnos sueltos que nadie pidió y que
+  // deshacer ya no puede alcanzar.
+  return db.transaction('rw', db.alumnos, db.inscripciones, async () => {
+    const alta = await altaMasiva(nuevos);
 
-  // Los repetidos también se inscriben: ya existían de otra materia, y el
-  // alumno es uno solo aunque lo tengas en varias.
-  const inscripcion = await inscribir(
-    materiaId,
-    [...alta.creados, ...alta.repetidos.map((a) => a.id)],
-    fecha,
-  );
+    // Los repetidos también se inscriben: ya existían de otra materia, y el
+    // alumno es uno solo aunque lo tengas en varias.
+    const inscripcion = await inscribir(
+      materiaId,
+      [...alta.creados, ...alta.repetidos.map((a) => a.id)],
+      fecha,
+    );
 
-  return { ...alta, inscripcion };
+    return { ...alta, inscripcion };
+  });
 }
 
 export async function deshacerAltaEnMateria(
@@ -37,6 +43,8 @@ export async function deshacerAltaEnMateria(
   alta: AltaEnMateria,
   fecha: FechaLocal = hoy(),
 ): Promise<void> {
-  await deshacerInscripcion(materiaId, alta.inscripcion, fecha);
-  await deshacerAlta(alta.creados);
+  await db.transaction('rw', db.alumnos, db.inscripciones, async () => {
+    await deshacerInscripcion(materiaId, alta.inscripcion, fecha);
+    await deshacerAlta(alta.creados);
+  });
 }

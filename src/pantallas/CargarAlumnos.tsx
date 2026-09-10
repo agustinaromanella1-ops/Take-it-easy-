@@ -1,6 +1,11 @@
 import { useState } from 'react';
 
-import { estanCompletas, parsearLista, type FilaParseada } from '../alumnos/parseo';
+import {
+  estanCompletas,
+  parsearLista,
+  sinDatosQueNoSeGuardan,
+  type FilaParseada,
+} from '../alumnos/parseo';
 import {
   agregarAlumnosAMateria,
   deshacerAltaEnMateria,
@@ -11,13 +16,26 @@ import { hoy } from '../fecha';
 import { useBorrador } from '../hooks/useBorrador';
 import './CargarAlumnos.css';
 
-interface Borrador {
-  paso: 'pegar' | 'revisar';
-  texto: string;
-  filas: FilaParseada[];
+/**
+ * Lo que se guarda no lleva los datos descartados: el borrador dejaría el DNI
+ * escrito en la base justo debajo del cartel que dice que no se guarda.
+ */
+type FilaGuardada = Omit<FilaParseada, 'descartado'>;
+
+function sinDatosDescartados(fila: FilaParseada): FilaGuardada {
+  const { linea, apellido, nombre, confianza, motivo } = fila;
+  return { linea, apellido, nombre, confianza, motivo };
 }
 
-const VACIO: Borrador = { paso: 'pegar', texto: '', filas: [] };
+interface Borrador {
+  paso: 'pegar' | 'revisar';
+  /** Ya sin documentos ni correos: es lo único que llega a la base. */
+  textoSeguro: string;
+  filas: FilaGuardada[];
+  descartados: number;
+}
+
+const VACIO: Borrador = { paso: 'pegar', textoSeguro: '', filas: [], descartados: 0 };
 
 interface Props {
   materiaId: Id;
@@ -30,9 +48,30 @@ export default function CargarAlumnos({ materiaId, volver }: Props) {
     VACIO,
   );
   const [resultado, setResultado] = useState<AltaEnMateria | null>(null);
+  const [guardando, setGuardando] = useState(false);
+  // Los valores descartados se muestran, pero no sobreviven a la pantalla.
+  const [descartados, setDescartados] = useState<string[]>([]);
+  const [listaUsada, setListaUsada] = useState<Borrador | null>(null);
+  // Lo que se ve en el cuadro de texto es lo que pegó, con documentos y todo.
+  // Sólo vive en memoria: a la base va la versión sin esos datos. Mientras no
+  // escribió nada, se muestra lo que volvió del borrador.
+  const [textoEscrito, setTextoEscrito] = useState<string | null>(null);
+  const texto = textoEscrito ?? valor.textoSeguro;
+
+  function escribir(nuevo: string) {
+    setTextoEscrito(nuevo);
+    setValor((previo) => ({ ...previo, textoSeguro: sinDatosQueNoSeGuardan(nuevo) }));
+  }
 
   function revisar() {
-    setValor((previo) => ({ ...previo, paso: 'revisar', filas: parsearLista(previo.texto) }));
+    const filas = parsearLista(texto);
+    setDescartados(filas.flatMap((f) => f.descartado));
+    setValor((previo) => ({
+      ...previo,
+      paso: 'revisar',
+      filas: filas.map(sinDatosDescartados),
+      descartados: filas.reduce((total, f) => total + f.descartado.length, 0),
+    }));
   }
 
   function corregir(indice: number, campo: 'apellido' | 'nombre', texto: string) {
@@ -50,19 +89,40 @@ export default function CargarAlumnos({ materiaId, volver }: Props) {
   }
 
   async function agregar() {
-    const alta = await agregarAlumnosAMateria(
-      materiaId,
-      valor.filas.map(({ apellido, nombre }) => ({ apellido, nombre })),
-      hoy(),
-    );
+    // Sin esta guarda, el segundo toque pisa el resultado del primero con uno
+    // vacío: la pantalla diría que no se agregó nadie y escondería el deshacer.
+    if (guardando) return;
+    setGuardando(true);
+    try {
+      const alta = await agregarAlumnosAMateria(
+        materiaId,
+        valor.filas.map(({ apellido, nombre }) => ({ apellido, nombre })),
+        hoy(),
+      );
 
-    setResultado(alta);
-    limpiar();
+      setListaUsada(valor);
+      setResultado(alta);
+      limpiar();
+    } finally {
+      setGuardando(false);
+    }
   }
 
   async function deshacer() {
-    if (resultado) await deshacerAltaEnMateria(materiaId, resultado, hoy());
+    if (!resultado) return;
+    await deshacerAltaEnMateria(materiaId, resultado, hoy());
+    // Vuelve la lista con las correcciones hechas a mano: deshacer no puede
+    // costar rehacer todo el trabajo de revisión.
+    if (listaUsada) setValor(listaUsada);
+    setTextoEscrito(null);
     setResultado(null);
+    setListaUsada(null);
+  }
+
+  function salir() {
+    limpiar();
+    setTextoEscrito(null);
+    volver();
   }
 
   if (resultado) {
@@ -89,7 +149,7 @@ export default function CargarAlumnos({ materiaId, volver }: Props) {
         </header>
 
         <div className="pie">
-          <button className="primario" onClick={volver}>
+          <button className="primario" onClick={salir}>
             Volver a la materia
           </button>
           {(creados > 0 || resultado.inscripcion.nuevas.length > 0) && (
@@ -117,14 +177,14 @@ export default function CargarAlumnos({ materiaId, volver }: Props) {
         </header>
 
         <textarea
-          value={valor.texto}
-          onChange={(e) => setValor((previo) => ({ ...previo, texto: e.target.value }))}
+          value={texto}
+          onChange={(e) => escribir(e.target.value)}
           placeholder={'1. ACUÑA, Malena\n2. BARRETO, Ignacio'}
           rows={12}
         />
 
         <div className="pie">
-          <button className="primario" onClick={revisar} disabled={valor.texto.trim() === ''}>
+          <button className="primario" onClick={revisar} disabled={texto.trim() === ''}>
             Revisar la lista
           </button>
         </div>
@@ -134,7 +194,6 @@ export default function CargarAlumnos({ materiaId, volver }: Props) {
 
   const { filas } = valor;
   const paraRevisar = filas.filter((f) => f.confianza === 'revisar').length;
-  const descartados = filas.flatMap((f) => f.descartado);
   const completas = estanCompletas(filas);
 
   return (
@@ -153,10 +212,14 @@ export default function CargarAlumnos({ materiaId, volver }: Props) {
         </p>
       </header>
 
-      {descartados.length > 0 && (
+      {(descartados.length > 0 || valor.descartados > 0) && (
         <p className="descartado">
-          La app no guarda documentos, teléfonos ni correos, así que se dejaron
-          afuera: {descartados.join(', ')}.
+          La app no guarda documentos, teléfonos ni correos, así que se
+          {descartados.length > 0
+            ? ` dejaron afuera: ${descartados.join(', ')}.`
+            : ` dejaron afuera ${valor.descartados} ${
+                valor.descartados === 1 ? 'dato' : 'datos'
+              } de la lista.`}
         </p>
       )}
 
@@ -192,7 +255,7 @@ export default function CargarAlumnos({ materiaId, volver }: Props) {
         <button
           className="primario"
           onClick={agregar}
-          disabled={filas.length === 0 || !completas || !listo}
+          disabled={filas.length === 0 || !completas || !listo || guardando}
         >
           Agregar {filas.length} {filas.length === 1 ? 'alumno' : 'alumnos'}
         </button>

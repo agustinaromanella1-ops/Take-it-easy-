@@ -1,7 +1,9 @@
+import { PARTICULAS } from './particulas';
+
 export type Confianza = 'alta' | 'revisar';
 
 export interface FilaParseada {
-  /** La línea original, para que la docente pueda comparar. */
+  /** La línea como se pegó, ya sin los datos que la app no guarda. */
   linea: string;
   apellido: string;
   nombre: string;
@@ -33,7 +35,10 @@ function esEncabezado(linea: string): boolean {
 }
 
 function quitarNumeracion(linea: string): string {
-  return linea.replace(/^\s*\d{1,3}\s*[.)\]:\-–]\s*/, '');
+  // La numeración puede venir con puntuación ("1.") o sólo separada por
+  // tabulación o espacios, como cuando la columna del número viene de una
+  // planilla. Sin esto, el número termina pegado al apellido.
+  return linea.replace(/^\s*\d{1,3}(?:\s*[.)\]:\-–]\s*|\s+)/, '');
 }
 
 function quitarDatosQueNoSeGuardan(linea: string): { limpia: string; descartado: string[] } {
@@ -54,8 +59,6 @@ function enMayusculas(palabra: string): boolean {
   const letras = palabra.replace(/[^\p{L}]/gu, '');
   return letras.length > 1 && letras === letras.toUpperCase();
 }
-
-const PARTICULAS = new Set(['de', 'del', 'la', 'las', 'lo', 'los', 'y', 'da', 'di', 'van', 'von']);
 
 function capitalizar(texto: string): string {
   return texto
@@ -142,13 +145,27 @@ export function parsearLista(texto: string): FilaParseada[] {
     .map((linea) => linea.trim())
     .filter((linea) => linea.length > 0 && !esEncabezado(linea))
     .map((linea) => {
-      const { limpia, descartado } = quitarDatosQueNoSeGuardan(quitarNumeracion(linea));
-      const partida = partir(limpia);
-      return { linea, descartado, ...partida };
+      const { limpia, descartado } = quitarDatosQueNoSeGuardan(linea);
+      const partida = partir(quitarNumeracion(limpia));
+      // Se guarda la línea ya sin el documento ni el correo: mostrar el dato
+      // que la app dice no guardar sería mentir dos veces.
+      return { linea: limpiarBordes(limpia.replace(/\s+/g, ' ')), descartado, ...partida };
     })
     .filter((fila) => fila.apellido.length > 0 || fila.nombre.length > 0);
 }
 
-export function estanCompletas(filas: FilaParseada[]): boolean {
+/**
+ * El mismo texto, sin los datos que la app no guarda. Se usa para el borrador:
+ * el texto pegado entero incluye el DNI, y guardarlo tal cual dejaría escrito
+ * en la base justo lo que la pantalla promete no guardar.
+ */
+export function sinDatosQueNoSeGuardan(texto: string): string {
+  return texto
+    .split(/\r?\n/)
+    .map((linea) => limpiarBordes(quitarDatosQueNoSeGuardan(linea).limpia.replace(/[ \t]+/g, ' ')))
+    .join('\n');
+}
+
+export function estanCompletas(filas: { apellido: string; nombre: string }[]): boolean {
   return filas.every((fila) => fila.apellido.trim() !== '' && fila.nombre.trim() !== '');
 }

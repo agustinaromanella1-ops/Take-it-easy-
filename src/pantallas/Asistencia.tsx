@@ -6,6 +6,7 @@ import {
   asistenciaDeLaClase,
   borrarAsistencia,
   marcarAsistencia,
+  tocarEstado,
 } from '../datos/asistencia';
 import { claseDelDia } from '../datos/clases';
 import { alumnosInscriptos } from '../datos/inscripciones';
@@ -65,18 +66,16 @@ export default function Asistencia({ materiaId, volver }: { materiaId: Id; volve
   const registrados = alumnos.filter((a) => porAlumno.has(a.id)).length;
 
   async function tocar(alumnoId: Id, nombre: string, estado: EstadoAsistencia) {
-    const anterior = porAlumno.get(alumnoId);
-    // Segundo toque sobre el estado ya elegido: alterna la marca de justificada.
-    const repetido = anterior?.estado === estado;
-    const justificada = repetido ? !anterior.justificada : false;
-
-    await marcarAsistencia({ claseSesionId: claseId!, alumnoId, estado, justificada });
+    // El alternado de justificada lo decide la capa de datos, leyendo y
+    // escribiendo en la misma transacción: con dos toques rápidos, lo que la
+    // pantalla tiene en la mano ya está viejo.
+    const { anterior, justificada } = await tocarEstado(claseId!, alumnoId, estado);
 
     const palabra = ESTADOS.find((e) => e.estado === estado)!.palabra.toLowerCase();
     setUltimo({
       alumnoId,
       nombre,
-      descripcion: estado !== 'presente' && justificada ? `${palabra} justificada` : palabra,
+      descripcion: justificada ? `${palabra} justificada` : palabra,
       anterior,
     });
   }

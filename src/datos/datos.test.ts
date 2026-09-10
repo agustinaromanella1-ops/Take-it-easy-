@@ -3,7 +3,7 @@ import { beforeEach, describe, expect, it } from 'vitest';
 
 import { db, nuevoId } from './db';
 import { altaMasiva } from './alumnos';
-import { marcarAsistencia } from './asistencia';
+import { marcarAsistencia, tocarEstado } from './asistencia';
 import { calificar, promedioDeAlumno } from './calificaciones';
 import { crearObservacion } from './observaciones';
 import { PlantillaConNombreError, guardarPlantilla } from './plantillas';
@@ -71,6 +71,44 @@ describe('asistencia', () => {
     await expect(
       db.registrosAsistencia.add({ ...base, id: 'r2', registradoEn: Date.now() }),
     ).rejects.toThrow();
+  });
+
+  it('el segundo toque sobre el mismo estado alterna justificada', async () => {
+    await tocarEstado(claseSesionId, alumnoId, 'ausente');
+    const segundo = await tocarEstado(claseSesionId, alumnoId, 'ausente');
+
+    expect(segundo.justificada).toBe(true);
+    expect((await db.registrosAsistencia.toCollection().first())?.justificada).toBe(true);
+  });
+
+  it('dos toques rápidos no pierden el alternado', async () => {
+    // La pantalla no puede decidir el alternado con lo que tiene en la mano:
+    // en el segundo toque eso ya está viejo.
+    await tocarEstado(claseSesionId, alumnoId, 'tarde');
+    await Promise.all([
+      tocarEstado(claseSesionId, alumnoId, 'tarde'),
+      tocarEstado(claseSesionId, alumnoId, 'tarde'),
+    ]);
+
+    const registro = await db.registrosAsistencia.toCollection().first();
+    expect(registro?.justificada).toBe(false);
+    expect(await db.registrosAsistencia.count()).toBe(1);
+  });
+
+  it('cambiar de estado limpia la justificación', async () => {
+    await tocarEstado(claseSesionId, alumnoId, 'ausente');
+    await tocarEstado(claseSesionId, alumnoId, 'ausente');
+    const cambio = await tocarEstado(claseSesionId, alumnoId, 'presente');
+
+    expect(cambio.justificada).toBe(false);
+    expect((await db.registrosAsistencia.toCollection().first())?.justificada).toBe(false);
+  });
+
+  it('devuelve cómo estaba antes, para poder deshacer', async () => {
+    await tocarEstado(claseSesionId, alumnoId, 'presente');
+    const segundo = await tocarEstado(claseSesionId, alumnoId, 'ausente');
+
+    expect(segundo.anterior?.estado).toBe('presente');
   });
 
   it('alumnos distintos en la misma clase conviven', async () => {
@@ -200,6 +238,31 @@ describe('plantillas grupales', () => {
   it('rechaza el apellido escrito sin acento', async () => {
     await expect(
       guardarPlantilla({ texto: 'Hablar con la familia CABRERA.', ambito: 'grupal' }),
+    ).rejects.toThrow(PlantillaConNombreError);
+  });
+
+  it('una partícula de apellido no bloquea una plantilla inocente', async () => {
+    // "de la Fuente" comparte "de" y "la" con media lengua: indexarlas haría
+    // que casi cualquier plantilla grupal quede bloqueada.
+    await db.alumnos.add({
+      id: nuevoId(), nombre: 'Sol', apellido: 'de la Fuente', creadoEn: Date.now(),
+    });
+
+    const id = await guardarPlantilla({
+      texto: 'Recordar la entrega de la semana que viene.',
+      ambito: 'grupal',
+    });
+
+    expect(await db.plantillas.get(id)).toBeDefined();
+  });
+
+  it('pero el apellido en sí sigue bloqueando', async () => {
+    await db.alumnos.add({
+      id: nuevoId(), nombre: 'Sol', apellido: 'de la Fuente', creadoEn: Date.now(),
+    });
+
+    await expect(
+      guardarPlantilla({ texto: 'Hablar con la familia Fuente.', ambito: 'grupal' }),
     ).rejects.toThrow(PlantillaConNombreError);
   });
 

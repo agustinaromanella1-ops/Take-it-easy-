@@ -1,3 +1,4 @@
+import { esIdentificatoria } from '../alumnos/particulas';
 import { db } from './db';
 
 /** Minúsculas, sin acentos, sin signos: "Acuña" y "acuna" son la misma palabra. */
@@ -23,7 +24,9 @@ export async function indiceDeNombres(): Promise<Set<string>> {
   const indice = new Set<string>();
   for (const alumno of alumnos) {
     for (const palabra of palabras(`${alumno.nombre} ${alumno.apellido}`)) {
-      indice.add(palabra);
+      // Una partícula no identifica a nadie. Indexarla haría que un apellido
+      // como "de la Fuente" bloquee cualquier plantilla que diga "de" o "la".
+      if (esIdentificatoria(palabra)) indice.add(palabra);
     }
   }
   return indice;

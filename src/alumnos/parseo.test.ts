@@ -80,9 +80,27 @@ GAUNA, Renata  11 5555 4444`);
     expect(filas[0]).toMatchObject({ apellido: 'de la Fuente', nombre: 'María Sol' });
   });
 
-  it('guarda la línea original para poder comparar', () => {
-    const filas = parsearLista('1. ACUÑA, Malena');
+  it('lee la numeración separada por tabulación, como sale de una planilla', () => {
+    const filas = parsearLista('1\tACUÑA, Malena\n2\tBARRETO, Ignacio');
 
-    expect(filas[0].linea).toBe('1. ACUÑA, Malena');
+    expect(filas[0]).toMatchObject({ apellido: 'Acuña', nombre: 'Malena', confianza: 'alta' });
+    expect(filas[1]).toMatchObject({ apellido: 'Barreto', nombre: 'Ignacio' });
+  });
+
+  it('lee la numeración separada sólo por espacios', () => {
+    expect(parsearLista('12 ACUÑA, Malena')[0]).toMatchObject({
+      apellido: 'Acuña', nombre: 'Malena',
+    });
+  });
+
+  it('la línea que se conserva no lleva el dato descartado', () => {
+    // Se muestra en pantalla y se guarda en el borrador: si arrastrara el DNI,
+    // quedaría escrito abajo del cartel que dice que no se guarda.
+    const fila = parsearLista('1. ACUÑA, Malena  45.678.901  familia@ejemplo.com')[0];
+
+    expect(fila.linea).not.toContain('45.678.901');
+    expect(fila.linea).not.toContain('familia@ejemplo.com');
+    expect(fila.linea).toContain('ACUÑA');
+    expect(fila.descartado).toHaveLength(2);
   });
 });

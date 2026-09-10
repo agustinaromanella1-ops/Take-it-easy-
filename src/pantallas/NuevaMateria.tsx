@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { useLiveQuery } from 'dexie-react-hooks';
 
 import { db } from '../datos/db';
@@ -21,6 +22,7 @@ const VACIO: Formulario = { nombre: '', anio: '', division: '', escuela: '', col
 export default function NuevaMateria({ volver }: { volver: () => void }) {
   const { valor, setValor, limpiar, listo } = useBorrador<Formulario>('materia-nueva', VACIO);
   const escuelas = useLiveQuery(() => db.escuelas.toArray(), [], []);
+  const [guardando, setGuardando] = useState(false);
 
   function cambiar<C extends keyof Formulario>(campo: C, nuevo: Formulario[C]) {
     setValor((previo) => ({ ...previo, [campo]: nuevo }));
@@ -30,6 +32,10 @@ export default function NuevaMateria({ volver }: { volver: () => void }) {
     valor.nombre.trim() !== '' && valor.anio.trim() !== '' && valor.division.trim() !== '';
 
   async function guardar() {
+    // Dos toques seguidos crearían dos materias idénticas, imposibles de
+    // distinguir después.
+    if (guardando) return;
+    setGuardando(true);
     await crearMateria({
       nombre: valor.nombre,
       anio: valor.anio,
@@ -113,7 +119,7 @@ export default function NuevaMateria({ volver }: { volver: () => void }) {
       </div>
 
       <div className="pie">
-        <button className="primario" onClick={guardar} disabled={!completo || !listo}>
+        <button className="primario" onClick={guardar} disabled={!completo || !listo || guardando}>
           Crear materia
         </button>
       </div>

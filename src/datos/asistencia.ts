@@ -46,6 +46,39 @@ export async function marcarAsistencia(marca: MarcaAsistencia): Promise<Id> {
   });
 }
 
+export interface ResultadoToque {
+  /** Cómo estaba antes, para poder deshacer exactamente eso. */
+  anterior: RegistroAsistencia | undefined;
+  justificada: boolean;
+}
+
+/**
+ * Un toque en la pantalla: elige el estado, y si repite el que ya estaba,
+ * alterna la marca de justificada.
+ *
+ * Lee y escribe dentro de la misma transacción a propósito. Si la pantalla
+ * decidiera el alternado con lo que tiene en la mano, dos toques rápidos
+ * decidirían los dos sobre el mismo estado viejo y el segundo se perdería.
+ */
+export async function tocarEstado(
+  claseSesionId: Id,
+  alumnoId: Id,
+  estado: EstadoAsistencia,
+): Promise<ResultadoToque> {
+  return db.transaction('rw', db.registrosAsistencia, async () => {
+    const anterior = await db.registrosAsistencia
+      .where('[claseSesionId+alumnoId]')
+      .equals([claseSesionId, alumnoId])
+      .first();
+
+    const justificada =
+      estado !== 'presente' && anterior?.estado === estado ? !anterior.justificada : false;
+
+    await marcarAsistencia({ claseSesionId, alumnoId, estado, justificada });
+    return { anterior, justificada };
+  });
+}
+
 export function asistenciaDeLaClase(claseSesionId: Id): Promise<RegistroAsistencia[]> {
   return db.registrosAsistencia.where('claseSesionId').equals(claseSesionId).toArray();
 }
