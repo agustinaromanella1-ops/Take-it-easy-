@@ -2,17 +2,31 @@ import { db, nuevoId } from './db';
 import type { Alumno, Id, Inscripcion } from './tipos';
 import type { FechaLocal } from '../fecha';
 
+export interface ResultadoInscripcion {
+  /** No estaban inscriptos: la inscripción la creó esta acción. */
+  nuevas: Id[];
+  /** Estaban dados de baja y esta acción los volvió a activar. */
+  reactivadas: Id[];
+}
+
 /**
  * Inscribir es idempotente: el alumno existe una sola vez y la inscripción
  * también. Volver a inscribir a alguien que ya está reactiva su baja en vez
  * de crear una segunda fila.
+ *
+ * Informa qué cambió, y no sólo qué se pidió, para que deshacer pueda
+ * revertir exactamente eso: a quien ya estaba inscripto de antes no lo tocó
+ * esta acción, y deshacerla no puede sacarlo del curso.
  */
 export async function inscribir(
   materiaId: Id,
   alumnoIds: Id[],
   desde: FechaLocal,
-): Promise<void> {
-  await db.transaction('rw', db.inscripciones, async () => {
+): Promise<ResultadoInscripcion> {
+  return db.transaction('rw', db.inscripciones, async () => {
+    const nuevas: Id[] = [];
+    const reactivadas: Id[] = [];
+
     for (const alumnoId of alumnoIds) {
       const existente = await db.inscripciones
         .where('[alumnoId+materiaId]')
@@ -22,6 +36,7 @@ export async function inscribir(
       if (existente) {
         if (existente.estado === 'baja') {
           await db.inscripciones.update(existente.id, { estado: 'activa', hasta: undefined });
+          reactivadas.push(alumnoId);
         }
         continue;
       }
@@ -34,6 +49,31 @@ export async function inscribir(
         desde,
       };
       await db.inscripciones.add(inscripcion);
+      nuevas.push(alumnoId);
+    }
+
+    return { nuevas, reactivadas };
+  });
+}
+
+/** Revierte exactamente lo que hizo una inscripción, y nada más. */
+export async function deshacerInscripcion(
+  materiaId: Id,
+  cambios: ResultadoInscripcion,
+  hasta: FechaLocal,
+): Promise<void> {
+  await db.transaction('rw', db.inscripciones, async () => {
+    for (const alumnoId of cambios.nuevas) {
+      await db.inscripciones.where('[alumnoId+materiaId]').equals([alumnoId, materiaId]).delete();
+    }
+    for (const alumnoId of cambios.reactivadas) {
+      const existente = await db.inscripciones
+        .where('[alumnoId+materiaId]')
+        .equals([alumnoId, materiaId])
+        .first();
+      if (existente) {
+        await db.inscripciones.update(existente.id, { estado: 'baja', hasta });
+      }
     }
   });
 }

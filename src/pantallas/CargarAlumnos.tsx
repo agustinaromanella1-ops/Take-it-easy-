@@ -1,8 +1,11 @@
 import { useState } from 'react';
 
 import { estanCompletas, parsearLista, type FilaParseada } from '../alumnos/parseo';
-import { altaMasiva, deshacerAlta, type ResultadoAlta } from '../datos/alumnos';
-import { inscribir } from '../datos/inscripciones';
+import {
+  agregarAlumnosAMateria,
+  deshacerAltaEnMateria,
+  type AltaEnMateria,
+} from '../datos/altaEnMateria';
 import type { Id } from '../datos/tipos';
 import { hoy } from '../fecha';
 import { useBorrador } from '../hooks/useBorrador';
@@ -26,7 +29,7 @@ export default function CargarAlumnos({ materiaId, volver }: Props) {
     `alumnos:${materiaId}`,
     VACIO,
   );
-  const [resultado, setResultado] = useState<ResultadoAlta | null>(null);
+  const [resultado, setResultado] = useState<AltaEnMateria | null>(null);
 
   function revisar() {
     setValor((previo) => ({ ...previo, paso: 'revisar', filas: parsearLista(previo.texto) }));
@@ -47,20 +50,18 @@ export default function CargarAlumnos({ materiaId, volver }: Props) {
   }
 
   async function agregar() {
-    const alta = await altaMasiva(
+    const alta = await agregarAlumnosAMateria(
+      materiaId,
       valor.filas.map(({ apellido, nombre }) => ({ apellido, nombre })),
+      hoy(),
     );
-
-    // Los repetidos también se inscriben: ya existían de otra materia, y el
-    // alumno es uno solo aunque lo tengas en varias.
-    await inscribir(materiaId, [...alta.creados, ...alta.repetidos.map((a) => a.id)], hoy());
 
     setResultado(alta);
     limpiar();
   }
 
   async function deshacer() {
-    if (resultado) await deshacerAlta(resultado.creados);
+    if (resultado) await deshacerAltaEnMateria(materiaId, resultado, hoy());
     setResultado(null);
   }
 
@@ -73,9 +74,9 @@ export default function CargarAlumnos({ materiaId, volver }: Props) {
         <header>
           <h1>Listo</h1>
           <p className="resumen">
-            {creados === 0
-              ? 'No se agregó nadie nuevo.'
-              : `Se agregaron ${creados} ${creados === 1 ? 'alumno' : 'alumnos'}.`}
+            {creados === 0 && 'No se agregó nadie nuevo.'}
+            {creados === 1 && 'Se agregó 1 alumno.'}
+            {creados > 1 && `Se agregaron ${creados} alumnos.`}
           </p>
           {repetidos > 0 && (
             <p className="ayuda">
@@ -91,7 +92,7 @@ export default function CargarAlumnos({ materiaId, volver }: Props) {
           <button className="primario" onClick={volver}>
             Volver a la materia
           </button>
-          {creados > 0 && (
+          {(creados > 0 || resultado.inscripcion.nuevas.length > 0) && (
             <button className="secundario" onClick={deshacer}>
               Deshacer
             </button>
