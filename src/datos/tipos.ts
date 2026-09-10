@@ -124,3 +124,10 @@ export interface Recordatorio {
   idNotificacion: number;
   estado: 'programado' | 'entregado' | 'cancelado';
 }
+
+/** Lo que la docente dejó escrito a medias en una pantalla. */
+export interface Borrador {
+  clave: string;
+  contenido: unknown;
+  guardadoEn: Instante;
+}

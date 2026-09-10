@@ -7,11 +7,13 @@ import CargarAlumnos from './pantallas/CargarAlumnos';
 import Hoy from './pantallas/Hoy';
 import Materia from './pantallas/Materia';
 import Materias from './pantallas/Materias';
+import NuevaMateria from './pantallas/NuevaMateria';
 import './App.css';
 
 type Pantalla =
   | { nombre: 'hoy' }
   | { nombre: 'materias' }
+  | { nombre: 'materia-nueva' }
   | { nombre: 'materia'; materiaId: Id }
   | { nombre: 'alumnos'; materiaId: Id }
   | { nombre: 'asistencia'; materiaId: Id };
@@ -49,8 +51,13 @@ export default function App() {
       {actual.nombre === 'hoy' && <Hoy />}
 
       {actual.nombre === 'materias' && (
-        <Materias abrir={(materiaId) => ir({ nombre: 'materia', materiaId })} />
+        <Materias
+          abrir={(materiaId) => ir({ nombre: 'materia', materiaId })}
+          crear={() => ir({ nombre: 'materia-nueva' })}
+        />
       )}
+
+      {actual.nombre === 'materia-nueva' && <NuevaMateria volver={volver} />}
 
       {actual.nombre === 'materia' && (
         <Materia

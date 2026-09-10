@@ -33,6 +33,12 @@ un toque desde el arranque.
 - Desde Hoy se llega en un toque a la asistencia de cualquier clase del día.
 - El botón atrás de Android **guarda y vuelve**, nunca descarta. No hay
   pantalla en la que salir sin guardar sea el comportamiento por defecto.
+- Donde todavía no hay nada que guardar —un formulario a medio llenar, una
+  lista pegada sin confirmar— lo escrito queda como **borrador en
+  IndexedDB**, con la clave de esa pantalla, y vuelve al entrar de nuevo.
+  En memoria no alcanza: Android mata la app en segundo plano, y ahí es
+  donde de verdad se pierde lo escrito. El borrador se borra al confirmar,
+  y un borrador vacío no se guarda.
 
 ### 1.2 Inventario de pantallas
 

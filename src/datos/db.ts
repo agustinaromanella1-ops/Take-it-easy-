@@ -1,6 +1,7 @@
 import Dexie, { type EntityTable } from 'dexie';
 import type {
   Alumno,
+  Borrador,
   BloqueHorario,
   Calificacion,
   ClaseSesion,
@@ -35,6 +36,7 @@ export class BaseTakeItEasy extends Dexie {
   observaciones!: EntityTable<Observacion, 'id'>;
   plantillas!: EntityTable<Plantilla, 'id'>;
   entradasAgenda!: EntityTable<EntradaAgenda, 'id'>;
+  borradores!: EntityTable<Borrador, 'clave'>;
   recordatorios!: EntityTable<Recordatorio, 'id'>;
 
   constructor(nombre = 'take-it-easy') {
@@ -55,6 +57,10 @@ export class BaseTakeItEasy extends Dexie {
       entradasAgenda: 'id, materiaId, fecha',
       recordatorios: 'id, entradaAgendaId, fechaHoraLocal',
     });
+
+    // Lo escrito a medias sobrevive a que Android mate la app en segundo plano,
+    // que es lo que en la práctica descarta un formulario a medio llenar.
+    this.version(2).stores({ borradores: 'clave' });
   }
 }
 
