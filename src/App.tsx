@@ -1,30 +1,32 @@
-import { enPalabras, hoy } from './fecha';
-import { esNativa, plataforma } from './nativo/plataforma';
+import { useState } from 'react';
+
+import CargarAlumnos from './pantallas/CargarAlumnos';
+import Hoy from './pantallas/Hoy';
 import './App.css';
 
+type Seccion = 'hoy' | 'alumnos';
+
 export default function App() {
-  const fecha = hoy();
+  const [seccion, setSeccion] = useState<Seccion>('hoy');
 
   return (
-    <main className="pantalla">
-      <header>
-        <p className="fecha">{enPalabras(fecha)}</p>
-        <h1>Hoy</h1>
-      </header>
+    <div className="app">
+      {seccion === 'hoy' ? <Hoy /> : <CargarAlumnos />}
 
-      <section className="vacio">
-        <p className="invitacion">Todavía no cargaste tus materias.</p>
-        <p className="detalle">
-          Cuando estén, acá vas a ver las clases del día en orden, y vas a poder
-          tomar asistencia de la que sigue.
-        </p>
-      </section>
-
-      <footer>
-        {esNativa() ? `Corriendo en ${plataforma()}` : 'Corriendo en el navegador'}
-        {' · '}
-        {fecha}
-      </footer>
-    </main>
+      <nav>
+        <button
+          className={seccion === 'hoy' ? 'activa' : undefined}
+          onClick={() => setSeccion('hoy')}
+        >
+          Hoy
+        </button>
+        <button
+          className={seccion === 'alumnos' ? 'activa' : undefined}
+          onClick={() => setSeccion('alumnos')}
+        >
+          Alumnos
+        </button>
+      </nav>
+    </div>
   );
 }

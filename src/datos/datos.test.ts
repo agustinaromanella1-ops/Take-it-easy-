@@ -2,6 +2,7 @@ import 'fake-indexeddb/auto';
 import { beforeEach, describe, expect, it } from 'vitest';
 
 import { db, nuevoId } from './db';
+import { altaMasiva } from './alumnos';
 import { marcarAsistencia } from './asistencia';
 import { calificar, promedioDeAlumno } from './calificaciones';
 import { crearObservacion } from './observaciones';
@@ -116,6 +117,55 @@ describe('calificaciones', () => {
     const promedio = await promedioDeAlumno(alumnoId, materiaId);
     expect(promedio.valor).toBeNull();
     expect(promedio.conceptuales).toBe(1);
+  });
+});
+
+describe('alta masiva de alumnos', () => {
+  it('crea los alumnos de la lista', async () => {
+    const { creados, repetidos } = await altaMasiva([
+      { apellido: 'Acuña', nombre: 'Malena' },
+      { apellido: 'Barreto', nombre: 'Ignacio' },
+    ]);
+
+    expect(creados).toHaveLength(2);
+    expect(repetidos).toHaveLength(0);
+    expect(await db.alumnos.count()).toBe(2);
+  });
+
+  it('pegar dos veces la misma lista no duplica a nadie', async () => {
+    await altaMasiva([{ apellido: 'Acuña', nombre: 'Malena' }]);
+    const segunda = await altaMasiva([{ apellido: 'Acuña', nombre: 'Malena' }]);
+
+    expect(segunda.creados).toHaveLength(0);
+    expect(segunda.repetidos).toHaveLength(1);
+    expect(await db.alumnos.count()).toBe(1);
+  });
+
+  it('reconoce al mismo alumno escrito con otras mayúsculas o sin acento', async () => {
+    await altaMasiva([{ apellido: 'Acuña', nombre: 'Malena' }]);
+    const segunda = await altaMasiva([{ apellido: 'ACUNA', nombre: 'malena' }]);
+
+    expect(segunda.repetidos).toHaveLength(1);
+    expect(await db.alumnos.count()).toBe(1);
+  });
+
+  it('detecta repetidos dentro de la misma lista pegada', async () => {
+    const { creados, repetidos } = await altaMasiva([
+      { apellido: 'Acuña', nombre: 'Malena' },
+      { apellido: 'Acuña', nombre: 'Malena' },
+    ]);
+
+    expect(creados).toHaveLength(1);
+    expect(repetidos).toHaveLength(1);
+  });
+
+  it('dos alumnos con el mismo apellido y distinto nombre son dos personas', async () => {
+    const { creados } = await altaMasiva([
+      { apellido: 'Acuña', nombre: 'Malena' },
+      { apellido: 'Acuña', nombre: 'Tomás' },
+    ]);
+
+    expect(creados).toHaveLength(2);
   });
 });
 

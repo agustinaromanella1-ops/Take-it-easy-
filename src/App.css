@@ -1,47 +1,85 @@
-.pantalla {
+.app {
   max-width: 480px;
   margin: 0 auto;
   min-height: 100dvh;
   display: flex;
   flex-direction: column;
-  padding: 28px 20px 20px;
 }
 
-.fecha {
-  font-size: 14px;
-  color: var(--secundario);
-  margin-bottom: 2px;
+.pantalla {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  padding: 28px 20px 16px;
 }
 
-h1 {
-  font-size: 30px;
+.pantalla h1 {
+  font-size: 28px;
   font-weight: 700;
   letter-spacing: -0.4px;
 }
 
-.vacio {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-  gap: 10px;
-  padding: 32px 0;
-}
-
-.invitacion {
-  font-size: 18px;
-  font-weight: 700;
-}
-
-.detalle {
-  font-size: 15px;
-  line-height: 1.55;
-  color: var(--secundario);
-}
-
-footer {
-  font-size: 12px;
-  color: var(--secundario);
-  border-top: 1px solid var(--borde);
+.pie {
+  position: sticky;
+  bottom: 0;
+  margin-top: auto;
   padding-top: 14px;
+  background: var(--fondo);
+}
+
+.primario {
+  display: block;
+  width: 100%;
+  padding: 15px;
+  border: none;
+  border-radius: 12px;
+  background: var(--primario);
+  color: #fff;
+  font-family: inherit;
+  font-size: 16px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.primario:disabled {
+  background: var(--borde);
+  color: var(--secundario);
+  cursor: default;
+}
+
+.secundario {
+  display: block;
+  width: 100%;
+  margin-top: 8px;
+  padding: 13px;
+  border: none;
+  border-radius: 12px;
+  background: none;
+  color: var(--primario);
+  font-family: inherit;
+  font-size: 15px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+nav {
+  display: flex;
+  border-top: 1px solid var(--borde);
+  background: var(--superficie);
+}
+
+nav button {
+  flex: 1;
+  padding: 12px 0 16px;
+  border: none;
+  background: none;
+  font-family: inherit;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--secundario);
+  cursor: pointer;
+}
+
+nav button.activa {
+  color: var(--primario);
 }
