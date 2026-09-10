@@ -57,8 +57,8 @@ un toque desde el arranque.
 - **Deshacer en lugar de confirmar.** Cero diálogos modales durante la
   clase: marcar, borrar y cambiar un estado son acciones inmediatas con
   una barra de deshacer que dura unos segundos.
-- **Ningún estado se lee sólo por color.** Presente, ausente y tarde
-  llevan letra o texto además del pastel que los acompaña.
+- **Ningún estado se lee sólo por color.** Presente, ausente, tarde y la
+  marca de justificada se distinguen en palabras, no en tono de pastel.
 - **Tono calmo.** Sin signos de exclamación, sin urgencia, sin apuro.
   Ningún texto de la app califica a un alumno: describe hechos.
 - **Los estados vacíos invitan a hacer algo**, no piden disculpas. Un
@@ -78,6 +78,33 @@ un toque desde el arranque.
   Nunca negro puro.
 - Nunito para toda la interfaz. Baloo 2 sólo en el logo.
 
+### 1.5 Texto de las notificaciones
+
+Una notificación se lee en la pantalla bloqueada, a la vista de cualquiera
+que esté cerca. De ahí las dos reglas que fijan su forma.
+
+**No se muestra texto escrito por el docente.** Ni el título de la entrada
+de agenda, ni el nombre de la evaluación. Una entrada que dice "hablar con
+Delfina sobre el trabajo" es perfectamente razonable de escribir, y
+mostrarla en la pantalla bloqueada publica el nombre de una alumna. El
+cuerpo de la notificación es fijo; el contenido se ve al abrir la app.
+
+**No se prometen horas.** Los recordatorios son notificaciones inexactas
+(decisión tomada del proyecto): pueden llegar más tarde de lo programado.
+Un texto que diga "en diez minutos" va a estar mal seguido.
+
+| Caso | Título | Cuerpo |
+|---|---|---|
+| Nota para una clase | `Lengua · 3.º B` | Tenés una nota para esta clase. |
+| Evaluación anotada | `Historia · 4.º A` | Hoy tenés una evaluación anotada. |
+| Sin materia asociada | `Take It Easy` | Tenés una nota para hoy. |
+
+La materia y el curso sí van en el título: no son datos de un alumno, y sin
+ellos la notificación no dice nada útil.
+
+Tono calmo también acá: sin signos de exclamación, sin "¡no te olvides!",
+sin contador de pendientes.
+
 ---
 
 ## 2. Modelo de datos
@@ -89,12 +116,14 @@ sincronización ni copia remota de estos datos.
 
 ```
 Escuela         id, nombre
-Materia         id, escuelaId, nombre, anio, division, colorPastel
+Materia         id, escuelaId, nombre, anio, division, colorPastel,
+                escalaPorDefecto
 BloqueHorario   id, materiaId, diaSemana (1-7), horaInicio, horaFin
 Alumno          id, nombre, apellido, creadoEn
 Inscripcion     id, alumnoId, materiaId, estado (activa|baja), desde, hasta
 ClaseSesion     id, materiaId, fecha, bloqueHorarioId, tema
-RegistroAsistencia  id, claseSesionId, alumnoId, estado, registradoEn
+RegistroAsistencia  id, claseSesionId, alumnoId, estado, justificada,
+                registradoEn
 Evaluacion      id, materiaId, nombre, fecha, tipo, escala
 Calificacion    id, evaluacionId, alumnoId, valor, registradoEn
 Observacion     id, ambito (alumno|materia), alumnoId, materiaId,
@@ -171,7 +200,58 @@ La distinción es deliberada y conviene mantenerla explícita en los nombres.
 `Recordatorio.fechaHoraLocal` es fecha local más hora local, sin zona: el
 recordatorio suena a la hora del teléfono.
 
-### 2.7 Exportación
+### 2.7 Estados de asistencia
+
+Tres estados, y una marca aparte:
+
+```
+estado        presente | ausente | tarde
+justificada   true | false
+```
+
+**"Justificada" no es un cuarto estado, es una propiedad del registro.** Una
+llegada tarde puede estar justificada igual que una ausencia; como estado
+suelto habría que elegir entre "tarde" y "justificada", y se perdería la
+mitad de la información. Como marca, las dos cosas conviven.
+
+`justificada` sólo tiene sentido sobre `ausente` y `tarde`. La capa de datos
+la ignora sobre `presente` en vez de rechazar la escritura: no es un error
+del docente, es un toque de más.
+
+En la interfaz son tres botones por fila —tres entran cómodos en el ancho de
+un teléfono, cinco no— y la marca es un segundo toque sobre el estado ya
+elegido. Se lee como texto: "Ausente" y "Ausente justificada" son distintas
+en palabras, no en tono de rosa.
+
+**Retiro anticipado no es un estado.** En una clase de 40 a 80 minutos,
+quien se retira antes estuvo presente; si importa por qué, es una
+observación. Un estado más en la pantalla que se usa todos los días cuesta
+más de lo que aporta.
+
+### 2.8 Escalas de calificación
+
+Cada materia define su escala por defecto y cada evaluación la hereda,
+pudiendo cambiarla: un trabajo práctico conceptual y un parcial numérico
+conviven en la misma materia.
+
+```
+Escala   tipo (numerica|conceptual)
+         numerica:    min, max, decimales
+         conceptual:  etiquetas [{ id, texto }]
+```
+
+En las escalas conceptuales, `Calificacion.valor` guarda el **id** de la
+etiqueta, no su texto. Así, renombrar "MB" a "Muy bueno" no deja huérfanas
+las notas ya cargadas.
+
+**El promedio se calcula sólo sobre evaluaciones de escala numérica**, y la
+pantalla dice cuántas quedaron afuera. Promediar etiquetas conceptuales
+—convirtiéndolas a 1, 2, 3— es inventar una distancia entre ellas que nadie
+definió, y es la forma más silenciosa de que el promedio mienta. En una
+materia con escala conceptual no hay promedio: hay distribución, cuántas de
+cada etiqueta.
+
+### 2.9 Exportación
 
 IndexedDB puede ser desalojada por el sistema, y un teléfono se pierde o se
 rompe. Como no hay backend con datos, la única red de seguridad es una
@@ -377,8 +457,8 @@ sigue andando.
 | El mapa alias → alumno se persiste sin querer | Store persistido, log de estado, reporte de fallo que captura memoria | El mapa nunca sale de memoria (3.4); revisar el reporte de fallos antes de publicar |
 | Una plantilla con nombre llega a un grupo | Plantilla individual reutilizada como grupal | Validación en la capa de datos (2.5), no en la interfaz |
 | El dictado cae a reconocimiento por servidor | Cambio de plugin, cambio de versión de Android, respaldo automático del plugin | Módulo propio que verifica disponibilidad local; si no hay reconocimiento local, el micrófono no aparece (regla innegociable 2) |
-| Un nombre de alumno aparece en una notificación en la pantalla bloqueada | Recordatorio que incluye el texto de la entrada de agenda | Las notificaciones muestran materia y curso, nunca nombres |
-| Pérdida total de datos | Desalojo de IndexedDB, teléfono roto o perdido | Exportación manual a archivo (2.7); no hay copia remota por diseño |
+| Un nombre de alumno aparece en una notificación en la pantalla bloqueada | Recordatorio que muestra el texto que escribió el docente | Cuerpo fijo, materia y curso en el título, nada escrito por el docente (1.5) |
+| Pérdida total de datos | Desalojo de IndexedDB, teléfono roto o perdido | Exportación manual a archivo (2.9); no hay copia remota por diseño |
 | El archivo exportado, que sí tiene nombres reales, queda en un lugar poco cuidado | Exportación guardada en una carpeta que se sincroniza sola a la nube | Se guarda con el selector de archivos del sistema, elegido por la docente; la pantalla de exportación dice qué contiene el archivo |
 | "Hoy" muestra el día equivocado | Uso de UTC en una fecha de calendario | Fechas locales como texto (2.6); tests con zona `America/Argentina/Buenos_Aires` a las 23:30 |
 | Un registro duplicado hace mentir el promedio | Doble toque | Índices únicos y upsert por par en la capa de datos (2.3) |
@@ -401,7 +481,7 @@ Qué aporta cada pieza, y por qué esa y no otra:
 - **Dexie** expresa los índices únicos compuestos de la sección 2.3
   —`[claseSesionId+alumnoId]` y `[evaluacionId+alumnoId]`— de forma
   directa, y da migraciones de esquema versionadas, que es exactamente lo
-  que la exportación de 2.7 necesita para seguir siendo importable.
+  que la exportación de 2.9 necesita para seguir siendo importable.
 - Las **consultas reactivas** de Dexie (`liveQuery`) hacen que las
   pantallas se actualicen solas cuando cambia la base. Con eso, casi todo
   el estado de la app es la base de datos.
@@ -427,14 +507,19 @@ de la app, y detrás de un módulo propio como cualquier otra API nativa.
 
 ### 6.3 Lo demás, ya resuelto en su sección
 
-- Formato de la exportación: sección 2.7.
+- Formato de la exportación: sección 2.9.
 - Proveedor de IA, modelo y forma de los prompts: secciones 4.4 y 4.5.
 
 ## 7. Lo que sigue sin definir
 
-- Estados de asistencia más allá de presente, ausente y tarde (¿justificada?
-  ¿retiro anticipado?). Se decide con la pantalla de asistencia en la mano.
-- Escalas de calificación por materia.
-- Texto exacto de las notificaciones de recordatorio.
+Queda poco, y nada de estructura. Lo que falta se congela al construir cada
+parte, no antes:
 
-Ninguno bloquea el orden de trabajo: se resuelven al construir cada parte.
+- **El texto de los prompts.** La forma está en 4.5; las palabras exactas se
+  escriben con el asistente andando, porque se ajustan probando.
+- **El esquema de la exportación campo por campo.** La `version 1` se
+  congela cuando la capa de datos esté terminada: fijarla antes garantiza
+  tener que corregirla.
+
+Si aparece una decisión estructural nueva mientras se construye, entra en
+este documento antes que en el código.

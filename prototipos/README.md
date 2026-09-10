@@ -24,6 +24,10 @@ el documento. Una vez aprobadas, se invierte: gana el prototipo.
 
 - Una sola acción primaria por pantalla, en `#7B5EA7` con texto blanco.
 - Los estados de asistencia se leen por letra y palabra, nunca sólo por color.
+- "Justificada" no es un cuarto estado: es una marca sobre la ausencia o la
+  llegada tarde, y se lee como texto debajo del nombre.
+- El promedio sale sólo de las evaluaciones numéricas, y la tarjeta dice
+  cuántas quedaron afuera.
 - Verde salvia sólo en "presente", como borde y punto, nunca como fondo ni en
   botones.
 - Cada pastel lleva el tono oscuro de su propio par como color de texto.

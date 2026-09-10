@@ -45,10 +45,12 @@
     background:var(--superficie);border:1px solid var(--borde);border-radius:14px;
     padding:12px 14px;display:flex;align-items:center;gap:12px;
   }
-  .nombre{
-    flex:1;font-size:15px;font-weight:600;min-width:0;
+  .nombre{flex:1;min-width:0}
+  .nombre .n{
+    font-size:15px;font-weight:600;
     white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
   }
+  .nombre .just{font-size:12px;color:var(--secundario);margin-top:1px}
   .estados{display:flex;gap:5px;flex:none}
   .op{
     font-family:inherit;font-size:13px;font-weight:700;
@@ -109,7 +111,7 @@
   <div class="alumnos">
 
     <div class="alumno">
-      <span class="nombre">Acuña, Malena</span>
+      <div class="nombre"><p class="n">Acuña, Malena</p></div>
       <div class="estados">
         <button class="op presente" aria-pressed="true"><span class="punto"></span>P<span class="palabra">resente</span></button>
         <button class="op ausente" aria-pressed="false">A</button>
@@ -118,7 +120,7 @@
     </div>
 
     <div class="alumno">
-      <span class="nombre">Barreto, Ignacio</span>
+      <div class="nombre"><p class="n">Barreto, Ignacio</p><p class="just">Justificada</p></div>
       <div class="estados">
         <button class="op presente" aria-pressed="false">P</button>
         <button class="op ausente" aria-pressed="true">A<span class="palabra">usente</span></button>
@@ -127,7 +129,7 @@
     </div>
 
     <div class="alumno">
-      <span class="nombre">Cabrera, Delfina</span>
+      <div class="nombre"><p class="n">Cabrera, Delfina</p></div>
       <div class="estados">
         <button class="op presente" aria-pressed="true"><span class="punto"></span>P<span class="palabra">resente</span></button>
         <button class="op ausente" aria-pressed="false">A</button>
@@ -136,7 +138,7 @@
     </div>
 
     <div class="alumno">
-      <span class="nombre">Duarte, Joaquín</span>
+      <div class="nombre"><p class="n">Duarte, Joaquín</p></div>
       <div class="estados">
         <button class="op presente" aria-pressed="false">P</button>
         <button class="op ausente" aria-pressed="false">A</button>
@@ -145,7 +147,7 @@
     </div>
 
     <div class="alumno">
-      <span class="nombre">Esquivel, Camila</span>
+      <div class="nombre"><p class="n">Esquivel, Camila</p></div>
       <div class="estados">
         <button class="op presente" aria-pressed="true"><span class="punto"></span>P<span class="palabra">resente</span></button>
         <button class="op ausente" aria-pressed="false">A</button>
@@ -154,7 +156,7 @@
     </div>
 
     <div class="alumno">
-      <span class="nombre">Ferreyra, Bautista</span>
+      <div class="nombre"><p class="n">Ferreyra, Bautista</p></div>
       <div class="estados">
         <button class="op presente" aria-pressed="false">P</button>
         <button class="op ausente" aria-pressed="false">A</button>
@@ -163,7 +165,7 @@
     </div>
 
     <div class="alumno">
-      <span class="nombre">Gauna, Renata</span>
+      <div class="nombre"><p class="n">Gauna, Renata</p></div>
       <div class="estados">
         <button class="op presente" aria-pressed="false">P</button>
         <button class="op ausente" aria-pressed="false">A</button>
@@ -176,7 +178,9 @@
   <p class="nota">
     Prototipo — propuesta a revisar, no aprobada todavía. Nombres ficticios.<br>
     Cada estado se lee por letra y palabra, no por color. El verde salvia aparece
-    sólo en “presente”, y como borde y punto, nunca como fondo. El botón atrás guarda.
+    sólo en “presente”, y como borde y punto, nunca como fondo. El botón atrás guarda.<br>
+    “Justificada” no es un cuarto botón: es un segundo toque sobre el estado ya
+    elegido, y vale igual para una ausencia que para una llegada tarde.
   </p>
 
   <div class="pie">
