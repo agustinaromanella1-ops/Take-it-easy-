@@ -83,3 +83,19 @@ nav button {
 nav button.activa {
   color: var(--primario);
 }
+
+/* Acciones poco frecuentes y reversibles: presentes, pero sin pelear con las otras. */
+.terciario {
+  display: block;
+  width: 100%;
+  margin-top: 4px;
+  padding: 11px;
+  border: none;
+  border-radius: 12px;
+  background: none;
+  color: var(--secundario);
+  font-family: inherit;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+}

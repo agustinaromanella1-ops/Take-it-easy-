@@ -2,7 +2,12 @@ import { useLiveQuery } from 'dexie-react-hooks';
 
 import { hoy } from '../fecha';
 import { darDeBaja, alumnosInscriptos } from '../datos/inscripciones';
-import { comoSeLlama, materia as buscarMateria, nombreDeEscuela } from '../datos/materias';
+import {
+  archivarMateria,
+  comoSeLlama,
+  materia as buscarMateria,
+  nombreDeEscuela,
+} from '../datos/materias';
 import type { Id } from '../datos/tipos';
 import './Materia.css';
 
@@ -74,6 +79,15 @@ export default function Materia({ materiaId, volver, agregarAlumnos, tomarAsiste
           onClick={agregarAlumnos}
         >
           Agregar alumnos
+        </button>
+        <button
+          className="terciario"
+          onClick={async () => {
+            await archivarMateria(materiaId);
+            volver();
+          }}
+        >
+          Archivar
         </button>
       </div>
     </div>

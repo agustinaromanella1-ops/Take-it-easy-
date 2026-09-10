@@ -44,8 +44,39 @@ export async function crearMateria(nueva: MateriaNueva): Promise<Id> {
   });
 }
 
-export function todasLasMaterias(): Promise<Materia[]> {
-  return db.materias.toArray();
+/**
+ * El orden natural de la base es por id, que es un uuid: la lista quedaría
+ * barajada y cambiando de lugar. Se ordena por cómo se lee en pantalla.
+ */
+function ordenadas(materias: Materia[]): Materia[] {
+  return materias.sort(
+    (a, b) =>
+      a.nombre.localeCompare(b.nombre, 'es-AR') ||
+      a.anio.localeCompare(b.anio, 'es-AR', { numeric: true }) ||
+      a.division.localeCompare(b.division, 'es-AR'),
+  );
+}
+
+/** Las que están en curso. Las archivadas se piden aparte, a propósito. */
+export async function materiasActivas(): Promise<Materia[]> {
+  return ordenadas(await db.materias.filter((m) => !m.archivada).toArray());
+}
+
+export async function materiasArchivadas(): Promise<Materia[]> {
+  return ordenadas(await db.materias.filter((m) => m.archivada === true).toArray());
+}
+
+/**
+ * Archivar no borra: ni la materia, ni los alumnos inscriptos, ni la
+ * asistencia ya tomada. Es reversible siempre, así que no hace falta
+ * preguntar antes.
+ */
+export async function archivarMateria(id: Id): Promise<void> {
+  await db.materias.update(id, { archivada: true });
+}
+
+export async function recuperarMateria(id: Id): Promise<void> {
+  await db.materias.update(id, { archivada: false });
 }
 
 export function materia(id: Id): Promise<Materia | undefined> {

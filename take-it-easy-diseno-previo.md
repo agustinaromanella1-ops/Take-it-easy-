@@ -123,7 +123,7 @@ sincronización ni copia remota de estos datos.
 ```
 Escuela         id, nombre
 Materia         id, escuelaId, nombre, anio, division, colorPastel,
-                escalaPorDefecto
+                escalaPorDefecto, archivada
 BloqueHorario   id, materiaId, diaSemana (1-7), horaInicio, horaFin
 Alumno          id, nombre, apellido, creadoEn
 Inscripcion     id, alumnoId, materiaId, estado (activa|baja), desde, hasta
@@ -173,7 +173,21 @@ que defenderse del doble toque, porque no es su responsabilidad.
 la misma materia puede dictarse dos veces el mismo día en bloques
 distintos, pero no dos veces en el mismo bloque.
 
-### 2.4 Capas de la observación
+### 2.4 Archivar una materia
+
+Una materia se **archiva**, no se borra. `Materia.archivada` la saca de la
+lista y de "Hoy", y no toca nada de lo que cuelga: los alumnos siguen
+inscriptos, la asistencia tomada sigue tomada, las notas siguen puestas.
+
+Un curso que termina no deja de haber existido. Borrarlo se llevaría
+puesto el registro de un año entero de asistencia, y sería la única acción
+de la app sin vuelta atrás.
+
+Como es reversible, no se pregunta antes: las archivadas quedan listadas
+aparte con su botón de recuperar, que es el deshacer, disponible siempre y
+no durante unos segundos.
+
+### 2.5 Capas de la observación
 
 `Observacion.capa` tiene dos valores: `privada` y `compartible`.
 
@@ -182,7 +196,7 @@ capa de datos no acepta una escritura sin capa y no toma otro valor por
 defecto; el formulario no preselecciona `compartible` en ningún caso.
 Cambiar de capa es una acción explícita y posterior del docente.
 
-### 2.5 Plantillas: el bloqueo del nombre
+### 2.6 Plantillas: el bloqueo del nombre
 
 Una `Plantilla` de ámbito `grupal` no puede contener un nombre de alumno
 (regla innegociable 3). La validación vive en la **capa de datos**: al
@@ -191,7 +205,7 @@ se contrasta contra el índice de nombres conocidos (sección 3.2). Si hay
 coincidencia, la operación se rechaza con un error. No es un cartel en la
 interfaz que el docente pueda ignorar: es una escritura que no ocurre.
 
-### 2.6 Fechas
+### 2.7 Fechas
 
 Las fechas de calendario (`ClaseSesion.fecha`, `Evaluacion.fecha`,
 `Observacion.fecha`, `EntradaAgenda.fecha`, `Inscripcion.desde/hasta`) se
@@ -206,7 +220,7 @@ La distinción es deliberada y conviene mantenerla explícita en los nombres.
 `Recordatorio.fechaHoraLocal` es fecha local más hora local, sin zona: el
 recordatorio suena a la hora del teléfono.
 
-### 2.7 Estados de asistencia
+### 2.8 Estados de asistencia
 
 Tres estados, y una marca aparte:
 
@@ -234,7 +248,7 @@ quien se retira antes estuvo presente; si importa por qué, es una
 observación. Un estado más en la pantalla que se usa todos los días cuesta
 más de lo que aporta.
 
-### 2.8 Escalas de calificación
+### 2.9 Escalas de calificación
 
 Cada materia define su escala por defecto y cada evaluación la hereda,
 pudiendo cambiarla: un trabajo práctico conceptual y un parcial numérico
@@ -257,7 +271,7 @@ definió, y es la forma más silenciosa de que el promedio mienta. En una
 materia con escala conceptual no hay promedio: hay distribución, cuántas de
 cada etiqueta.
 
-### 2.9 Exportación
+### 2.10 Exportación
 
 IndexedDB puede ser desalojada por el sistema, y un teléfono se pierde o se
 rompe. Como no hay backend con datos, la única red de seguridad es una
@@ -467,12 +481,12 @@ sigue andando.
 | Un nombre de alumno llega a la IA | Texto libre con un nombre que el índice no cubre | Pipeline de la sección 3.3 completo, con el principio de errar por exceso |
 | El docente reescribe un nombre en la revisión | Edición manual en el último paso | Segundo escaneo defensivo (3.3.d): el envío no ocurre |
 | El mapa alias → alumno se persiste sin querer | Store persistido, log de estado, reporte de fallo que captura memoria | El mapa nunca sale de memoria (3.4); revisar el reporte de fallos antes de publicar |
-| Una plantilla con nombre llega a un grupo | Plantilla individual reutilizada como grupal | Validación en la capa de datos (2.5), no en la interfaz |
+| Una plantilla con nombre llega a un grupo | Plantilla individual reutilizada como grupal | Validación en la capa de datos (2.6), no en la interfaz |
 | El dictado cae a reconocimiento por servidor | Cambio de plugin, cambio de versión de Android, respaldo automático del plugin | Módulo propio que verifica disponibilidad local; si no hay reconocimiento local, el micrófono no aparece (regla innegociable 2) |
 | Un nombre de alumno aparece en una notificación en la pantalla bloqueada | Recordatorio que muestra el texto que escribió el docente | Cuerpo fijo, materia y curso en el título, nada escrito por el docente (1.5) |
-| Pérdida total de datos | Desalojo de IndexedDB, teléfono roto o perdido | Exportación manual a archivo (2.9); no hay copia remota por diseño |
+| Pérdida total de datos | Desalojo de IndexedDB, teléfono roto o perdido | Exportación manual a archivo (2.10); no hay copia remota por diseño |
 | El archivo exportado, que sí tiene nombres reales, queda en un lugar poco cuidado | Exportación guardada en una carpeta que se sincroniza sola a la nube | Se guarda con el selector de archivos del sistema, elegido por la docente; la pantalla de exportación dice qué contiene el archivo |
-| "Hoy" muestra el día equivocado | Uso de UTC en una fecha de calendario | Fechas locales como texto (2.6); tests con zona `America/Argentina/Buenos_Aires` a las 23:30 |
+| "Hoy" muestra el día equivocado | Uso de UTC en una fecha de calendario | Fechas locales como texto (2.7); tests con zona `America/Argentina/Buenos_Aires` a las 23:30 |
 | Un registro duplicado hace mentir el promedio | Doble toque | Índices únicos y upsert por par en la capa de datos (2.3) |
 | La IA devuelve una etiqueta sobre un alumno | Redacción asistida de observaciones | Instrucción de sistema que prohíbe calificar personas; el docente edita antes de guardar; ningún texto de la app califica a un alumno |
 | Rechazo o revisión extra en Play Store | Política de datos de menores | La app no recolecta ni transmite datos personales; declarar con precisión qué viaja al asistente y qué no |
@@ -493,7 +507,7 @@ Qué aporta cada pieza, y por qué esa y no otra:
 - **Dexie** expresa los índices únicos compuestos de la sección 2.3
   —`[claseSesionId+alumnoId]` y `[evaluacionId+alumnoId]`— de forma
   directa, y da migraciones de esquema versionadas, que es exactamente lo
-  que la exportación de 2.9 necesita para seguir siendo importable.
+  que la exportación de 2.10 necesita para seguir siendo importable.
 - Las **consultas reactivas** de Dexie (`liveQuery`) hacen que las
   pantallas se actualicen solas cuando cambia la base. Con eso, casi todo
   el estado de la app es la base de datos.
@@ -519,7 +533,7 @@ de la app, y detrás de un módulo propio como cualquier otra API nativa.
 
 ### 6.3 Lo demás, ya resuelto en su sección
 
-- Formato de la exportación: sección 2.9.
+- Formato de la exportación: sección 2.10.
 - Proveedor de IA, modelo y forma de los prompts: secciones 4.4 y 4.5.
 
 ## 7. Lo que sigue sin definir

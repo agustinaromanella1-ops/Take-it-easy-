@@ -5,7 +5,13 @@ import { altaMasiva } from './alumnos';
 import { claseDelDia } from './clases';
 import { db } from './db';
 import { alumnosInscriptos, darDeBaja, inscribir } from './inscripciones';
-import { crearMateria } from './materias';
+import {
+  archivarMateria,
+  crearMateria,
+  materiasActivas,
+  materiasArchivadas,
+  recuperarMateria,
+} from './materias';
 
 const hoy = '2026-09-10';
 
@@ -39,12 +45,71 @@ describe('materias', () => {
     expect(await db.materias.count()).toBe(2);
   });
 
+  it('la lista sale ordenada por nombre y curso, no por id interno', async () => {
+    await crearMateria({ nombre: 'Lengua', anio: '4', division: 'B', escuela: 'E', colorPastel: 'lila' });
+    await crearMateria({ nombre: 'Historia', anio: '10', division: 'A', escuela: 'E', colorPastel: 'celeste' });
+    await crearMateria({ nombre: 'Historia', anio: '2', division: 'A', escuela: 'E', colorPastel: 'celeste' });
+
+    const nombres = (await materiasActivas()).map((m) => `${m.nombre} ${m.anio}.º ${m.division}`);
+    expect(nombres).toEqual(['Historia 2.º A', 'Historia 10.º A', 'Lengua 4.º B']);
+  });
+
   it('la escala por defecto es numérica del 1 al 10', async () => {
     const id = await materiaDePrueba();
 
     expect((await db.materias.get(id))?.escalaPorDefecto).toMatchObject({
       tipo: 'numerica', min: 1, max: 10,
     });
+  });
+});
+
+describe('archivar una materia', () => {
+  it('la saca de las activas sin borrar nada', async () => {
+    const materiaId = await materiaDePrueba();
+    const { creados } = await altaMasiva([{ apellido: 'Acuña', nombre: 'Malena' }]);
+    await inscribir(materiaId, creados, hoy);
+
+    await archivarMateria(materiaId);
+
+    expect(await materiasActivas()).toHaveLength(0);
+    expect(await materiasArchivadas()).toHaveLength(1);
+    expect(await db.materias.count()).toBe(1);
+    expect(await db.inscripciones.count()).toBe(1);
+    expect(await db.alumnos.count()).toBe(1);
+  });
+
+  it('la asistencia ya tomada sigue estando', async () => {
+    const materiaId = await materiaDePrueba();
+    const clase = await claseDelDia(materiaId, hoy);
+    await db.registrosAsistencia.add({
+      id: 'r1', claseSesionId: clase.id, alumnoId: 'a1',
+      estado: 'presente', justificada: false, registradoEn: Date.now(),
+    });
+
+    await archivarMateria(materiaId);
+
+    expect(await db.registrosAsistencia.count()).toBe(1);
+    expect(await db.clasesSesion.count()).toBe(1);
+  });
+
+  it('recuperar la devuelve a las activas con todo lo suyo', async () => {
+    const materiaId = await materiaDePrueba();
+    const { creados } = await altaMasiva([{ apellido: 'Acuña', nombre: 'Malena' }]);
+    await inscribir(materiaId, creados, hoy);
+    await archivarMateria(materiaId);
+
+    await recuperarMateria(materiaId);
+
+    expect(await materiasActivas()).toHaveLength(1);
+    expect(await materiasArchivadas()).toHaveLength(0);
+    expect(await alumnosInscriptos(materiaId)).toHaveLength(1);
+  });
+
+  it('una materia recién creada no nace archivada', async () => {
+    await materiaDePrueba();
+
+    expect(await materiasActivas()).toHaveLength(1);
+    expect(await materiasArchivadas()).toHaveLength(0);
   });
 });
 

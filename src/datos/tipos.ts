@@ -30,6 +30,11 @@ export interface Materia {
   division: string;
   colorPastel: ColorPastel;
   escalaPorDefecto: Escala;
+  /**
+   * Archivada deja de aparecer, pero no borra nada: la asistencia y las notas
+   * de un curso que terminó siguen ahí, y se puede recuperar cuando sea.
+   */
+  archivada?: boolean;
 }
 
 export interface BloqueHorario {

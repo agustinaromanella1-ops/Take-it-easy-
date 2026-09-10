@@ -1,7 +1,12 @@
 import { useLiveQuery } from 'dexie-react-hooks';
 
 import { db } from '../datos/db';
-import { comoSeLlama, todasLasMaterias } from '../datos/materias';
+import {
+  comoSeLlama,
+  materiasActivas,
+  materiasArchivadas,
+  recuperarMateria,
+} from '../datos/materias';
 import type { Id } from '../datos/tipos';
 import './Materias.css';
 
@@ -11,7 +16,8 @@ interface Props {
 }
 
 export default function Materias({ abrir, crear }: Props) {
-  const materias = useLiveQuery(todasLasMaterias, [], []);
+  const materias = useLiveQuery(materiasActivas, [], []);
+  const archivadas = useLiveQuery(materiasArchivadas, [], []);
   const inscripciones = useLiveQuery(() => db.inscripciones.toArray(), [], []);
 
   return (
@@ -20,7 +26,7 @@ export default function Materias({ abrir, crear }: Props) {
         <h1>Materias</h1>
       </header>
 
-      {materias.length === 0 ? (
+      {materias.length === 0 && archivadas.length === 0 ? (
         <section className="vacio">
           <p className="invitacion">Todavía no cargaste ninguna materia.</p>
           <p className="detalle">
@@ -28,7 +34,7 @@ export default function Materias({ abrir, crear }: Props) {
             los alumnos.
           </p>
         </section>
-      ) : (
+      ) : materias.length > 0 ? (
         <ul className="lista">
           {materias.map((m) => {
             const cuantos = inscripciones.filter(
@@ -48,6 +54,20 @@ export default function Materias({ abrir, crear }: Props) {
             );
           })}
         </ul>
+      ) : null}
+
+      {archivadas.length > 0 && (
+        <section className="archivadas">
+          <h2>Archivadas</h2>
+          <ul>
+            {archivadas.map((m) => (
+              <li key={m.id}>
+                <span>{comoSeLlama(m)}</span>
+                <button onClick={() => recuperarMateria(m.id)}>Recuperar</button>
+              </li>
+            ))}
+          </ul>
+        </section>
       )}
 
       <div className="pie">

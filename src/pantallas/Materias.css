@@ -148,3 +148,56 @@
 .materias .color.elegido.durazno { color: var(--durazno-osc); }
 .materias .color.elegido.celeste { color: var(--celeste-osc); }
 .materias .color.elegido.noche { color: var(--noche-osc); }
+
+.materias .archivadas {
+  margin-top: 26px;
+  padding-top: 16px;
+  border-top: 1px solid var(--borde);
+}
+
+.materias .archivadas h2 {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--secundario);
+  text-transform: uppercase;
+  letter-spacing: 0.6px;
+}
+
+.materias .archivadas ul {
+  list-style: none;
+  margin-top: 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+}
+
+.materias .archivadas li {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 11px 14px;
+  border: 1px solid var(--borde);
+  border-radius: 12px;
+  font-size: 15px;
+  color: var(--secundario);
+}
+
+.materias .archivadas span {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.materias .archivadas button {
+  background: none;
+  border: none;
+  padding: 0;
+  font-family: inherit;
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--primario);
+  cursor: pointer;
+  flex: none;
+}
