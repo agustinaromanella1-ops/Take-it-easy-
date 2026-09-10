@@ -9,8 +9,12 @@ export interface AlumnoNuevo {
 
 export interface ResultadoAlta {
   creados: Id[];
-  /** Los que ya estaban en la base: un alumno existe una sola vez. */
-  repetidos: AlumnoNuevo[];
+  /**
+   * Los que ya estaban en la base: un alumno existe una sola vez. Vuelven con
+   * su id, porque igual hay que inscribirlos en la materia desde la que se
+   * pegó la lista.
+   */
+  repetidos: Alumno[];
 }
 
 function clave(alumno: AlumnoNuevo): string {
@@ -23,19 +27,19 @@ function clave(alumno: AlumnoNuevo): string {
  */
 export async function altaMasiva(nuevos: AlumnoNuevo[]): Promise<ResultadoAlta> {
   return db.transaction('rw', db.alumnos, async () => {
-    const existentes = new Set((await db.alumnos.toArray()).map(clave));
+    const existentes = new Map((await db.alumnos.toArray()).map((a) => [clave(a), a]));
 
     const creados: Id[] = [];
-    const repetidos: AlumnoNuevo[] = [];
+    const repetidos: Alumno[] = [];
     const aInsertar: Alumno[] = [];
 
     for (const nuevo of nuevos) {
       const k = clave(nuevo);
-      if (existentes.has(k)) {
-        repetidos.push(nuevo);
+      const yaEsta = existentes.get(k);
+      if (yaEsta) {
+        repetidos.push(yaEsta);
         continue;
       }
-      existentes.add(k);
 
       const alumno: Alumno = {
         id: nuevoId(),
@@ -43,6 +47,7 @@ export async function altaMasiva(nuevos: AlumnoNuevo[]): Promise<ResultadoAlta> 
         apellido: nuevo.apellido.trim(),
         creadoEn: Date.now(),
       };
+      existentes.set(k, alumno);
       aInsertar.push(alumno);
       creados.push(alumno.id);
     }

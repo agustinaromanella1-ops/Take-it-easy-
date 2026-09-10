@@ -1,0 +1,167 @@
+.asistencia .volver {
+  background: none;
+  border: none;
+  padding: 0 0 10px;
+  font-family: inherit;
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--primario);
+  cursor: pointer;
+}
+
+.asistencia .subtitulo {
+  font-size: 13px;
+  color: var(--secundario);
+  margin-top: 3px;
+}
+
+.asistencia .avance {
+  margin-top: 14px;
+  padding: 12px 14px;
+  background: var(--superficie);
+  border: 1px solid var(--borde);
+  border-radius: 12px;
+  font-size: 14px;
+  color: var(--secundario);
+}
+
+.asistencia .avance b {
+  color: var(--texto);
+  font-weight: 700;
+}
+
+.asistencia .alumnos {
+  list-style: none;
+  margin-top: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.asistencia .alumno {
+  background: var(--superficie);
+  border: 1px solid var(--borde);
+  border-radius: 14px;
+  padding: 12px 14px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.asistencia .nombre {
+  flex: 1;
+  min-width: 0;
+}
+
+.asistencia .nombre .n {
+  font-size: 15px;
+  font-weight: 600;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.asistencia .nombre .just {
+  font-size: 12px;
+  color: var(--secundario);
+  margin-top: 1px;
+}
+
+.asistencia .estados {
+  display: flex;
+  gap: 5px;
+  flex: none;
+}
+
+.asistencia .op {
+  min-width: 36px;
+  height: 36px;
+  padding: 0 9px;
+  border: 1px solid var(--borde);
+  border-radius: 10px;
+  background: var(--superficie);
+  color: var(--secundario);
+  font-family: inherit;
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Verde salvia sólo en "presente", y como borde y punto, nunca como fondo. */
+.asistencia .op.presente[aria-pressed='true'] {
+  border: 2px solid var(--salvia);
+  color: var(--salvia-osc);
+}
+
+.asistencia .op .punto {
+  width: 7px;
+  height: 7px;
+  border-radius: 999px;
+  background: var(--salvia);
+  margin-right: 6px;
+  flex: none;
+}
+
+.asistencia .op.ausente[aria-pressed='true'] {
+  background: var(--rosa);
+  border-color: var(--rosa);
+  color: var(--rosa-osc);
+}
+
+.asistencia .op.tarde[aria-pressed='true'] {
+  background: var(--durazno);
+  border-color: var(--durazno);
+  color: var(--durazno-osc);
+}
+
+.asistencia .deshacer {
+  position: sticky;
+  bottom: 0;
+  margin-top: auto;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 14px;
+  background: var(--texto);
+  color: #fff;
+  border-radius: 12px;
+  font-size: 14px;
+}
+
+.asistencia .deshacer span {
+  flex: 1;
+}
+
+.asistencia .deshacer button {
+  background: none;
+  border: none;
+  padding: 0;
+  color: var(--lila);
+  font-family: inherit;
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+  flex: none;
+}
+
+.asistencia .vacio {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 10px;
+}
+
+.asistencia .invitacion {
+  font-size: 18px;
+  font-weight: 700;
+}
+
+.asistencia .detalle {
+  font-size: 15px;
+  line-height: 1.55;
+  color: var(--secundario);
+}

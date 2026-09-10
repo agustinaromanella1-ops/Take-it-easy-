@@ -2,11 +2,19 @@ import { useState } from 'react';
 
 import { estanCompletas, parsearLista, type FilaParseada } from '../alumnos/parseo';
 import { altaMasiva, deshacerAlta, type ResultadoAlta } from '../datos/alumnos';
+import { inscribir } from '../datos/inscripciones';
+import type { Id } from '../datos/tipos';
+import { hoy } from '../fecha';
 import './CargarAlumnos.css';
 
 type Paso = 'pegar' | 'revisar' | 'listo';
 
-export default function CargarAlumnos() {
+interface Props {
+  materiaId: Id;
+  volver: () => void;
+}
+
+export default function CargarAlumnos({ materiaId, volver }: Props) {
   const [paso, setPaso] = useState<Paso>('pegar');
   const [texto, setTexto] = useState('');
   const [filas, setFilas] = useState<FilaParseada[]>([]);
@@ -31,7 +39,13 @@ export default function CargarAlumnos() {
   }
 
   async function agregar() {
-    setResultado(await altaMasiva(filas.map(({ apellido, nombre }) => ({ apellido, nombre }))));
+    const alta = await altaMasiva(filas.map(({ apellido, nombre }) => ({ apellido, nombre })));
+
+    // Los repetidos también se inscriben: ya existían de otra materia, y el
+    // alumno es uno solo aunque lo tengas en varias.
+    await inscribir(materiaId, [...alta.creados, ...alta.repetidos.map((a) => a.id)], hoy());
+
+    setResultado(alta);
     setPaso('listo');
   }
 
@@ -51,6 +65,9 @@ export default function CargarAlumnos() {
     return (
       <div className="pantalla alumnos">
         <header>
+          <button className="volver" onClick={volver}>
+            ← Volver a la materia
+          </button>
           <h1>Pegar la lista</h1>
           <p className="ayuda">
             Copiá la lista de tu planilla y pegala acá. Después vas a poder revisar
@@ -156,15 +173,19 @@ export default function CargarAlumnos() {
         </p>
         {repetidos > 0 && (
           <p className="ayuda">
-            {repetidos === 1 ? 'Uno ya estaba' : `${repetidos} ya estaban`} en la base y
-            se {repetidos === 1 ? 'dejó' : 'dejaron'} como {repetidos === 1 ? 'está' : 'están'}:
-            un alumno existe una sola vez, aunque lo tengas en varias materias.
+            {repetidos === 1 ? 'Uno ya estaba' : `${repetidos} ya estaban`} cargado
+            {repetidos === 1 ? '' : 's'} de otra materia, así que se
+            {repetidos === 1 ? ' inscribió' : ' inscribieron'} en esta sin duplicarse:
+            un alumno existe una sola vez.
           </p>
         )}
       </header>
 
       <div className="pie">
-        <button className="primario" onClick={volverAEmpezar}>
+        <button className="primario" onClick={volver}>
+          Volver a la materia
+        </button>
+        <button className="secundario" onClick={volverAEmpezar}>
           Pegar otra lista
         </button>
         {creados > 0 && (

@@ -49,3 +49,11 @@ export async function marcarAsistencia(marca: MarcaAsistencia): Promise<Id> {
 export function asistenciaDeLaClase(claseSesionId: Id): Promise<RegistroAsistencia[]> {
   return db.registrosAsistencia.where('claseSesionId').equals(claseSesionId).toArray();
 }
+
+/** Para deshacer la primera marca de un alumno, que antes no tenía registro. */
+export async function borrarAsistencia(claseSesionId: Id, alumnoId: Id): Promise<void> {
+  await db.registrosAsistencia
+    .where('[claseSesionId+alumnoId]')
+    .equals([claseSesionId, alumnoId])
+    .delete();
+}

@@ -1,0 +1,81 @@
+import { useLiveQuery } from 'dexie-react-hooks';
+
+import { hoy } from '../fecha';
+import { darDeBaja, alumnosInscriptos } from '../datos/inscripciones';
+import { comoSeLlama, materia as buscarMateria, nombreDeEscuela } from '../datos/materias';
+import type { Id } from '../datos/tipos';
+import './Materia.css';
+
+interface Props {
+  materiaId: Id;
+  volver: () => void;
+  agregarAlumnos: () => void;
+  tomarAsistencia: () => void;
+}
+
+export default function Materia({ materiaId, volver, agregarAlumnos, tomarAsistencia }: Props) {
+  const datos = useLiveQuery(async () => {
+    const m = await buscarMateria(materiaId);
+    return {
+      materia: m,
+      escuela: m ? await nombreDeEscuela(m.escuelaId) : '',
+      alumnos: await alumnosInscriptos(materiaId),
+    };
+  }, [materiaId]);
+
+  if (!datos?.materia) return <div className="pantalla materia" />;
+
+  const { materia, escuela, alumnos } = datos;
+
+  return (
+    <div className="pantalla materia">
+      <header>
+        <button className="volver" onClick={volver}>
+          ← Materias
+        </button>
+        <h1>{comoSeLlama(materia)}</h1>
+        {escuela && <p className="escuela">{escuela}</p>}
+      </header>
+
+      {alumnos.length === 0 ? (
+        <section className="vacio">
+          <p className="invitacion">Esta materia todavía no tiene alumnos.</p>
+          <p className="detalle">
+            Pegá la lista del curso y quedan inscriptos acá. Los que ya estén
+            cargados de otra materia no se duplican.
+          </p>
+        </section>
+      ) : (
+        <>
+          <p className="cuantos">
+            {alumnos.length} {alumnos.length === 1 ? 'alumno inscripto' : 'alumnos inscriptos'}
+          </p>
+          <ul className="alumnos">
+            {alumnos.map((alumno) => (
+              <li key={alumno.id}>
+                <span>
+                  {alumno.apellido}, {alumno.nombre}
+                </span>
+                <button onClick={() => darDeBaja(materiaId, alumno.id, hoy())}>Dar de baja</button>
+              </li>
+            ))}
+          </ul>
+        </>
+      )}
+
+      <div className="pie">
+        {alumnos.length > 0 && (
+          <button className="primario" onClick={tomarAsistencia}>
+            Tomar asistencia
+          </button>
+        )}
+        <button
+          className={alumnos.length > 0 ? 'secundario' : 'primario'}
+          onClick={agregarAlumnos}
+        >
+          Agregar alumnos
+        </button>
+      </div>
+    </div>
+  );
+}
