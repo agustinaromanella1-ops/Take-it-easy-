@@ -1,0 +1,48 @@
+@import '@fontsource/nunito/400.css';
+@import '@fontsource/nunito/600.css';
+@import '@fontsource/nunito/700.css';
+
+:root {
+  --fondo: #fff9f5;
+  --superficie: #ffffff;
+  --borde: #f0e8e1;
+  --texto: #2e2a45;
+  --secundario: #6e6880;
+  --primario: #7b5ea7;
+
+  --lila: #e3d5f5;
+  --lila-osc: #6b4e9e;
+  --rosa: #fbd5e3;
+  --rosa-osc: #b54a75;
+  --durazno: #ffdcc2;
+  --durazno-osc: #c4652a;
+  --celeste: #cfe7f5;
+  --celeste-osc: #2c7196;
+  --noche: #d3d8f0;
+  --noche-osc: #3a4380;
+  --salvia: #8fc4a8;
+  --salvia-osc: #3d7a5e;
+
+  color-scheme: light;
+}
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  font-family: 'Nunito', system-ui, -apple-system, sans-serif;
+  background: var(--fondo);
+  color: var(--texto);
+  -webkit-font-smoothing: antialiased;
+  -webkit-tap-highlight-color: transparent;
+}
+
+/* El contenido no se mete debajo de la barra de estado ni del gesto de inicio. */
+#root {
+  min-height: 100dvh;
+  padding: env(safe-area-inset-top) env(safe-area-inset-right)
+    env(safe-area-inset-bottom) env(safe-area-inset-left);
+}

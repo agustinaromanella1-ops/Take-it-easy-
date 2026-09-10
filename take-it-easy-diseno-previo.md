@@ -273,6 +273,12 @@ El archivo contiene nombres reales de alumnos. Se guarda con el selector de
 archivos del sistema, donde la docente elige dónde ponerlo, y no en una
 carpeta pública ni en una ruta fija de la app.
 
+La copia de seguridad automática de Android queda **desactivada**
+(`android:allowBackup="false"`). Viene activada por defecto y subiría los
+datos de la app —la base con los nombres— a la cuenta de Google del
+teléfono, que es exactamente la copia remota que este diseño no tiene. Por
+eso la exportación manual no es una comodidad: es la única red que queda.
+
 ---
 
 ## 3. Filtro de anonimización
