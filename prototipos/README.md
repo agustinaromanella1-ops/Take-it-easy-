@@ -10,15 +10,15 @@ interacción, no código a reutilizar.
 | `cargar-alumnos.html` | Pegar la lista — revisar el parseo antes del alta |
 | `ficha-alumno.html` | Ficha de alumno — asistencia, promedio y observaciones |
 
-## Estado: propuesta, no aprobados
+## Estado: aprobados
 
-Estas cuatro pantallas se reconstruyeron a partir de
-`take-it-easy-diseno-previo.md` y de la identidad visual del proyecto. **No son
-los prototipos aprobados originales**: hay que revisarlas y aprobarlas antes de
-tratarlas como la autoridad visual.
+Cuando una pantalla y `take-it-easy-diseno-previo.md` no coincidan, gana el
+prototipo, y lo que hay que corregir es el documento.
 
-Mientras tanto, cuando una pantalla y el documento de diseño no coincidan, gana
-el documento. Una vez aprobadas, se invierte: gana el prototipo.
+La excepción es lo que todavía no está construido: la barra inferior de `hoy.html`
+muestra Agenda y Ajustes, que son la forma a la que hay que llegar, no pestañas
+para agregar ahora. Una pestaña que no lleva a ningún lado es peor que una que
+falta.
 
 ## Qué muestran a propósito
 

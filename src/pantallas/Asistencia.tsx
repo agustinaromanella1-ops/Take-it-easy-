@@ -97,13 +97,15 @@ export default function Asistencia({ materiaId, volver }: { materiaId: Id; volve
 
   return (
     <div className="pantalla asistencia">
-      <header>
-        <button className="volver" onClick={volver}>
-          ← Volver a la materia
+      <div className="barra">
+        <button className="atras" onClick={volver} aria-label="Volver a la materia">
+          ←
         </button>
-        <h1>{materia ? comoSeLlama(materia) : 'Asistencia'}</h1>
-        <p className="subtitulo">{enPalabras(fecha)}</p>
-      </header>
+        <div>
+          <h1>{materia ? comoSeLlama(materia) : 'Asistencia'}</h1>
+          <p className="subtitulo">{enPalabras(fecha)}</p>
+        </div>
+      </div>
 
       {alumnos.length === 0 ? (
         <section className="vacio">
@@ -152,14 +154,21 @@ export default function Asistencia({ materiaId, volver }: { materiaId: Id; volve
         </>
       )}
 
-      {ultimo && (
-        <div className="deshacer">
-          <span>
-            {ultimo.nombre}: {ultimo.descripcion}.
-          </span>
-          <button onClick={deshacer}>Deshacer</button>
-        </div>
-      )}
+      <div className="pie">
+        {ultimo && (
+          <div className="deshacer">
+            <span>
+              {ultimo.nombre}: {ultimo.descripcion}.
+            </span>
+            <button onClick={deshacer}>Deshacer</button>
+          </div>
+        )}
+        {alumnos.length > 0 && (
+          <button className="primario" onClick={volver}>
+            Listo
+          </button>
+        )}
+      </div>
     </div>
   );
 }

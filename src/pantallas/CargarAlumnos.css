@@ -156,3 +156,25 @@
   color: var(--durazno-osc);
   text-align: center;
 }
+
+.alumnos .encabezado {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  margin-bottom: 8px;
+}
+
+.alumnos .num {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--secundario);
+}
+
+.alumnos .marca {
+  font-size: 12px;
+  font-weight: 700;
+  padding: 3px 9px;
+  border-radius: 999px;
+  background: var(--durazno);
+  color: var(--durazno-osc);
+}

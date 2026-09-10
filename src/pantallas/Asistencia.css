@@ -1,12 +1,25 @@
-.asistencia .volver {
-  background: none;
-  border: none;
-  padding: 0 0 10px;
+.asistencia .barra {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.asistencia .atras {
+  width: 34px;
+  height: 34px;
+  flex: none;
+  border: 1px solid var(--borde);
+  border-radius: 10px;
+  background: var(--superficie);
+  color: var(--texto);
+  font-size: 17px;
   font-family: inherit;
-  font-size: 14px;
-  font-weight: 700;
-  color: var(--primario);
   cursor: pointer;
+}
+
+.asistencia .barra h1 {
+  font-size: 19px;
+  line-height: 1.2;
 }
 
 .asistencia .subtitulo {
@@ -118,9 +131,7 @@
 }
 
 .asistencia .deshacer {
-  position: sticky;
-  bottom: 0;
-  margin-top: auto;
+  margin-bottom: 10px;
   display: flex;
   align-items: center;
   gap: 12px;

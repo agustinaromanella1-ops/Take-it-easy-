@@ -226,6 +226,10 @@ export default function CargarAlumnos({ materiaId, volver }: Props) {
       <ul className="filas">
         {filas.map((fila, i) => (
           <li key={i} className={fila.confianza === 'revisar' ? 'fila revisar' : 'fila'}>
+            <div className="encabezado">
+              <span className="num">{i + 1}</span>
+              {fila.confianza === 'revisar' && <span className="marca">Revisar</span>}
+            </div>
             <div className="campos">
               <label>
                 <span>Apellido</span>

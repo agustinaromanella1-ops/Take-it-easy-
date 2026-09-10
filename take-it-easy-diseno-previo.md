@@ -14,14 +14,17 @@ gana.
 ## 1. Pantallas
 
 `prototipos/` contiene cuatro pantallas en HTML —Hoy, Asistencia, Pegar la
-lista y Ficha de alumno— que son la referencia visual y de interacción para
-todo lo demás. No son código a reutilizar.
+lista y Ficha de alumno—, **aprobadas**. Son la referencia visual y de
+interacción para todo lo demás. No son código a reutilizar.
 
-Están **a la espera de aprobación**: se reconstruyeron a partir de este
-documento y de la identidad visual del proyecto, no son los prototipos
-aprobados originales. Hasta que se aprueben, cuando una descripción de esta
-sección y un prototipo no coincidan, gana el documento. Aprobadas, se
-invierte: gana el prototipo.
+Cuando una descripción de esta sección y un prototipo no coincidan, gana el
+prototipo, y lo que hay que corregir es este documento.
+
+Con una excepción, porque un prototipo no puede prometer lo que no existe:
+donde muestra una pantalla que todavía no está construida —una pestaña de
+la barra inferior, por ejemplo— eso es la forma a la que hay que llegar, no
+un botón para poner ahora. Una pestaña que no lleva a ningún lado es peor
+que una pestaña que falta.
 
 ### 1.1 Navegación
 
