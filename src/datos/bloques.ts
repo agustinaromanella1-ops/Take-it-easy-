@@ -76,6 +76,28 @@ export async function clasesDelDia(fecha: FechaLocal): Promise<ClaseDeHoy[]> {
   return clases;
 }
 
+export type EstadoDeClase =
+  | { tipo: 'sin-alumnos'; texto: string }
+  | { tipo: 'sin-registrar'; texto: string }
+  | { tipo: 'a-medias'; texto: string }
+  | { tipo: 'tomada'; texto: string };
+
+/**
+ * Cómo está la asistencia de una clase. Una vez tomada deja de ser una tarea
+ * pendiente, así que el texto tiene que decirlo: si siguiera diciendo "tomar
+ * asistencia" después de tomarla, la pantalla mentiría.
+ */
+export function estadoDeClase(clase: ClaseDeHoy): EstadoDeClase {
+  const { registrados, inscriptos } = clase;
+
+  if (inscriptos === 0) return { tipo: 'sin-alumnos', texto: 'Sin alumnos todavía' };
+  if (registrados === 0) return { tipo: 'sin-registrar', texto: 'Sin registrar' };
+  if (registrados < inscriptos) {
+    return { tipo: 'a-medias', texto: `A medias · ${registrados} de ${inscriptos}` };
+  }
+  return { tipo: 'tomada', texto: `Asistencia tomada · ${registrados} de ${inscriptos}` };
+}
+
 /**
  * La clase que sigue: la que está ocurriendo, y si no, la próxima del día.
  * Cuando la jornada terminó no devuelve ninguna, porque ya no hay nada que

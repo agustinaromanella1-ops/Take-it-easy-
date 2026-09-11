@@ -1,6 +1,6 @@
 import { useLiveQuery } from 'dexie-react-hooks';
 
-import { clasesDelDia, laQueSigue } from '../datos/bloques';
+import { clasesDelDia, estadoDeClase, laQueSigue } from '../datos/bloques';
 import { db } from '../datos/db';
 import type { Id } from '../datos/tipos';
 import { enPalabras, hoy } from '../fecha';
@@ -61,36 +61,38 @@ export default function Hoy({ tomarAsistencia, irAMaterias }: Props) {
         <ul className="clases">
           {clases.map((clase) => {
             const esLaQueSigue = clase.bloque.id === siguiente?.bloque.id;
-            const tomada = clase.claseSesionId !== undefined && clase.registrados > 0;
+            const estado = estadoDeClase(clase);
+            // Deja de haber acción primaria cuando ya no queda nada por hacer.
+            const pendiente = estado.tipo === 'sin-registrar' || estado.tipo === 'a-medias';
 
             return (
               <li
                 key={clase.bloque.id}
-                className={`clase ${clase.materia.colorPastel} ${esLaQueSigue ? 'siguiente' : ''}`}
+                className={`clase ${clase.materia.colorPastel} ${
+                  esLaQueSigue && pendiente ? 'siguiente' : ''
+                }`}
               >
                 <div className="hora">{clase.bloque.horaInicio}</div>
                 <div className="cuerpo">
-                  {esLaQueSigue && <p className="etiqueta">La que sigue</p>}
+                  {esLaQueSigue && pendiente && <p className="etiqueta">La que sigue</p>}
                   <p className="materia">{clase.materia.nombre}</p>
                   <p className="curso">
                     {clase.materia.anio}.º {clase.materia.division}
                   </p>
 
-                  {esLaQueSigue ? (
+                  {esLaQueSigue && pendiente ? (
                     <button
                       className="primario"
                       onClick={() => tomarAsistencia(clase.materia.id, clase.bloque.id)}
                     >
-                      Tomar asistencia
+                      {estado.tipo === 'a-medias' ? 'Seguir tomando asistencia' : 'Tomar asistencia'}
                     </button>
                   ) : (
                     <button
-                      className="estado"
+                      className={`estado ${estado.tipo}`}
                       onClick={() => tomarAsistencia(clase.materia.id, clase.bloque.id)}
                     >
-                      {tomada
-                        ? `Asistencia tomada · ${clase.registrados} de ${clase.inscriptos}`
-                        : 'Sin registrar'}
+                      {estado.texto}
                     </button>
                   )}
                 </div>

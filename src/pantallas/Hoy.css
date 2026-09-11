@@ -112,3 +112,9 @@
   text-decoration-color: var(--borde);
   text-underline-offset: 3px;
 }
+
+/* Ya tomada: se lee como un hecho, no como algo por hacer. */
+.hoy .estado.tomada {
+  font-weight: 600;
+  color: var(--texto);
+}

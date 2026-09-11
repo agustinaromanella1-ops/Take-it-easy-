@@ -5,6 +5,7 @@ import { altaMasiva } from './alumnos';
 import { marcarAsistencia } from './asistencia';
 import {
   agregarBloque,
+  estadoDeClase,
   bloqueSugerido,
   bloquesDeMateria,
   clasesDelDia,
@@ -106,6 +107,39 @@ describe('clases del día', () => {
     await archivarMateria(materiaId);
 
     expect(await clasesDelDia(jueves)).toHaveLength(0);
+  });
+});
+
+describe('estado de una clase', () => {
+  const base = { materia: {}, bloque: {} } as never;
+
+  it('sin alumnos no invita a tomar asistencia', () => {
+    expect(estadoDeClase({ ...base, registrados: 0, inscriptos: 0 })).toMatchObject({
+      tipo: 'sin-alumnos',
+    });
+  });
+
+  it('nadie registrado todavía', () => {
+    expect(estadoDeClase({ ...base, registrados: 0, inscriptos: 24 })).toMatchObject({
+      tipo: 'sin-registrar', texto: 'Sin registrar',
+    });
+  });
+
+  it('a medias dice cuántos faltan', () => {
+    expect(estadoDeClase({ ...base, registrados: 12, inscriptos: 24 })).toMatchObject({
+      tipo: 'a-medias', texto: 'A medias · 12 de 24',
+    });
+  });
+
+  it('tomada deja de ser una tarea pendiente', () => {
+    // Es lo que estaba mal: después de tomarla seguía diciendo "tomar asistencia".
+    expect(estadoDeClase({ ...base, registrados: 24, inscriptos: 24 })).toMatchObject({
+      tipo: 'tomada', texto: 'Asistencia tomada · 24 de 24',
+    });
+  });
+
+  it('alguien dado de baja después de tomar lista no deja la clase incompleta', () => {
+    expect(estadoDeClase({ ...base, registrados: 25, inscriptos: 24 }).tipo).toBe('tomada');
   });
 });
 
