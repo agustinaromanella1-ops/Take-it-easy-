@@ -1,6 +1,11 @@
 import { describe, expect, it } from 'vitest';
 
-import { crearSesionDeAnonimizacion, type Contexto } from './anonimizacion';
+import {
+  crearSesionDeAnonimizacion,
+  sinDatosDeContacto,
+  tieneDatosDeContacto,
+  type Contexto,
+} from './anonimizacion';
 
 const malena = { id: 'a1', nombre: 'Malena', apellido: 'Acuña' };
 const ignacio = { id: 'a2', nombre: 'Ignacio', apellido: 'Barreto' };
@@ -127,12 +132,28 @@ describe('sustitución de nombres conocidos', () => {
     expect(s().anonimizar('Vengo del Colegio San Martín.').texto).toBe('Vengo de la escuela.');
   });
 
-  it('de una mención parcial saca al menos la parte que identifica', () => {
-    // "San" es partícula y no entra al índice, así que sola no alcanza para
-    // reconocer la frase; lo que sí identifica se va igual.
+  it('una mención parcial se lleva la partícula que va pegada al nombre', () => {
     const { texto } = sesion({ escuelas: ['Colegio San Martín'] }).anonimizar('Estoy en San Martín.');
 
-    expect(texto).not.toContain('Martín');
+    expect(texto).toBe('Estoy en la escuela.');
+  });
+
+  it('la partícula se va sólo cuando es parte del nombre de esa escuela', () => {
+    const s = () => sesion({ escuelas: ['Instituto Los Andes'] });
+
+    expect(s().anonimizar('Estoy en Los Andes.').texto).toBe('Estoy en la escuela.');
+    // El mismo "los", suelto, no tiene nada que ver con la escuela.
+    expect(s().anonimizar('Los chicos entregaron.').texto).toBe('Los chicos entregaron.');
+  });
+
+  it('no se come la preposición que une', () => {
+    // El "de" es parte del nombre y aun así no se absorbe: sin frenar ahí,
+    // "vengo de la Sagrada Familia" quedaría como "vengo la escuela".
+    const { texto } = sesion({ escuelas: ['Escuela de la Sagrada Familia'] }).anonimizar(
+      'Vengo de la Sagrada Familia.',
+    );
+
+    expect(texto).toBe('Vengo de la escuela.');
   });
 
   it('el nombre de la escuela se reemplaza por su rol', () => {
@@ -287,5 +308,28 @@ describe('el mapa de alias no sale de memoria', () => {
     s.anonimizar('Malena no entregó.');
 
     expect(() => JSON.stringify(s)).toThrow(/no se serializa/);
+  });
+});
+
+describe('lo que no se guarda ni a medio escribir', () => {
+  it('el borrador de la consulta no se lleva el correo a la base', () => {
+    expect(sinDatosDeContacto('Escribile a ana@correo.com, dice que la llame.')).toBe(
+      'Escribile a [un correo], dice que la llame.',
+    );
+  });
+
+  it('tampoco un número largo, que puede ser un documento', () => {
+    expect(sinDatosDeContacto('El teléfono es 11 2345 6789.')).toBe(
+      'El teléfono es [un número].',
+    );
+  });
+
+  it('el nombre del alumno sí se guarda: es un dato local, como una observación', () => {
+    expect(sinDatosDeContacto('Malena viene faltando.')).toBe('Malena viene faltando.');
+  });
+
+  it('avisa cuando hay algo que se va a dejar afuera, para no alterar en silencio', () => {
+    expect(tieneDatosDeContacto('Escribile a ana@correo.com')).toBe(true);
+    expect(tieneDatosDeContacto('Malena viene faltando.')).toBe(false);
   });
 });

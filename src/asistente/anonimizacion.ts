@@ -79,6 +79,41 @@ const MAYUSCULAS_ESPERABLES = new Set([
   'estudiante', 'estudiantes', 'alumno', 'alumna', 'alumnos', 'alumnas',
 ]);
 
+function quitarDatos(texto: string): { texto: string; quitados: string[] } {
+  const quitados: string[] = [];
+  let resultado = texto;
+
+  for (const [patron, marcador] of [
+    [CORREO, MARCADORES.correo],
+    [ENLACE, MARCADORES.enlace],
+    [NUMERO_LARGO, MARCADORES.numero],
+    [ARROBA, MARCADORES.usuario],
+  ] as const) {
+    resultado = resultado.replace(patron, (coincidencia) => {
+      quitados.push(coincidencia.trim());
+      return marcador;
+    });
+  }
+
+  return { texto: resultado, quitados };
+}
+
+/**
+ * Correos, enlaces, usuarios y números largos reemplazados por su marcador.
+ *
+ * Además del filtro, lo usa el borrador de la consulta: la app le dice a la
+ * docente que no guarda documentos, teléfonos ni correos, y eso tiene que
+ * valer también para lo que escribe a medias.
+ */
+export function sinDatosDeContacto(texto: string): string {
+  return quitarDatos(texto).texto;
+}
+
+/** Si algo se dejaría afuera al guardar, conviene decirlo en vez de alterar en silencio. */
+export function tieneDatosDeContacto(texto: string): boolean {
+  return quitarDatos(texto).quitados.length > 0;
+}
+
 const LETRAS = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
 
 /**
@@ -100,6 +135,13 @@ const DETERMINANTES = new Set([
 
 /** "del Colegio" es "de el Colegio": se reemplaza el artículo, no la preposición. */
 const CONTRACCIONES: Record<string, string> = { del: 'de ', al: 'a ' };
+
+/**
+ * Partículas que unen, no que nombran. "Sagrada Familia" se lleva el "la" que
+ * tiene delante, pero no el "de": en "vengo de la Sagrada Familia", comerse el
+ * "de" dejaría "vengo la escuela".
+ */
+const CONECTORES = new Set(['de', 'del', 'y', 'da', 'das', 'di', 'do', 'dos', 'van', 'von']);
 
 export function normalizar(texto: string): string {
   return texto.normalize('NFD').replace(/\p{Diacritic}/gu, '').toLowerCase();
@@ -130,32 +172,38 @@ type Tipo = 'alumno' | 'docente' | 'escuela';
 interface Entrada {
   clave: string;
   tipo: Tipo;
+  /** Las que alcanzan para reconocerla solas: entran al índice. */
   palabras: Set<string>;
+  /** Todas, partículas incluidas. Solas no sirven, pegadas a una del índice sí. */
+  todas: Set<string>;
 }
 
 function entradasDe(contexto: Contexto): Entrada[] {
   const entradas: Entrada[] = [];
 
   for (const alumno of contexto.alumnos) {
-    const palabras = new Set(
-      palabrasDe(`${alumno.nombre} ${alumno.apellido}`).filter(esIdentificatoria),
-    );
+    const todas = new Set(palabrasDe(`${alumno.nombre} ${alumno.apellido}`));
+    const palabras = new Set([...todas].filter(esIdentificatoria));
     if (palabras.size > 0) {
-      entradas.push({ clave: alumno.id, tipo: 'alumno', palabras });
+      entradas.push({ clave: alumno.id, tipo: 'alumno', palabras, todas });
     }
   }
 
   if (contexto.docente) {
-    const palabras = new Set(palabrasDe(contexto.docente).filter(esIdentificatoria));
-    if (palabras.size > 0) entradas.push({ clave: 'docente', tipo: 'docente', palabras });
+    const todas = new Set(palabrasDe(contexto.docente));
+    const palabras = new Set([...todas].filter(esIdentificatoria));
+    if (palabras.size > 0) {
+      entradas.push({ clave: 'docente', tipo: 'docente', palabras, todas });
+    }
   }
 
   for (const escuela of contexto.escuelas ?? []) {
+    const todas = new Set(palabrasDe(escuela));
     const palabras = new Set(
-      palabrasDe(escuela).filter((p) => esIdentificatoria(p) && !MAYUSCULAS_ESPERABLES.has(p)),
+      [...todas].filter((p) => esIdentificatoria(p) && !MAYUSCULAS_ESPERABLES.has(p)),
     );
     if (palabras.size > 0) {
-      entradas.push({ clave: `escuela:${escuela}`, tipo: 'escuela', palabras });
+      entradas.push({ clave: `escuela:${escuela}`, tipo: 'escuela', palabras, todas });
     }
   }
 
@@ -323,7 +371,20 @@ export function crearSesionDeAnonimizacion(contexto: Contexto): SesionDeAnonimiz
         elegidas.length === 1 ? elegidas[0].clave : `ambiguo:${normalizar(original)}`;
       const tipo = elegidas.length === 1 ? elegidas[0].tipo : 'alumno';
 
-      anotar(i, fin, clave, tipo);
+      // "San Martín" por "Colegio San Martín": "san" no entra al índice, porque
+      // una partícula suelta reemplazaría media frase. Pegada a la palabra que
+      // sí identifica es parte del nombre, y se va con ella.
+      let arranque = i;
+      if (elegidas.length === 1 && elegidas[0].tipo === 'escuela') {
+        const { todas } = elegidas[0];
+        while (arranque > 0) {
+          const previa = tokens[arranque - 1].normalizada;
+          if (!todas.has(previa) || CONECTORES.has(previa)) break;
+          arranque -= 1;
+        }
+      }
+
+      anotar(arranque, fin, clave, tipo);
 
       i = fin + 1;
     }
@@ -334,25 +395,6 @@ export function crearSesionDeAnonimizacion(contexto: Contexto): SesionDeAnonimiz
       resultado = resultado.slice(0, r.inicio) + r.alias + resultado.slice(r.fin);
     }
     return { texto: resultado, sustituciones };
-  }
-
-  function quitarDatos(texto: string): { texto: string; quitados: string[] } {
-    const quitados: string[] = [];
-    let resultado = texto;
-
-    for (const [patron, marcador] of [
-      [CORREO, MARCADORES.correo],
-      [ENLACE, MARCADORES.enlace],
-      [NUMERO_LARGO, MARCADORES.numero],
-      [ARROBA, MARCADORES.usuario],
-    ] as const) {
-      resultado = resultado.replace(patron, (coincidencia) => {
-        quitados.push(coincidencia.trim());
-        return marcador;
-      });
-    }
-
-    return { texto: resultado, quitados };
   }
 
   function buscarSospechas(texto: string): string[] {

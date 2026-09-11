@@ -56,6 +56,7 @@ un toque desde el arranque.
 | Calificaciones de una evaluación | Cargar notas |
 | Agenda | Agregar una entrada |
 | Redactar (observación, mensaje, entrada de agenda) | Guardar |
+| Preguntar al asistente | Revisar lo que se envía |
 | Revisión de envío al asistente | Enviar |
 | Ajustes | — |
 
@@ -329,6 +330,14 @@ sección define cómo se cumple.
 Aplica a todo texto que salga del dispositivo hacia el servicio de IA, sin
 excepción: observaciones, borradores de mensajes, entradas de agenda,
 preguntas libres del docente al asistente.
+
+El texto se escribe con los nombres reales —es lo que el docente escribiría
+en un papel— y se filtra al pasar a la revisión. Lo que sí se recorta antes
+de guardar el borrador son los correos y los números largos: la app le dice
+al docente que no guarda documentos, teléfonos ni correos, y eso vale
+también para lo escrito a medias. No se pierde nada útil, porque el filtro
+los reemplaza igual antes de cualquier envío; la pantalla lo avisa en vez de
+alterar el texto en silencio.
 
 ### 3.1 Principio rector
 

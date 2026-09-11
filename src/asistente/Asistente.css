@@ -1,0 +1,40 @@
+.asistente .ayuda {
+  font-size: 14px;
+  line-height: 1.55;
+  color: var(--secundario);
+  margin-top: 8px;
+}
+
+.asistente .ayuda strong {
+  color: var(--texto);
+}
+
+.asistente textarea {
+  flex: 1;
+  min-height: 200px;
+  margin-top: 16px;
+  padding: 14px;
+  border: 1px solid var(--borde);
+  border-radius: 14px;
+  background: var(--superficie);
+  color: var(--texto);
+  font-family: inherit;
+  font-size: 15px;
+  line-height: 1.7;
+  resize: none;
+}
+
+.asistente textarea::placeholder {
+  color: var(--secundario);
+  opacity: 0.6;
+}
+
+.asistente .descartado {
+  margin-top: 14px;
+  padding: 12px 14px;
+  background: var(--durazno);
+  color: var(--durazno-osc);
+  border-radius: 12px;
+  font-size: 13px;
+  line-height: 1.5;
+}
