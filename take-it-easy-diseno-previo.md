@@ -127,7 +127,7 @@ sincronización ni copia remota de estos datos.
 Escuela         id, nombre
 Materia         id, escuelaId, nombre, anio, division, colorPastel,
                 escalaPorDefecto, archivada
-BloqueHorario   id, materiaId, diaSemana (1-7), horaInicio, horaFin
+BloqueHorario   id, materiaId, diaSemana (1 lunes … 7 domingo), horaInicio, horaFin
 Alumno          id, nombre, apellido, creadoEn
 Inscripcion     id, alumnoId, materiaId, estado (activa|baja), desde, hasta
 ClaseSesion     id, materiaId, fecha, bloqueHorarioId, tema
@@ -222,6 +222,15 @@ La distinción es deliberada y conviene mantenerla explícita en los nombres.
 
 `Recordatorio.fechaHoraLocal` es fecha local más hora local, sin zona: el
 recordatorio suena a la hora del teléfono.
+
+`BloqueHorario.diaSemana` va de **1 lunes a 7 domingo**, como ISO 8601, y no
+como `getDay()` de JavaScript, que cuenta el domingo como 0 y arranca la
+semana ahí. La conversión se hace en un solo lugar y tiene test: es un
+corrimiento de un día que no se nota hasta que alguien mira un domingo.
+
+**Mirar Hoy no crea clases.** La `ClaseSesion` se crea recién al entrar a
+tomar asistencia. Si la creara la pantalla, quedarían clases dictadas en la
+base para días en los que nunca se dio clase, y el historial mentiría.
 
 ### 2.8 Estados de asistencia
 

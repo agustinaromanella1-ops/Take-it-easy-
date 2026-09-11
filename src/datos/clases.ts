@@ -10,16 +10,18 @@ import type { FechaLocal } from '../fecha';
 export async function claseDelDia(
   materiaId: Id,
   fecha: FechaLocal,
-  bloqueHorarioId: Id = SIN_BLOQUE,
+  bloqueHorarioId: Id | undefined = SIN_BLOQUE,
 ): Promise<ClaseSesion> {
+  const bloque = bloqueHorarioId ?? SIN_BLOQUE;
+
   return db.transaction('rw', db.clasesSesion, async () => {
     const existente = await db.clasesSesion
       .where('[materiaId+fecha+bloqueHorarioId]')
-      .equals([materiaId, fecha, bloqueHorarioId])
+      .equals([materiaId, fecha, bloque])
       .first();
     if (existente) return existente;
 
-    const clase: ClaseSesion = { id: nuevoId(), materiaId, fecha, bloqueHorarioId };
+    const clase: ClaseSesion = { id: nuevoId(), materiaId, fecha, bloqueHorarioId: bloque };
     await db.clasesSesion.add(clase);
     return clase;
   });

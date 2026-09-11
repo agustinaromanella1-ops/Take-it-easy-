@@ -19,3 +19,33 @@ export function enPalabras(fecha: FechaLocal): string {
   const fechaLocal = new Date(anio, mes - 1, dia);
   return `${nombreDia.format(fechaLocal)} ${diaYMes.format(fechaLocal)}`;
 }
+
+/** 1 lunes … 7 domingo, como ISO 8601. */
+export type DiaSemana = 1 | 2 | 3 | 4 | 5 | 6 | 7;
+
+export const DIAS: { dia: DiaSemana; letra: string; nombre: string }[] = [
+  { dia: 1, letra: 'L', nombre: 'lunes' },
+  { dia: 2, letra: 'M', nombre: 'martes' },
+  { dia: 3, letra: 'M', nombre: 'miércoles' },
+  { dia: 4, letra: 'J', nombre: 'jueves' },
+  { dia: 5, letra: 'V', nombre: 'viernes' },
+  { dia: 6, letra: 'S', nombre: 'sábado' },
+  { dia: 7, letra: 'D', nombre: 'domingo' },
+];
+
+export function diaSemanaDe(fecha: FechaLocal): DiaSemana {
+  const [anio, mes, dia] = fecha.split('-').map(Number);
+  // getDay() cuenta 0 = domingo; acá el domingo es 7 y la semana empieza el lunes.
+  const deJs = new Date(anio, mes - 1, dia).getDay();
+  return (deJs === 0 ? 7 : deJs) as DiaSemana;
+}
+
+/** "09:20" como minutos desde la medianoche, para poder comparar horarios. */
+export function enMinutos(hora: string): number {
+  const [h, m] = hora.split(':').map(Number);
+  return h * 60 + m;
+}
+
+export function horaActualEnMinutos(ahora = new Date()): number {
+  return ahora.getHours() * 60 + ahora.getMinutes();
+}

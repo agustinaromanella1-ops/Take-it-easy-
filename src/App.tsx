@@ -4,6 +4,7 @@ import { escucharBotonAtras } from './nativo/botonAtras';
 import type { Id } from './datos/tipos';
 import Asistencia from './pantallas/Asistencia';
 import CargarAlumnos from './pantallas/CargarAlumnos';
+import Horario from './pantallas/Horario';
 import Hoy from './pantallas/Hoy';
 import Materia from './pantallas/Materia';
 import Materias from './pantallas/Materias';
@@ -16,7 +17,8 @@ type Pantalla =
   | { nombre: 'materia-nueva' }
   | { nombre: 'materia'; materiaId: Id }
   | { nombre: 'alumnos'; materiaId: Id }
-  | { nombre: 'asistencia'; materiaId: Id };
+  | { nombre: 'horario'; materiaId: Id }
+  | { nombre: 'asistencia'; materiaId: Id; bloqueHorarioId?: Id };
 
 export default function App() {
   const [pila, setPila] = useState<Pantalla[]>([{ nombre: 'hoy' }]);
@@ -48,7 +50,14 @@ export default function App() {
 
   return (
     <div className="app">
-      {actual.nombre === 'hoy' && <Hoy />}
+      {actual.nombre === 'hoy' && (
+        <Hoy
+          tomarAsistencia={(materiaId, bloqueHorarioId) =>
+            ir({ nombre: 'asistencia', materiaId, bloqueHorarioId })
+          }
+          irAMaterias={() => seccion('materias')}
+        />
+      )}
 
       {actual.nombre === 'materias' && (
         <Materias
@@ -64,6 +73,7 @@ export default function App() {
           materiaId={actual.materiaId}
           volver={volver}
           agregarAlumnos={() => ir({ nombre: 'alumnos', materiaId: actual.materiaId })}
+          editarHorario={() => ir({ nombre: 'horario', materiaId: actual.materiaId })}
           tomarAsistencia={() => ir({ nombre: 'asistencia', materiaId: actual.materiaId })}
         />
       )}
@@ -72,8 +82,16 @@ export default function App() {
         <CargarAlumnos materiaId={actual.materiaId} volver={volver} />
       )}
 
+      {actual.nombre === 'horario' && (
+        <Horario materiaId={actual.materiaId} volver={volver} />
+      )}
+
       {actual.nombre === 'asistencia' && (
-        <Asistencia materiaId={actual.materiaId} volver={volver} />
+        <Asistencia
+          materiaId={actual.materiaId}
+          bloqueHorarioId={actual.bloqueHorarioId}
+          volver={volver}
+        />
       )}
 
       <nav>

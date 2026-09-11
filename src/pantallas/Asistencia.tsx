@@ -8,6 +8,7 @@ import {
   marcarAsistencia,
   tocarEstado,
 } from '../datos/asistencia';
+import { bloqueSugerido } from '../datos/bloques';
 import { claseDelDia } from '../datos/clases';
 import { alumnosInscriptos } from '../datos/inscripciones';
 import { comoSeLlama, materia as buscarMateria } from '../datos/materias';
@@ -27,20 +28,30 @@ interface CambioDeshacible {
   anterior: RegistroAsistencia | undefined;
 }
 
-export default function Asistencia({ materiaId, volver }: { materiaId: Id; volver: () => void }) {
+interface Props {
+  materiaId: Id;
+  /** Si no viene, se resuelve por la hora: entrar desde la materia y entrar
+   *  desde Hoy tienen que caer en la misma clase. */
+  bloqueHorarioId?: Id;
+  volver: () => void;
+}
+
+export default function Asistencia({ materiaId, bloqueHorarioId, volver }: Props) {
   const fecha = hoy();
   const [claseId, setClaseId] = useState<Id | null>(null);
   const [ultimo, setUltimo] = useState<CambioDeshacible | null>(null);
 
   useEffect(() => {
     let vigente = true;
-    claseDelDia(materiaId, fecha).then((clase) => {
+    (async () => {
+      const bloque = bloqueHorarioId ?? (await bloqueSugerido(materiaId, fecha));
+      const clase = await claseDelDia(materiaId, fecha, bloque);
       if (vigente) setClaseId(clase.id);
-    });
+    })();
     return () => {
       vigente = false;
     };
-  }, [materiaId, fecha]);
+  }, [materiaId, bloqueHorarioId, fecha]);
 
   const datos = useLiveQuery(async () => {
     if (!claseId) return undefined;
