@@ -38,3 +38,13 @@
   font-size: 13px;
   line-height: 1.5;
 }
+
+.asistente .bloqueo {
+  margin-top: 14px;
+  padding: 13px 15px;
+  border-radius: 12px;
+  background: var(--rosa);
+  color: var(--rosa-osc);
+  font-size: 14px;
+  line-height: 1.5;
+}

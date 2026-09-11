@@ -109,9 +109,14 @@ export function sinDatosDeContacto(texto: string): string {
   return quitarDatos(texto).texto;
 }
 
+/** Los correos, enlaces, usuarios y números largos que hay en el texto. */
+export function datosDeContacto(texto: string): string[] {
+  return quitarDatos(texto).quitados;
+}
+
 /** Si algo se dejaría afuera al guardar, conviene decirlo en vez de alterar en silencio. */
 export function tieneDatosDeContacto(texto: string): boolean {
-  return quitarDatos(texto).quitados.length > 0;
+  return datosDeContacto(texto).length > 0;
 }
 
 const LETRAS = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
@@ -259,7 +264,17 @@ export function crearSesionDeAnonimizacion(contexto: Contexto): SesionDeAnonimiz
       nombre,
       palabras: palabrasDe(nombre).filter((p) => !ORDINAL.test(p)),
     }))
-    .filter((f) => f.palabras.length > 0)
+    // Una escuela guardada como "N.º 12" se reduce a una sola palabra que no
+    // distingue nada: con ella, cada "12" del texto —"tengo 12 alumnos"— se
+    // volvería "la escuela". Una frase de una sola palabra sirve sólo si esa
+    // palabra identifica sola; dos o más ya son una frase.
+    .filter(
+      (f) =>
+        f.palabras.length >= 2 ||
+        (f.palabras.length === 1 &&
+          esIdentificatoria(f.palabras[0]) &&
+          !MAYUSCULAS_ESPERABLES.has(f.palabras[0])),
+    )
     .sort((a, b) => b.palabras.length - a.palabras.length);
 
   // El mapa que no puede salir de acá.
@@ -288,15 +303,19 @@ export function crearSesionDeAnonimizacion(contexto: Contexto): SesionDeAnonimiz
 
   /**
    * Dónde termina la frase que empieza en `desde`, o `null` si no está. El
-   * ruido ordinal se saltea de los dos lados, así "Escuela N.º 12", "Escuela
-   * Nº 12" y "Escuela 12" son la misma escuela.
+   * ruido ordinal se saltea **entre** palabras de la frase, así "Escuela
+   * N.º 12", "Escuela Nº 12" y "Escuela 12" son la misma escuela.
+   *
+   * Antes de la primera no: saltearlo ahí haría que la frase arranque una
+   * palabra más atrás y se coma lo que hubiera, incluso una negación —"ahora
+   * no, Escuela N.º 12 queda lejos" perdería el "no".
    */
   function finDeFrase(tokens: Token[], desde: number, palabras: string[]): number | null {
     let k = 0;
     let j = desde;
     while (k < palabras.length) {
       if (j >= tokens.length) return null;
-      if (ORDINAL.test(tokens[j].normalizada)) {
+      if (k > 0 && ORDINAL.test(tokens[j].normalizada)) {
         j += 1;
         continue;
       }
@@ -312,8 +331,15 @@ export function crearSesionDeAnonimizacion(contexto: Contexto): SesionDeAnonimiz
     const sustituciones: Sustitucion[] = [];
     const reemplazos: { inicio: number; fin: number; alias: string }[] = [];
 
+    // Hasta dónde llegó el último reemplazo. Extenderse hacia atrás más allá
+    // de ahí solapa dos reemplazos, y al aplicarlos de atrás para adelante el
+    // texto queda destrozado: "Andes Los Andes." terminaba en "la escuelacuela.".
+    let consumidoHasta = -1;
+
     function anotar(desde: number, hasta: number, clave: string, tipo: Tipo) {
-      const previa = tipo !== 'alumno' && desde > 0 ? tokens[desde - 1].normalizada : '';
+      const hayEspacioAtras = desde - 1 > consumidoHasta;
+      const previa =
+        tipo !== 'alumno' && desde > 0 && hayEspacioAtras ? tokens[desde - 1].normalizada : '';
       const contraccion = CONTRACCIONES[previa];
 
       // El artículo suelto entra en lo reemplazado, así "la escuela" vuelve a
@@ -330,6 +356,7 @@ export function crearSesionDeAnonimizacion(contexto: Contexto): SesionDeAnonimiz
         alias: (contraccion ?? '') + alias,
       });
       sustituciones.push({ original, alias });
+      consumidoHasta = hasta;
     }
 
     let i = 0;
@@ -377,7 +404,7 @@ export function crearSesionDeAnonimizacion(contexto: Contexto): SesionDeAnonimiz
       let arranque = i;
       if (elegidas.length === 1 && elegidas[0].tipo === 'escuela') {
         const { todas } = elegidas[0];
-        while (arranque > 0) {
+        while (arranque > 0 && arranque - 1 > consumidoHasta) {
           const previa = tokens[arranque - 1].normalizada;
           if (!todas.has(previa) || CONECTORES.has(previa)) break;
           arranque -= 1;

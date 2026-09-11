@@ -86,6 +86,28 @@ describe('lo que decide si se envía', () => {
     expect(r.sospechas).toEqual([]);
   });
 
+  it('frena un correo escrito a mano en la revisión', () => {
+    const s = sesion();
+
+    const r = revisar(s, 'Escribile a ana@correo.com y contale.', []);
+
+    expect(r.datos).toEqual(['ana@correo.com']);
+    expect(r.sePuedeEnviar).toBe(false);
+  });
+
+  it('frena también un teléfono y un enlace', () => {
+    const s = sesion();
+
+    expect(revisar(s, 'Llamala al 11 2345 6789.', []).sePuedeEnviar).toBe(false);
+    expect(revisar(s, 'Está en www.escuela.edu.ar', []).sePuedeEnviar).toBe(false);
+  });
+
+  it('con el dato reemplazado por su marcador, se puede enviar', () => {
+    const s = sesion();
+
+    expect(revisar(s, 'Escribile a [un correo] y contale.', []).sePuedeEnviar).toBe(true);
+  });
+
   it('un texto vacío no se envía', () => {
     expect(revisar(sesion(), '   \n ', []).sePuedeEnviar).toBe(false);
   });

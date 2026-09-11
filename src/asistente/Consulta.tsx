@@ -15,6 +15,8 @@ interface Props {
   preparando: boolean;
   /** Hay algo escrito que no va a quedar guardado. */
   avisarDelBorrador: boolean;
+  /** No se pudo leer la lista de alumnos, así que no hay con qué filtrar. */
+  falla: boolean;
 }
 
 const EJEMPLO =
@@ -28,6 +30,7 @@ export default function Consulta({
   listo,
   preparando,
   avisarDelBorrador,
+  falla,
 }: Props) {
   return (
     <div className="pantalla asistente">
@@ -51,6 +54,13 @@ export default function Consulta({
         <p className="descartado">
           Si salís de acá, el correo o el número largo no quedan guardados: la
           app no los guarda en ningún lado. Al asistente tampoco le llegan.
+        </p>
+      )}
+
+      {falla && (
+        <p className="bloqueo">
+          No se pudo leer tu lista de alumnos, así que el filtro no tiene con
+          qué comparar. Probá de nuevo.
         </p>
       )}
 

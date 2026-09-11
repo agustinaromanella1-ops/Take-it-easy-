@@ -104,6 +104,34 @@ describe('sustitución de nombres conocidos', () => {
     }
   });
 
+  it('una escuela guardada sin nombre propio no convierte cada número en la escuela', () => {
+    // De "N.º 12" sólo queda "12", que no distingue nada: usarla como frase
+    // volvería "tengo 12 alumnos" en "tengo la escuela alumnos".
+    const s = sesion({ escuelas: ['N.º 12'] });
+
+    expect(s.anonimizar('Tengo 12 alumnos.').texto).toBe('Tengo 12 alumnos.');
+  });
+
+  it('no se come lo que viene justo antes por parecerse a un ordinal', () => {
+    const { texto } = sesion().anonimizar('Ahora no, Escuela N.º 12 queda lejos.');
+
+    expect(texto).toBe('Ahora no, la escuela queda lejos.');
+  });
+
+  it('dos menciones pegadas no se pisan entre sí', () => {
+    const s = sesion({ escuelas: ['Instituto Los Andes'] });
+
+    // Reemplazos solapados, aplicados de atrás para adelante, destrozaban el
+    // texto: "Andes Los Andes." terminaba en "la escuelacuela.".
+    expect(s.anonimizar('Andes Los Andes.').texto).toBe('la escuela la escuela.');
+    // Dos menciones separadas por una coma entran en un solo reemplazo, igual
+    // que "Acuña, Malena" es una persona y no dos. Se pierde la coma, no el
+    // texto.
+    expect(s.anonimizar('Fui a Los Andes, Andes Los Andes.').texto).toBe(
+      'Fui a la escuela la escuela.',
+    );
+  });
+
   it('un número suelto no es la escuela', () => {
     const { texto } = sesion().anonimizar('Tengo 12 alumnos en el curso.');
 

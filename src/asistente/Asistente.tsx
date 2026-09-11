@@ -1,5 +1,6 @@
 import { useState } from 'react';
 
+import { useAtras } from '../hooks/useAtras';
 import { useBorrador } from '../hooks/useBorrador';
 import Consulta from './Consulta';
 import Revision from './Revision';
@@ -37,6 +38,15 @@ export default function Asistente() {
 
   const [paso, setPaso] = useState<Paso>({ nombre: 'escribir' });
   const [preparando, setPreparando] = useState(false);
+  const [falla, setFalla] = useState(false);
+
+  // El asistente es una sección, así que no tiene pila detrás: sin esto, el
+  // botón atrás desde la revisión cierra la app con la consulta adentro.
+  useAtras(() => {
+    if (paso.nombre === 'escribir') return false;
+    setPaso({ nombre: 'escribir' });
+    return true;
+  });
 
   function escribir(nuevo: string) {
     setEscrito(nuevo);
@@ -52,9 +62,14 @@ export default function Asistente() {
   async function revisar() {
     if (preparando) return;
     setPreparando(true);
+    setFalla(false);
     try {
       const sesion = crearSesionDeAnonimizacion(await contextoDelAsistente());
       setPaso({ nombre: 'revisar', sesion, consulta: texto });
+    } catch {
+      // Si leer los alumnos falla, el filtro no tiene contra qué comparar.
+      // Avanzar igual sería enviar sin filtrar, así que no se avanza.
+      setFalla(true);
     } finally {
       setPreparando(false);
     }
@@ -106,6 +121,7 @@ export default function Asistente() {
       listo={listo}
       preparando={preparando}
       avisarDelBorrador={tieneDatosDeContacto(texto)}
+      falla={falla}
     />
   );
 }

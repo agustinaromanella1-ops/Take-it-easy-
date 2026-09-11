@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react';
 
-import { type SesionDeAnonimizacion } from './anonimizacion';
+import { sinDatosDeContacto, type SesionDeAnonimizacion } from './anonimizacion';
 import { loResaltado, revisar, sacar, trozos } from './revision';
 import './Revision.css';
 
@@ -34,9 +34,17 @@ export default function Revision({ sesion, consulta, enviar, volver }: Props) {
 
   // Las que siguen en el texto: si la docente borró un pedazo, listar lo que
   // ya no está sería mentir sobre lo que se envía.
-  const reemplazos = [...new Map(inicial.sustituciones.map((s) => [s.alias, s])).values()].filter(
-    (s) => texto.includes(s.alias),
-  );
+  //
+  // Se repite por par, no por alias: dos escuelas comparten "la escuela" y
+  // colapsarlas escondería una de las dos. Y se queda la primera de cada par,
+  // que es la que vuelve al re-personalizar la respuesta.
+  const listadas = new Set<string>();
+  const reemplazos = inicial.sustituciones.filter((s) => {
+    const par = `${s.original} → ${s.alias}`;
+    if (listadas.has(par) || !texto.includes(s.alias)) return false;
+    listadas.add(par);
+    return true;
+  });
 
   function confirmar() {
     // El botón deshabilitado es una comodidad, no una garantía: el escaneo se
@@ -63,6 +71,16 @@ export default function Revision({ sesion, consulta, enviar, volver }: Props) {
           Quedó un nombre de alumno en el texto:{' '}
           <strong>{estado.nombres.join(', ')}</strong>. Sacalo para poder enviar.
         </p>
+      )}
+
+      {estado.datos.length > 0 && (
+        <div className="bloqueo">
+          <p>
+            Escribiste algo que no sale del teléfono:{' '}
+            <strong>{estado.datos.join(', ')}</strong>.
+          </p>
+          <button onClick={() => setTexto(sinDatosDeContacto(texto))}>Sacarlo</button>
+        </div>
       )}
 
       {editando ? (
@@ -123,7 +141,7 @@ export default function Revision({ sesion, consulta, enviar, volver }: Props) {
           <h2>Lo que se reemplazó</h2>
           <ul>
             {reemplazos.map((s) => (
-              <li key={s.alias}>
+              <li key={`${s.original} → ${s.alias}`}>
                 <span className="antes">{s.original}</span>
                 <span className="flecha">→</span>
                 <span className="despues">{s.alias}</span>

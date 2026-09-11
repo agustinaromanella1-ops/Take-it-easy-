@@ -1,4 +1,9 @@
-import { MARCADORES, type SesionDeAnonimizacion, type Sustitucion } from './anonimizacion';
+import {
+  MARCADORES,
+  datosDeContacto,
+  type SesionDeAnonimizacion,
+  type Sustitucion,
+} from './anonimizacion';
 
 /**
  * La lógica de la pantalla de revisión, aparte de la pantalla para poder
@@ -15,6 +20,13 @@ export interface Revision {
    * reescribe uno a mano en esta pantalla; mientras haya alguno, no se envía.
    */
   nombres: string[];
+  /**
+   * Correos, enlaces y números largos escritos a mano acá. El filtro los
+   * reemplaza al entrar, pero lo que se escribe después no pasa por el filtro:
+   * sin revisarlo de nuevo, un correo tipeado en la edición se enviaría tal
+   * cual.
+   */
+  datos: string[];
   sePuedeEnviar: boolean;
 }
 
@@ -36,10 +48,17 @@ export function revisar(
     .sospechasDe(texto)
     .filter((p) => !permitidas.includes(p) && !nombres.includes(p));
 
+  const datos = datosDeContacto(texto);
+
   return {
     sospechas,
     nombres,
-    sePuedeEnviar: nombres.length === 0 && sospechas.length === 0 && texto.trim() !== '',
+    datos,
+    sePuedeEnviar:
+      nombres.length === 0 &&
+      sospechas.length === 0 &&
+      datos.length === 0 &&
+      texto.trim() !== '',
   };
 }
 
