@@ -1,0 +1,157 @@
+.revision .volver {
+  background: none;
+  border: none;
+  padding: 0 0 10px;
+  font-family: inherit;
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--primario);
+  cursor: pointer;
+}
+
+.revision .ayuda {
+  font-size: 14px;
+  line-height: 1.55;
+  color: var(--secundario);
+  margin-top: 8px;
+}
+
+/* Lo que se envía, tal cual. Es lo primero que tiene que leerse. */
+.revision .envio {
+  margin-top: 16px;
+  padding: 16px;
+  border: 1px solid var(--borde);
+  border-radius: 14px;
+  background: var(--superficie);
+  font-size: 15px;
+  line-height: 1.75;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+.revision mark {
+  padding: 1px 5px;
+  border-radius: 6px;
+  background: var(--lila);
+  color: var(--lila-osc);
+  font-weight: 700;
+}
+
+.revision textarea {
+  margin-top: 16px;
+  padding: 15px;
+  border: 1px solid var(--primario);
+  border-radius: 14px;
+  background: var(--superficie);
+  color: var(--texto);
+  font-family: inherit;
+  font-size: 15px;
+  line-height: 1.75;
+  resize: none;
+}
+
+/* Un nombre reescrito a mano: no es un aviso, es un freno. */
+.revision .bloqueo {
+  margin-top: 16px;
+  padding: 13px 15px;
+  border-radius: 12px;
+  background: var(--rosa);
+  color: var(--rosa-osc);
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+.revision section {
+  margin-top: 22px;
+}
+
+.revision h2 {
+  font-size: 15px;
+  font-weight: 700;
+}
+
+.revision .sospechas ul,
+.revision .reemplazos ul {
+  list-style: none;
+  margin-top: 12px;
+}
+
+.revision .sospechas li {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+  padding: 12px 14px;
+  margin-bottom: 8px;
+  border-radius: 12px;
+  background: var(--durazno);
+}
+
+.revision .palabra {
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--durazno-osc);
+}
+
+.revision .decidir {
+  display: flex;
+  gap: 8px;
+}
+
+.revision .decidir button {
+  padding: 8px 12px;
+  border: none;
+  border-radius: 9px;
+  background: var(--durazno-osc);
+  color: #fff;
+  font-family: inherit;
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.revision .decidir .dejar {
+  background: var(--superficie);
+  color: var(--durazno-osc);
+}
+
+.revision .reemplazos li {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 9px 0;
+  border-bottom: 1px solid var(--borde);
+  font-size: 14px;
+}
+
+.revision .reemplazos li:last-child {
+  border-bottom: none;
+}
+
+.revision .antes {
+  flex: 1;
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.revision .flecha {
+  color: var(--secundario);
+}
+
+.revision .despues {
+  flex: 1;
+  min-width: 0;
+  font-weight: 700;
+  color: var(--lila-osc);
+}
+
+.revision .quitados {
+  display: block;
+  color: var(--secundario);
+  line-height: 1.5;
+}
+
+.revision .pie {
+  padding-bottom: 4px;
+}

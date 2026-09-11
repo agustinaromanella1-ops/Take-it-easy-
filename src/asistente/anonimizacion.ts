@@ -38,14 +38,32 @@ export interface TextoAnonimizado {
   datosQuitados: string[];
 }
 
-const CORREO = /\S+@\S+\.\S+/g;
-const ENLACE = /\b(?:https?:\/\/|www\.)\S+/gi;
+/**
+ * El final no puede ser "cualquier cosa que no sea un espacio": con eso, en
+ * "escribile a ana@correo.com, y llamala" la coma entra en la coincidencia y
+ * desaparece del texto que se envía junto con el correo.
+ */
+const CORREO = /[^\s@]+@[^\s@]+\.\p{L}{2,}/gu;
+const ENLACE = /\b(?:https?:\/\/|www\.)\S*[^\s.,;:!?)\]]/gi;
 const ARROBA = /(?<![\w@])@\w{2,}/g;
 /** Seis o más dígitos, con o sin separadores: documentos, teléfonos, matrículas. */
 const NUMERO_LARGO = /\b\d[\d.\-\s]{4,}\d\b/g;
 
 const ALIAS_DOCENTE = 'la docente';
 const ALIAS_ESCUELA = 'la escuela';
+
+/**
+ * Lo que queda en lugar de un dato que no viaja. La pantalla de revisión los
+ * resalta y usa `nombre` cuando la docente decide sacar una palabra marcada,
+ * así que viven acá y no repetidos en cada archivo.
+ */
+export const MARCADORES = {
+  correo: '[un correo]',
+  enlace: '[un enlace]',
+  numero: '[un número]',
+  usuario: '[un usuario]',
+  nombre: '[un nombre]',
+} as const;
 
 /**
  * Palabras que empiezan con mayúscula y no son nombres de persona. Sin esta
@@ -136,6 +154,12 @@ export interface SesionDeAnonimizacion {
    * Devuelve los nombres que encontró: si devuelve alguno, no se envía.
    */
   nombresQueQuedaron(texto: string): string[];
+  /**
+   * Las palabras que parecen un nombre que la app no conoce, sobre el texto
+   * que se enviaría. No crea alias ni toca el mapa, así que la pantalla de
+   * revisión puede llamarla en cada tecla mientras la docente edita.
+   */
+  sospechasDe(texto: string): string[];
 }
 
 export function crearSesionDeAnonimizacion(contexto: Contexto): SesionDeAnonimizacion {
@@ -230,10 +254,10 @@ export function crearSesionDeAnonimizacion(contexto: Contexto): SesionDeAnonimiz
     let resultado = texto;
 
     for (const [patron, marcador] of [
-      [CORREO, '[un correo]'],
-      [ENLACE, '[un enlace]'],
-      [NUMERO_LARGO, '[un número]'],
-      [ARROBA, '[un usuario]'],
+      [CORREO, MARCADORES.correo],
+      [ENLACE, MARCADORES.enlace],
+      [NUMERO_LARGO, MARCADORES.numero],
+      [ARROBA, MARCADORES.usuario],
     ] as const) {
       resultado = resultado.replace(patron, (coincidencia) => {
         quitados.push(coincidencia.trim());
@@ -286,6 +310,10 @@ export function crearSesionDeAnonimizacion(contexto: Contexto): SesionDeAnonimiz
         resultado = resultado.split(a).join(originalPorAlias.get(a)!);
       }
       return resultado;
+    },
+
+    sospechasDe(texto: string): string[] {
+      return buscarSospechas(texto);
     },
 
     nombresQueQuedaron(texto: string): string[] {

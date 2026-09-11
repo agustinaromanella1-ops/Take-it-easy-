@@ -379,6 +379,16 @@ Esta pantalla no se puede desactivar, no tiene "no volver a mostrar" y no
 se saltea cuando el envío se dispara desde otra pantalla. Su acción
 primaria es *Enviar*; la secundaria, *Volver*.
 
+Decidir sobre una palabra marcada es elegir entre **sacarla** —queda
+`[un nombre]` en su lugar— y **dejarla**, declarando que no es un nombre.
+Mientras quede una sin decidir, *Enviar* no está disponible: una marca que
+se puede ignorar es una marca que se ignora.
+
+Un nombre que el índice sí conoce no se ofrece como duda. Preguntar si es
+un nombre, al lado del cartel que dice que lo es, invita a contestar que no
+y a creer que con eso se destraba. Para ése la única salida es sacarlo del
+texto.
+
 **d. Segundo escaneo defensivo.** Justo antes del envío, sobre el payload
 final —ya con las ediciones del docente— se vuelve a correr la sustitución
 del paso (a). Si aparece un nombre conocido, **el envío no ocurre**: se

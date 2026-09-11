@@ -119,6 +119,14 @@ describe('dos alumnos con el mismo apellido', () => {
 });
 
 describe('datos que no se guardan ni se envían', () => {
+  it('no se lleva puesta la puntuación que sigue al dato', () => {
+    const { texto } = crearSesionDeAnonimizacion({ alumnos: [] }).anonimizar(
+      'Escribile a ana@correo.com, y si no mirá www.escuela.edu.ar.',
+    );
+
+    expect(texto).toBe('Escribile a [un correo], y si no mirá [un enlace].');
+  });
+
   it('quita correos, teléfonos y enlaces', () => {
     const { texto, datosQuitados } = sesion().anonimizar(
       'Escribir a familia@ejemplo.com o llamar al 11 5555 4444, y ver www.escuela.edu.ar',
