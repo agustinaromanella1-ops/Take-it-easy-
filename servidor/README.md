@@ -82,9 +82,22 @@ así, y no texto pelado, porque un rechazo o una falla tienen que poder llegar
 en el medio de la respuesta, y no hay forma de distinguirlos si lo único que
 viaja son caracteres sueltos.
 
-## Lo que cuesta
+## Lo que cuesta, y los dos topes
 
 Cada consulta paga los tokens que usa. El modelo es `claude-opus-5` con
 esfuerzo bajo, que para redactar una observación o un mensaje es lo que
-corresponde. El tope por instalación está en 60 consultas por hora, y se
-cambia en `src/limite.ts`.
+corresponde.
+
+Hay dos topes, y hacen falta los dos:
+
+- **60 consultas por hora por instalación**, en `src/limite.ts`.
+- **300 consultas por día para todo el proxy junto**, que se cambia con la
+  variable de entorno `TOPE_DIARIO`.
+
+El segundo existe porque la dirección del proxy viaja dentro del APK, el APK
+es público, y el token de instalación lo genera el teléfono: cualquiera que
+baje el archivo puede inventarse un token nuevo por consulta y saltearse el
+primer tope. El techo diario no impide eso; le pone un límite a la factura.
+
+Los dos topes viven en memoria y se pierden al reiniciar. Es a propósito: el
+proxy no tiene base de datos. Son topes de gasto, no un control de acceso.

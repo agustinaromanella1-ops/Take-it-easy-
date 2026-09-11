@@ -14,6 +14,7 @@ const cliente = clave ? new Anthropic({ apiKey: clave }) : null;
 
 crearServidor({
   responder: cliente ? (texto, alTexto) => responder(cliente, texto, alTexto) : null,
+  topeDiario: process.env.TOPE_DIARIO ? Number(process.env.TOPE_DIARIO) : undefined,
 }).listen(PUERTO, () => {
   console.log(`Escuchando en ${PUERTO}. Clave: ${cliente ? 'configurada' : 'sin configurar'}.`);
 });

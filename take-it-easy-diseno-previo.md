@@ -531,10 +531,17 @@ llegar en el medio de la respuesta, y entre caracteres sueltos no hay forma de
 distinguirlos. Un error después del primer trozo llega igual, y lo que ya se
 escribió queda en pantalla.
 
-El tope de uso por instalación vive en memoria y se pierde al reiniciar. Es a
-propósito: el proxy no tiene base de datos (4.2), y esto es un tope de gasto,
-no un control de acceso. Lo que protege es la cuenta de la docente, no los
-datos, que nunca llegan al proxy.
+Los topes de uso viven en memoria y se pierden al reiniciar. Es a propósito:
+el proxy no tiene base de datos (4.2), y son topes de gasto, no un control de
+acceso. Lo que protegen es la cuenta de la docente, no los datos, que nunca
+llegan al proxy.
+
+Son dos, y hacen falta los dos. El de instalación evita que un teléfono se
+desboque. El diario, que cubre todo el proxy junto, existe porque la dirección
+del proxy viaja dentro del APK y el APK es público: el token de instalación lo
+genera el teléfono, así que cualquiera puede inventarse uno nuevo por consulta
+y saltearse el primero. El techo diario no impide el abuso; le pone un límite
+a la factura, que es lo que se puede hacer sin cuentas ni login.
 
 ### 4.7 Sin red
 

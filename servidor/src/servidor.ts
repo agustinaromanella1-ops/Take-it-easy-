@@ -24,10 +24,20 @@ export type Responder =
 
 export interface Opciones {
   responder: Responder;
+  /** Tope por instalación. */
   limite?: Limite;
+  /**
+   * Tope de todo el proxy junto, por día. El de instalación no alcanza: la
+   * dirección del proxy viaja dentro del APK, el APK es público, y el token de
+   * instalación lo genera el teléfono, así que cualquiera puede inventarse uno
+   * nuevo por consulta. Esto no impide el abuso; le pone techo a la factura.
+   */
+  topeDiario?: number;
   /** Para poder mirar en un test qué se registró, y qué no. */
   anotarEn?: (entrada: Entrada) => void;
 }
+
+export const TOPE_DIARIO = 300;
 
 function cabeceras(res: ServerResponse) {
   // La app corre dentro de un WebView, así que su origen no es un dominio.
@@ -54,8 +64,12 @@ function cerrarCon(res: ServerResponse, motivo: Motivo) {
   res.end();
 }
 
-export function crearServidor({ responder, limite, anotarEn }: Opciones): Server {
+export function crearServidor({ responder, limite, topeDiario, anotarEn }: Opciones): Server {
   const limitador = crearLimitador(limite);
+  const delDia = crearLimitador({
+    porVentana: topeDiario ?? TOPE_DIARIO,
+    ventanaMs: 24 * 60 * 60 * 1000,
+  });
   // El mapa del limitador crece con cada instalación que consulta una vez y
   // nunca más; esto lo poda sin necesidad de una base de datos.
   const podar = setInterval(() => limitador.limpiar(), 10 * 60 * 1000);
@@ -119,10 +133,17 @@ export function crearServidor({ responder, limite, anotarEn }: Opciones): Server
       return;
     }
 
-    const veredicto = limitador.consultar(pedido.instalacion);
-    if (!veredicto.permitido) {
+    if (!limitador.consultar(pedido.instalacion).permitido) {
       cerrarCon(res, 'limite');
       anotar(429, 'limite');
+      return;
+    }
+
+    // El techo de la factura. Se cuenta después del tope por instalación para
+    // que una sola instalación desbocada no se lleve puesto el día de todas.
+    if (!delDia.consultar('todas').permitido) {
+      cerrarCon(res, 'tope-del-dia');
+      anotar(429, 'tope-del-dia');
       return;
     }
 

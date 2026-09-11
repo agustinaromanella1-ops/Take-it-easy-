@@ -15,7 +15,7 @@ export type Evento =
   | { tipo: 'fin' }
   | { tipo: 'error'; motivo: Motivo; mensaje: string };
 
-export type Motivo = 'rechazo' | 'limite' | 'sin-clave' | 'pedido' | 'falla';
+export type Motivo = 'rechazo' | 'limite' | 'tope-del-dia' | 'sin-clave' | 'pedido' | 'falla';
 
 export function aLinea(evento: Evento): string {
   return `${JSON.stringify(evento)}\n`;
@@ -25,6 +25,7 @@ export function aLinea(evento: Evento): string {
 export const MENSAJES: Record<Motivo, string> = {
   rechazo: 'El asistente no pudo responder a esta consulta. Probá escribirla de otra manera.',
   limite: 'Hiciste muchas consultas seguidas. Probá de nuevo en un rato.',
+  'tope-del-dia': 'El asistente llegó a su tope de consultas por hoy. Volvé mañana.',
   'sin-clave': 'El asistente no está configurado.',
   pedido: 'La consulta no llegó bien. Probá de nuevo.',
   falla: 'No se pudo hablar con el asistente. Fijate si tenés internet y probá de nuevo.',

@@ -122,6 +122,30 @@ describe('el límite de uso', () => {
     expect(eventos[0]).toMatchObject({ tipo: 'error', motivo: 'limite' });
   });
 
+  it('hay además un techo diario para todo el proxy junto', async () => {
+    // Sin esto, inventarse un token de instalación nuevo por consulta alcanza
+    // para gastar la cuenta: la dirección del proxy viaja dentro del APK.
+    const { url } = await montar({ topeDiario: 2 });
+
+    await consultar(url, { texto: 'una' }, 'instalacion-uno');
+    await consultar(url, { texto: 'dos' }, 'instalacion-dos');
+    const { eventos } = await consultar(url, { texto: 'tres' }, 'instalacion-tres');
+
+    expect(eventos[0]).toMatchObject({ tipo: 'error', motivo: 'tope-del-dia' });
+  });
+
+  it('una instalación desbocada no se lleva puesto el día de las demás', async () => {
+    const { url } = await montar({ limite: { porVentana: 1, ventanaMs: 60_000 }, topeDiario: 2 });
+
+    await consultar(url, { texto: 'una' }, 'la-desbocada');
+    await consultar(url, { texto: 'dos' }, 'la-desbocada');
+    await consultar(url, { texto: 'tres' }, 'la-desbocada');
+
+    // Gastó un lugar del día, no tres: los otros dos los frenó su propio tope.
+    const { eventos } = await consultar(url, { texto: 'otra' }, 'otra-instalacion');
+    expect(eventos.at(-1)).toEqual({ tipo: 'fin' });
+  });
+
   it('el límite es por instalación, no del servidor entero', async () => {
     const { url } = await montar({ limite: { porVentana: 1, ventanaMs: 60_000 } });
 

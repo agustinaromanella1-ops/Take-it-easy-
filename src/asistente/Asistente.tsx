@@ -1,4 +1,4 @@
-import { useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 
 import { useAtras } from '../hooks/useAtras';
 import { useBorrador } from '../hooks/useBorrador';
@@ -47,7 +47,17 @@ export default function Asistente() {
   const [conAlias, setConAlias] = useState('');
   const [errorDeEnvio, setErrorDeEnvio] = useState<string | null>(null);
   const [esperando, setEsperando] = useState(false);
+  const [demorado, setDemorado] = useState(false);
   const enCurso = useRef<AbortController | null>(null);
+
+  // Un servidor que se apaga cuando no se usa tarda en despertar, y una
+  // pantalla quieta parece rota. Decir por qué tarda no la hace más rápida,
+  // pero evita que se cierre la app creyendo que se colgó.
+  useEffect(() => {
+    if (!esperando) return;
+    const aviso = setTimeout(() => setDemorado(true), 6000);
+    return () => clearTimeout(aviso);
+  }, [esperando]);
 
   function volverAEscribir() {
     enCurso.current?.abort();
@@ -98,6 +108,7 @@ export default function Asistente() {
     setConAlias('');
     setErrorDeEnvio(null);
     setEsperando(true);
+    setDemorado(false);
 
     const { error } = await preguntar(filtrado, setConAlias, corte.signal);
 
@@ -133,7 +144,19 @@ export default function Asistente() {
         </header>
 
         {!vacia && <p className="respuesta">{conNombres}</p>}
-        {esperando && vacia && <p className="ayuda">Pensando…</p>}
+
+        {esperando && vacia && (
+          <>
+            <p className="ayuda">Pensando…</p>
+            {demorado && (
+              <p className="ayuda">
+                La primera consulta después de un rato tiene que despertar el
+                servidor, y eso puede tardar hasta un minuto. Las siguientes
+                salen enseguida.
+              </p>
+            )}
+          </>
+        )}
 
         {errorDeEnvio && (
           <p className="bloqueo">
