@@ -57,6 +57,11 @@ captures/
 # no hay forma de volver a publicar una actualización de esta app.
 *.jks
 *.keystore
+# La única excepción: la clave con la que se firman los APK de prueba. Tiene
+# que ser siempre la misma para que cada versión nueva se instale encima de la
+# anterior sin borrar los datos del teléfono. No sirve para publicar en Play
+# Store y no da acceso a nada: sólo firma las pruebas que se instalan a mano.
+!app/prueba.keystore
 
 # External native build folder generated in Android Studio 2.2 and later
 .externalNativeBuild

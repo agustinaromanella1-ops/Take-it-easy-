@@ -17,19 +17,17 @@ android {
         }
     }
     // La firma del APK tiene que ser siempre la misma: si cambia, Android
-    // trata cada compilación como una app distinta y no la deja instalar
-    // encima de la anterior. El archivo no está en el repositorio, lo arma
-    // la compilación automática; sin él se usa la firma de siempre de Gradle,
-    // que alcanza para probar en la computadora.
+    // trata cada compilación como una app distinta, se niega a instalarla
+    // encima de la anterior y obliga a desinstalar, lo que borra todos los
+    // datos del teléfono. Por eso esta clave está en el repositorio a
+    // propósito. No es la clave de Play Store: ésa se genera aparte, nunca
+    // se versiona, y si se filtra no hay forma de recuperarla.
     signingConfigs {
         debug {
-            def clave = file('prueba.keystore')
-            if (clave.exists()) {
-                storeFile clave
-                storePassword System.getenv('CLAVE_DE_FIRMA') ?: 'apk-de-prueba'
-                keyAlias 'prueba'
-                keyPassword System.getenv('CLAVE_DE_FIRMA') ?: 'apk-de-prueba'
-            }
+            storeFile file('prueba.keystore')
+            storePassword 'apk-de-prueba'
+            keyAlias 'prueba'
+            keyPassword 'apk-de-prueba'
         }
     }
     buildTypes {
