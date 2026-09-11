@@ -394,6 +394,11 @@ Conviene tenerlo en cuenta al elegir manejo de estado y reporte de errores:
 un store persistido o un crash reporter que capture el estado completo
 rompen esta regla sin que nadie escriba una línea de código maliciosa.
 
+Por eso la sesión **falla al serializarse**: su `toJSON` tira un error. Si
+algún día un store con persistencia, un log o un reporte de fallo intenta
+guardarla, rompe fuerte en vez de escribir nombres de alumnos en disco sin
+que nadie se entere.
+
 ### 3.5 La respuesta
 
 La respuesta de la IA vuelve con los alias. Se re-personaliza
