@@ -78,6 +78,63 @@ describe('sustitución de nombres conocidos', () => {
     expect(texto).toBe('la docente va a corregir el viernes.');
   });
 
+  it('una escuela con número se reemplaza entera, que por palabras no se reemplazaba', () => {
+    const { texto } = sesion().anonimizar('Doy clases en la Escuela N.º 12 desde marzo.');
+
+    expect(texto).toBe('Doy clases en la escuela desde marzo.');
+  });
+
+  it('no duplica el artículo que ya estaba escrito', () => {
+    const { texto } = sesion().anonimizar('La Escuela N.º 12 queda cerca.');
+
+    expect(texto).not.toContain('la la');
+    expect(texto).toBe('la escuela queda cerca.');
+  });
+
+  it('la encuentra aunque el número se escriba de otra forma', () => {
+    for (const escrita of ['Escuela Nº 12', 'Escuela N 12', 'Escuela 12']) {
+      expect(sesion().anonimizar(`Vengo de la ${escrita}.`).texto).toBe(
+        'Vengo de la escuela.',
+      );
+    }
+  });
+
+  it('un número suelto no es la escuela', () => {
+    const { texto } = sesion().anonimizar('Tengo 12 alumnos en el curso.');
+
+    expect(texto).toBe('Tengo 12 alumnos en el curso.');
+  });
+
+  it('nombrar la escuela antes que a un alumno no le corre la letra', () => {
+    const { texto } = sesion().anonimizar('En la Escuela N.º 12, Malena faltó.');
+
+    expect(texto).toBe('En la escuela, Estudiante A faltó.');
+  });
+
+  it('la escuela vuelve a su nombre en la respuesta', () => {
+    const s = sesion();
+    s.anonimizar('Doy clases en la Escuela N.º 12.');
+
+    expect(s.rePersonalizar('Convendría hablarlo en la escuela.')).toBe(
+      'Convendría hablarlo en la Escuela N.º 12.',
+    );
+  });
+
+  it('una escuela con nombre propio se reemplaza entera, con artículo y todo', () => {
+    const s = () => sesion({ escuelas: ['Colegio San Martín'] });
+
+    expect(s().anonimizar('Estoy en el Colegio San Martín.').texto).toBe('Estoy en la escuela.');
+    expect(s().anonimizar('Vengo del Colegio San Martín.').texto).toBe('Vengo de la escuela.');
+  });
+
+  it('de una mención parcial saca al menos la parte que identifica', () => {
+    // "San" es partícula y no entra al índice, así que sola no alcanza para
+    // reconocer la frase; lo que sí identifica se va igual.
+    const { texto } = sesion({ escuelas: ['Colegio San Martín'] }).anonimizar('Estoy en San Martín.');
+
+    expect(texto).not.toContain('Martín');
+  });
+
   it('el nombre de la escuela se reemplaza por su rol', () => {
     const { texto } = sesion({ escuelas: ['Belgrano'] }).anonimizar('Vamos a Belgrano el lunes.');
 

@@ -81,6 +81,26 @@ const MAYUSCULAS_ESPERABLES = new Set([
 
 const LETRAS = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
 
+/**
+ * Ruido ordinal alrededor del número de una escuela. Sin sacarlo, "Escuela
+ * N.º 12" y "Escuela Nº 12" son dos frases distintas y la guardada no
+ * coincide con la escrita.
+ */
+const ORDINAL = /^(?:n|no|nro|num|numero|nº|n°|º|°)$/;
+
+/**
+ * Los alias "la escuela" y "la docente" ya traen el artículo, y son femeninos.
+ * Sin esto, "la Escuela N.º 12" quedaría como "la la escuela", y "el Colegio
+ * San Martín" como "el la escuela".
+ */
+const DETERMINANTES = new Set([
+  'el', 'la', 'un', 'una', 'mi', 'tu', 'su', 'este', 'esta', 'ese', 'esa',
+  'nuestro', 'nuestra',
+]);
+
+/** "del Colegio" es "de el Colegio": se reemplaza el artículo, no la preposición. */
+const CONTRACCIONES: Record<string, string> = { del: 'de ', al: 'a ' };
+
 export function normalizar(texto: string): string {
   return texto.normalize('NFD').replace(/\p{Diacritic}/gu, '').toLowerCase();
 }
@@ -179,9 +199,27 @@ export function crearSesionDeAnonimizacion(contexto: Contexto): SesionDeAnonimiz
     ...(contexto.escuelas ?? []).flatMap(palabrasDe),
   ]);
 
+  /**
+   * Una escuela se busca como frase y no palabra por palabra. En "Escuela
+   * N.º 12" ninguna palabra identifica sola —"escuela" es común y "12" es un
+   * número cualquiera, que suelto reemplazaría "tengo 12 alumnos"—, así que
+   * por palabras no se sustituía nada y el nombre de la escuela viajaba
+   * entero. Las más largas primero, para que la más específica gane.
+   */
+  const frasesDeEscuela = (contexto.escuelas ?? [])
+    .map((nombre) => ({
+      nombre,
+      palabras: palabrasDe(nombre).filter((p) => !ORDINAL.test(p)),
+    }))
+    .filter((f) => f.palabras.length > 0)
+    .sort((a, b) => b.palabras.length - a.palabras.length);
+
   // El mapa que no puede salir de acá.
   const aliasPorClave = new Map<string, string>();
   const originalPorAlias = new Map<string, string>();
+  // Propio, y no el tamaño del mapa: si no, una escuela nombrada antes que un
+  // alumno empujaría al primer alumno a "Estudiante B".
+  let alumnosConAlias = 0;
 
   function aliasDe(clave: string, tipo: Tipo, original: string): string {
     const existente = aliasPorClave.get(clave);
@@ -192,7 +230,7 @@ export function crearSesionDeAnonimizacion(contexto: Contexto): SesionDeAnonimiz
         ? ALIAS_DOCENTE
         : tipo === 'escuela'
           ? ALIAS_ESCUELA
-          : `Estudiante ${LETRAS[aliasPorClave.size % LETRAS.length]}`;
+          : `Estudiante ${LETRAS[alumnosConAlias++ % LETRAS.length]}`;
 
     aliasPorClave.set(clave, alias);
     // El primero que aparece es el que vuelve al re-personalizar.
@@ -200,13 +238,64 @@ export function crearSesionDeAnonimizacion(contexto: Contexto): SesionDeAnonimiz
     return alias;
   }
 
+  /**
+   * Dónde termina la frase que empieza en `desde`, o `null` si no está. El
+   * ruido ordinal se saltea de los dos lados, así "Escuela N.º 12", "Escuela
+   * Nº 12" y "Escuela 12" son la misma escuela.
+   */
+  function finDeFrase(tokens: Token[], desde: number, palabras: string[]): number | null {
+    let k = 0;
+    let j = desde;
+    while (k < palabras.length) {
+      if (j >= tokens.length) return null;
+      if (ORDINAL.test(tokens[j].normalizada)) {
+        j += 1;
+        continue;
+      }
+      if (tokens[j].normalizada !== palabras[k]) return null;
+      j += 1;
+      k += 1;
+    }
+    return j - 1;
+  }
+
   function sustituirNombres(texto: string): { texto: string; sustituciones: Sustitucion[] } {
     const tokens = tokenizar(texto);
     const sustituciones: Sustitucion[] = [];
     const reemplazos: { inicio: number; fin: number; alias: string }[] = [];
 
+    function anotar(desde: number, hasta: number, clave: string, tipo: Tipo) {
+      const previa = tipo !== 'alumno' && desde > 0 ? tokens[desde - 1].normalizada : '';
+      const contraccion = CONTRACCIONES[previa];
+
+      // El artículo suelto entra en lo reemplazado, así "la escuela" vuelve a
+      // ser "la Escuela N.º 12" en la respuesta y no "Escuela N.º 12" pelada.
+      // La contracción no: de "del Colegio" se reemplaza "el Colegio" y queda
+      // la preposición.
+      const arranque = DETERMINANTES.has(previa) ? desde - 1 : desde;
+      const original = texto.slice(tokens[arranque].inicio, tokens[hasta].fin);
+      const alias = aliasDe(clave, tipo, original);
+
+      reemplazos.push({
+        inicio: contraccion ? tokens[desde - 1].inicio : tokens[arranque].inicio,
+        fin: tokens[hasta].fin,
+        alias: (contraccion ?? '') + alias,
+      });
+      sustituciones.push({ original, alias });
+    }
+
     let i = 0;
     while (i < tokens.length) {
+      const frase = frasesDeEscuela
+        .map((f) => ({ nombre: f.nombre, fin: finDeFrase(tokens, i, f.palabras) }))
+        .find((f) => f.fin !== null);
+
+      if (frase?.fin != null) {
+        anotar(i, frase.fin, `escuela:${frase.nombre}`, 'escuela');
+        i = frase.fin + 1;
+        continue;
+      }
+
       const candidatas = porPalabra.get(tokens[i].normalizada);
       if (!candidatas) {
         i += 1;
@@ -234,9 +323,7 @@ export function crearSesionDeAnonimizacion(contexto: Contexto): SesionDeAnonimiz
         elegidas.length === 1 ? elegidas[0].clave : `ambiguo:${normalizar(original)}`;
       const tipo = elegidas.length === 1 ? elegidas[0].tipo : 'alumno';
 
-      const alias = aliasDe(clave, tipo, original);
-      reemplazos.push({ inicio: tokens[i].inicio, fin: tokens[fin].fin, alias });
-      sustituciones.push({ original, alias });
+      anotar(i, fin, clave, tipo);
 
       i = fin + 1;
     }

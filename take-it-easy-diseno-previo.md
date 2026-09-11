@@ -350,6 +350,20 @@ La coincidencia es **por palabra completa**, con límites de palabra Unicode
 — nunca por subcadena, para no romper palabras que contienen un nombre
 adentro.
 
+La escuela es la excepción: se busca **como frase**, no palabra por palabra.
+En "Escuela N.º 12" ninguna palabra identifica sola —"escuela" es común y
+"12" es un número cualquiera, que suelto convertiría "tengo 12 alumnos" en
+"tengo la escuela alumnos"—, así que por palabras no se sustituía nada y el
+nombre de la escuela viajaba entero. El ruido ordinal se saltea de los dos
+lados, de modo que "Escuela N.º 12", "Escuela Nº 12" y "Escuela 12" son la
+misma escuela. Una mención parcial que empiece con una partícula ("San
+Martín" por "Colegio San Martín") sólo se resuelve por palabras, y deja la
+partícula escrita: se pierde prolijidad, no privacidad.
+
+Los alias `la docente` y `la escuela` ya traen artículo, así que se comen el
+que venía pegado: "la Escuela N.º 12" queda como "la escuela" y no como "la
+la escuela", y "del Colegio San Martín" como "de la escuela".
+
 ### 3.3 Pipeline
 
 Cuatro pasos, en este orden, sin saltear ninguno:
