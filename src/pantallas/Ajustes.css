@@ -1,5 +1,12 @@
 .ajustes section {
   margin-top: 26px;
+  padding-top: 18px;
+  border-top: 1px solid var(--borde);
+}
+
+.ajustes section:first-of-type {
+  border-top: none;
+  padding-top: 0;
 }
 
 .ajustes h2 {
@@ -17,6 +24,26 @@
   color: var(--secundario);
 }
 
+.ajustes .aviso {
+  margin-top: 10px;
+  padding: 11px 13px;
+  background: var(--durazno);
+  color: var(--durazno-osc);
+  border-radius: 12px;
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+.ajustes .error {
+  margin-top: 10px;
+  padding: 11px 13px;
+  background: var(--rosa);
+  color: var(--rosa-osc);
+  border-radius: 12px;
+  font-size: 13px;
+  line-height: 1.5;
+}
+
 .ajustes .secundario {
   margin-top: 12px;
   width: auto;
@@ -26,12 +53,38 @@
   background: var(--superficie);
 }
 
-.ajustes .pendiente {
-  margin-top: 10px;
-  padding: 11px 13px;
-  background: var(--durazno);
-  color: var(--durazno-osc);
+.ajustes .primario {
+  margin-top: 12px;
+}
+
+.ajustes .terciario {
+  margin-top: 2px;
+}
+
+.ajustes .hecho {
+  margin-top: 12px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 14px;
+  background: var(--texto);
+  color: #fff;
   border-radius: 12px;
-  font-size: 13px;
-  line-height: 1.5;
+  font-size: 14px;
+}
+
+.ajustes .hecho span {
+  flex: 1;
+}
+
+.ajustes .hecho button {
+  flex: none;
+  background: none;
+  border: none;
+  padding: 0;
+  font-family: inherit;
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--lila);
+  cursor: pointer;
 }

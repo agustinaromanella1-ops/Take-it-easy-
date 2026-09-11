@@ -305,6 +305,14 @@ El archivo contiene nombres reales de alumnos. Se guarda con el selector de
 archivos del sistema, donde la docente elige dónde ponerlo, y no en una
 carpeta pública ni en una ruta fija de la app.
 
+Restaurar **reemplaza** todo lo que hay: es la acción más destructiva de la
+app. Por eso, antes de reemplazar, la copia del estado actual queda guardada
+en la base, y restaurar se puede deshacer una vez. Es la única forma de que
+la regla de deshacer en lugar de confirmar valga también acá.
+
+Leer un archivo de una versión más nueva que la app se **rechaza** en vez de
+adivinar: importar a medias es peor que no importar.
+
 La copia de seguridad automática de Android queda **desactivada**
 (`android:allowBackup="false"`). Viene activada por defecto y subiría los
 datos de la app —la base con los nombres— a la cuenta de Google del

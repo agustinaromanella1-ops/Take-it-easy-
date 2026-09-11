@@ -69,6 +69,10 @@ export class BaseTakeItEasy extends Dexie {
   }
 }
 
+/** La versión del esquema que entiende esta app. La copia de seguridad la
+ *  guarda para poder rechazar un archivo de una versión más nueva. */
+export const VERSION_ESQUEMA = 3;
+
 export const db = new BaseTakeItEasy();
 
 export function nuevoId(): string {
