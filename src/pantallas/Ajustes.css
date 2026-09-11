@@ -1,0 +1,37 @@
+.ajustes section {
+  margin-top: 26px;
+}
+
+.ajustes h2 {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--secundario);
+  text-transform: uppercase;
+  letter-spacing: 0.6px;
+}
+
+.ajustes .detalle {
+  margin-top: 8px;
+  font-size: 15px;
+  line-height: 1.55;
+  color: var(--secundario);
+}
+
+.ajustes .secundario {
+  margin-top: 12px;
+  width: auto;
+  padding: 11px 16px;
+  border: 1px solid var(--borde);
+  border-radius: 12px;
+  background: var(--superficie);
+}
+
+.ajustes .pendiente {
+  margin-top: 10px;
+  padding: 11px 13px;
+  background: var(--durazno);
+  color: var(--durazno-osc);
+  border-radius: 12px;
+  font-size: 13px;
+  line-height: 1.5;
+}

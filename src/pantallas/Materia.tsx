@@ -4,12 +4,13 @@ import { DIAS, hoy } from '../fecha';
 import { bloquesDeMateria } from '../datos/bloques';
 import { darDeBaja, alumnosInscriptos } from '../datos/inscripciones';
 import {
-  archivarMateria,
   comoSeLlama,
   materia as buscarMateria,
   nombreDeEscuela,
 } from '../datos/materias';
 import type { Id } from '../datos/tipos';
+import Pista from '../instructivo/Pista';
+import { usePista } from '../instructivo/useInstructivo';
 import './Materia.css';
 
 interface Props {
@@ -36,6 +37,9 @@ export default function Materia({
       bloques: await bloquesDeMateria(materiaId),
     };
   }, [materiaId]);
+
+  const sinAlumnos = datos !== undefined && datos.alumnos.length === 0;
+  const { mostrarPista, entendido } = usePista('agregar-alumnos', sinAlumnos);
 
   if (!datos?.materia) return <div className="pantalla materia" />;
 
@@ -89,6 +93,12 @@ export default function Materia({
       )}
 
       <div className="pie">
+        {mostrarPista && (
+          <Pista
+            texto="Pegá acá la lista del curso: se dan de alta y quedan inscriptos en un paso."
+            onEntendido={entendido}
+          />
+        )}
         {alumnos.length > 0 && (
           <button className="primario" onClick={tomarAsistencia}>
             Tomar asistencia
@@ -99,15 +109,6 @@ export default function Materia({
           onClick={agregarAlumnos}
         >
           Agregar alumnos
-        </button>
-        <button
-          className="terciario"
-          onClick={async () => {
-            await archivarMateria(materiaId);
-            volver();
-          }}
-        >
-          Archivar
         </button>
       </div>
     </div>

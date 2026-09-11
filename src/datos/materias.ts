@@ -79,6 +79,29 @@ export async function recuperarMateria(id: Id): Promise<void> {
   await db.materias.update(id, { archivada: false });
 }
 
+/**
+ * Deshacer el alta de una materia recién creada. Sólo borra si está vacía: si
+ * ya tiene alumnos, clases o notas, deshacer se llevaría puesto trabajo real y
+ * para eso está archivar.
+ */
+export async function deshacerCreacion(id: Id): Promise<boolean> {
+  return db.transaction(
+    'rw',
+    db.materias, db.inscripciones, db.clasesSesion, db.evaluaciones, db.bloquesHorario,
+    async () => {
+      const tieneAlgo =
+        (await db.inscripciones.where('materiaId').equals(id).count()) > 0 ||
+        (await db.clasesSesion.where('materiaId').equals(id).count()) > 0 ||
+        (await db.evaluaciones.where('materiaId').equals(id).count()) > 0;
+      if (tieneAlgo) return false;
+
+      await db.bloquesHorario.where('materiaId').equals(id).delete();
+      await db.materias.delete(id);
+      return true;
+    },
+  );
+}
+
 export function materia(id: Id): Promise<Materia | undefined> {
   return db.materias.get(id);
 }

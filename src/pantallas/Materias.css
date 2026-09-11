@@ -37,23 +37,16 @@
 }
 
 .materias .materia {
-  width: 100%;
+  flex: 1;
+  min-width: 0;
   text-align: left;
-  background: var(--superficie);
-  border: 1px solid var(--borde);
-  border-left: 5px solid var(--borde);
-  border-radius: 16px;
-  padding: 14px 16px;
+  background: none;
+  border: none;
+  padding: 14px 8px 14px 16px;
   font-family: inherit;
   cursor: pointer;
   display: block;
 }
-
-.materias .materia.lila { border-left-color: var(--lila); }
-.materias .materia.rosa { border-left-color: var(--rosa); }
-.materias .materia.durazno { border-left-color: var(--durazno); }
-.materias .materia.celeste { border-left-color: var(--celeste); }
-.materias .materia.noche { border-left-color: var(--noche); }
 
 .materias .materia .titulo {
   display: block;
@@ -200,4 +193,65 @@
   color: var(--primario);
   cursor: pointer;
   flex: none;
+}
+
+.materias .fila {
+  display: flex;
+  align-items: stretch;
+  gap: 0;
+  background: var(--superficie);
+  border: 1px solid var(--borde);
+  border-left: 5px solid var(--borde);
+  border-radius: 16px;
+  overflow: hidden;
+}
+
+.materias .fila.lila { border-left-color: var(--lila); }
+.materias .fila.rosa { border-left-color: var(--rosa); }
+.materias .fila.durazno { border-left-color: var(--durazno); }
+.materias .fila.celeste { border-left-color: var(--celeste); }
+.materias .fila.noche { border-left-color: var(--noche); }
+
+/* Archivar vive acá y no en la ficha: una materia recién creada no tiene nada
+   que archivar, y verlo ahí hacía dudar de si había quedado guardada. */
+.materias .fila .archivar {
+  flex: none;
+  align-self: center;
+  margin-right: 14px;
+  padding: 8px 4px;
+  background: none;
+  border: none;
+  font-family: inherit;
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--secundario);
+  cursor: pointer;
+}
+
+.materias .guardada {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 10px;
+  padding: 12px 14px;
+  background: var(--texto);
+  color: #fff;
+  border-radius: 12px;
+  font-size: 14px;
+}
+
+.materias .guardada span {
+  flex: 1;
+}
+
+.materias .guardada button {
+  flex: none;
+  background: none;
+  border: none;
+  padding: 0;
+  font-family: inherit;
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--lila);
+  cursor: pointer;
 }

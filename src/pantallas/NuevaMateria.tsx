@@ -19,7 +19,12 @@ interface Formulario {
 
 const VACIO: Formulario = { nombre: '', anio: '', division: '', escuela: '', color: 'lila' };
 
-export default function NuevaMateria({ volver }: { volver: () => void }) {
+interface Props {
+  volver: () => void;
+  alCrear: (id: string, nombre: string) => void;
+}
+
+export default function NuevaMateria({ volver, alCrear }: Props) {
   const { valor, setValor, limpiar, listo } = useBorrador<Formulario>('materia-nueva', VACIO);
   const escuelas = useLiveQuery(() => db.escuelas.toArray(), [], []);
   const [guardando, setGuardando] = useState(false);
@@ -36,13 +41,14 @@ export default function NuevaMateria({ volver }: { volver: () => void }) {
     // distinguir después.
     if (guardando) return;
     setGuardando(true);
-    await crearMateria({
+    const id = await crearMateria({
       nombre: valor.nombre,
       anio: valor.anio,
       division: valor.division,
       escuela: valor.escuela,
       colorPastel: valor.color,
     });
+    alCrear(id, `${valor.nombre.trim()} · ${valor.anio.trim()}.º ${valor.division.trim()}`);
     limpiar();
     volver();
   }

@@ -1,7 +1,10 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 
 import { escucharBotonAtras } from './nativo/botonAtras';
+import Intro from './instructivo/Intro';
+import { useIntro } from './instructivo/useInstructivo';
 import type { Id } from './datos/tipos';
+import Ajustes from './pantallas/Ajustes';
 import Asistencia from './pantallas/Asistencia';
 import CargarAlumnos from './pantallas/CargarAlumnos';
 import Horario from './pantallas/Horario';
@@ -14,6 +17,7 @@ import './App.css';
 type Pantalla =
   | { nombre: 'hoy' }
   | { nombre: 'materias' }
+  | { nombre: 'ajustes' }
   | { nombre: 'materia-nueva' }
   | { nombre: 'materia'; materiaId: Id }
   | { nombre: 'alumnos'; materiaId: Id }
@@ -22,6 +26,9 @@ type Pantalla =
 
 export default function App() {
   const [pila, setPila] = useState<Pantalla[]>([{ nombre: 'hoy' }]);
+  const { mostrarIntro, terminarIntro, volverAMostrar } = useIntro();
+  const [reciencreada, setReciencreada] = useState<{ id: Id; nombre: string } | undefined>();
+  const olvidarReciencreada = useCallback(() => setReciencreada(undefined), []);
   const actual = pila[pila.length - 1];
 
   // El listener del botón atrás se registra una sola vez, así que no puede
@@ -42,11 +49,11 @@ export default function App() {
   // Vuelve por la pila; sólo cierra la app cuando ya no queda a dónde volver.
   useEffect(() => escucharBotonAtras(volver), [volver]);
 
-  function seccion(nombre: 'hoy' | 'materias') {
+  function seccion(nombre: 'hoy' | 'materias' | 'ajustes') {
     setPila([{ nombre }]);
   }
 
-  const enHoy = actual.nombre === 'hoy';
+  if (mostrarIntro) return <Intro terminar={terminarIntro} />;
 
   return (
     <div className="app">
@@ -63,10 +70,21 @@ export default function App() {
         <Materias
           abrir={(materiaId) => ir({ nombre: 'materia', materiaId })}
           crear={() => ir({ nombre: 'materia-nueva' })}
+          reciencreada={reciencreada}
+          olvidarReciencreada={olvidarReciencreada}
         />
       )}
 
-      {actual.nombre === 'materia-nueva' && <NuevaMateria volver={volver} />}
+      {actual.nombre === 'materia-nueva' && (
+        <NuevaMateria
+          volver={volver}
+          alCrear={(id, nombre) => setReciencreada({ id, nombre })}
+        />
+      )}
+
+      {actual.nombre === 'ajustes' && (
+        <Ajustes verInstructivo={volverAMostrar} />
+      )}
 
       {actual.nombre === 'materia' && (
         <Materia
@@ -95,11 +113,23 @@ export default function App() {
       )}
 
       <nav>
-        <button className={enHoy ? 'activa' : undefined} onClick={() => seccion('hoy')}>
+        <button
+          className={actual.nombre === 'hoy' ? 'activa' : undefined}
+          onClick={() => seccion('hoy')}
+        >
           Hoy
         </button>
-        <button className={enHoy ? undefined : 'activa'} onClick={() => seccion('materias')}>
+        <button
+          className={actual.nombre === 'ajustes' || actual.nombre === 'hoy' ? undefined : 'activa'}
+          onClick={() => seccion('materias')}
+        >
           Materias
+        </button>
+        <button
+          className={actual.nombre === 'ajustes' ? 'activa' : undefined}
+          onClick={() => seccion('ajustes')}
+        >
+          Ajustes
         </button>
       </nav>
     </div>

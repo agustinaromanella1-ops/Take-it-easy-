@@ -136,3 +136,9 @@ export interface Borrador {
   contenido: unknown;
   guardadoEn: Instante;
 }
+
+/** Preferencias de la app: qué instructivo ya se vio, y lo que venga. */
+export interface Preferencia {
+  clave: string;
+  valor: unknown;
+}

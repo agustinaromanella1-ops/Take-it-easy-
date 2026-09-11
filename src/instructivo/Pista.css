@@ -1,0 +1,43 @@
+.pista {
+  position: relative;
+  margin-bottom: 10px;
+  padding: 13px 14px;
+  background: var(--lila);
+  color: var(--lila-osc);
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font-size: 14px;
+  line-height: 1.45;
+}
+
+/* El piquito que la ata al botón de abajo. */
+.pista::after {
+  content: '';
+  position: absolute;
+  bottom: -6px;
+  left: 26px;
+  width: 12px;
+  height: 12px;
+  background: var(--lila);
+  transform: rotate(45deg);
+}
+
+.pista p {
+  flex: 1;
+}
+
+.pista button {
+  flex: none;
+  background: none;
+  border: none;
+  padding: 0;
+  font-family: inherit;
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--lila-osc);
+  cursor: pointer;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
