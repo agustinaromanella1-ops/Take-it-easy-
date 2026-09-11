@@ -6,6 +6,7 @@ import { marcarAsistencia } from './asistencia';
 import {
   agregarBloque,
   estadoDeClase,
+  type ClaseDeHoy,
   bloqueSugerido,
   bloquesDeMateria,
   clasesDelDia,
@@ -111,7 +112,7 @@ describe('clases del día', () => {
 });
 
 describe('estado de una clase', () => {
-  const base = { materia: {}, bloque: {} } as never;
+  const base = { materia: {}, bloque: {} } as unknown as ClaseDeHoy;
 
   it('sin alumnos no invita a tomar asistencia', () => {
     expect(estadoDeClase({ ...base, registrados: 0, inscriptos: 0 })).toMatchObject({
