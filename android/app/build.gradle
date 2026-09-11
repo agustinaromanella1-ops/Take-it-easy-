@@ -16,6 +16,22 @@ android {
             ignoreAssetsPattern = '!.svn:!.git:!.ds_store:!*.scc:.*:!CVS:!thumbs.db:!picasa.ini:!*~'
         }
     }
+    // La firma del APK tiene que ser siempre la misma: si cambia, Android
+    // trata cada compilación como una app distinta y no la deja instalar
+    // encima de la anterior. El archivo no está en el repositorio, lo arma
+    // la compilación automática; sin él se usa la firma de siempre de Gradle,
+    // que alcanza para probar en la computadora.
+    signingConfigs {
+        debug {
+            def clave = file('prueba.keystore')
+            if (clave.exists()) {
+                storeFile clave
+                storePassword System.getenv('CLAVE_DE_FIRMA') ?: 'apk-de-prueba'
+                keyAlias 'prueba'
+                keyPassword System.getenv('CLAVE_DE_FIRMA') ?: 'apk-de-prueba'
+            }
+        }
+    }
     buildTypes {
         release {
             minifyEnabled false

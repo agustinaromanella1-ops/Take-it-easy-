@@ -47,12 +47,28 @@ jobs:
       # runner nuevo esa clave es distinta cada vez, y Android ve cada
       # compilación como una app ajena: al instalarla encima avisa "conflicto
       # con un paquete" y obliga a desinstalar, lo que borra todos los datos
-      # del teléfono. Guardarla hace que todas las versiones se firmen igual.
+      # del teléfono. Por eso la clave se genera una sola vez y se reusa.
+      #
+      # No se versiona: se guarda entre compilaciones y el repositorio la
+      # ignora. No es la clave de Play Store, que se genera aparte.
       - name: Reusar la clave de firma de siempre
         uses: actions/cache@v4
         with:
-          path: ~/.android/debug.keystore
+          path: android/app/prueba.keystore
           key: clave-de-firma-de-prueba
+
+      - name: Crear la clave la primera vez
+        run: |
+          if [ ! -f android/app/prueba.keystore ]; then
+            keytool -genkeypair -noprompt \
+              -keystore android/app/prueba.keystore \
+              -alias prueba -keyalg RSA -keysize 2048 -validity 10000 \
+              -storepass "$CLAVE" -keypass "$CLAVE" \
+              -dname "CN=Take It Easy (APK de prueba), O=Take It Easy, C=AR"
+          fi
+          test -f android/app/prueba.keystore
+        env:
+          CLAVE: apk-de-prueba
 
       - name: Compilar el APK
         working-directory: android
