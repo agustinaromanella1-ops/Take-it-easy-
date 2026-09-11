@@ -33,6 +33,11 @@ jobs:
 
       - name: Armar la web app
         run: npm run build
+        env:
+          # Sin esta variable el asistente avisa que no está conectado, y el
+          # resto de la app funciona igual. Se configura en Settings →
+          # Secrets and variables → Actions → Variables.
+          VITE_ASISTENTE_URL: ${{ vars.ASISTENTE_URL }}
 
       - name: Pasarla al proyecto Android
         run: npx cap sync android
@@ -64,3 +69,27 @@ jobs:
               --title "APK de prueba" \
               --notes "Versión para probar en el teléfono. Se reemplaza con cada cambio."
           fi
+
+  # El proxy no entra en el APK, pero se rompe igual si nadie lo mira.
+  revisar-el-servidor:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: servidor
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: servidor/package-lock.json
+
+      - run: npm ci
+
+      - name: Revisar que esté todo en orden
+        run: |
+          npm run lint
+          npx tsc -b
+          npx vitest run

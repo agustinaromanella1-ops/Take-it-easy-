@@ -48,3 +48,26 @@
   font-size: 14px;
   line-height: 1.5;
 }
+
+.asistente .respuesta {
+  margin-top: 16px;
+  padding: 16px;
+  border: 1px solid var(--borde);
+  border-radius: 14px;
+  background: var(--superficie);
+  font-size: 15px;
+  line-height: 1.75;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+.asistente .volver {
+  background: none;
+  border: none;
+  padding: 0 0 10px;
+  font-family: inherit;
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--primario);
+  cursor: pointer;
+}

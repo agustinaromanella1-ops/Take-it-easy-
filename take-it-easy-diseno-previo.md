@@ -523,7 +523,20 @@ sostiene una regla del proyecto:
 Los prompts se versionan con el código, en archivos propios, no incrustados
 entre la lógica de la pantalla.
 
-### 4.6 Sin red
+### 4.6 Cómo contesta
+
+Una línea de JSON por evento, a medida que el modelo escribe: `texto`, `fin`,
+`error`. No texto pelado, porque un rechazo o una falla tienen que poder
+llegar en el medio de la respuesta, y entre caracteres sueltos no hay forma de
+distinguirlos. Un error después del primer trozo llega igual, y lo que ya se
+escribió queda en pantalla.
+
+El tope de uso por instalación vive en memoria y se pierde al reiniciar. Es a
+propósito: el proxy no tiene base de datos (4.2), y esto es un tope de gasto,
+no un control de acceso. Lo que protege es la cuenta de la docente, no los
+datos, que nunca llegan al proxy.
+
+### 4.7 Sin red
 
 El asistente es la **única** función que necesita conexión. Sin red, la app
 funciona completa: asistencia, notas, agenda, observaciones y dictado. El
