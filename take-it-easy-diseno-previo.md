@@ -556,7 +556,49 @@ Cuando entre, entra así: con la **credencial del dispositivo** (el mismo
 PIN, patrón o huella que desbloquea el teléfono), nunca con un PIN propio
 de la app, y detrás de un módulo propio como cualquier otra API nativa.
 
-### 6.3 Lo demás, ya resuelto en su sección
+### 6.3 Firma de la app
+
+Son dos claves distintas, con dueños y riesgos distintos. Confundirlas es el
+error caro.
+
+**La clave de prueba** (`android/app/prueba.keystore`) está versionada a
+propósito, que es lo contrario de lo que se hace con una clave de firma.
+
+Android identifica una app por el nombre del paquete **y** la firma. Si cada
+compilación firma con una clave distinta, el teléfono ve la versión nueva
+como una app ajena, avisa "conflicto con un paquete" y la única salida es
+desinstalar. Desinstalar borra IndexedDB, que en esta app es la única copia
+que existe de los datos. Es decir: una clave que cambia convierte cada
+actualización en una pérdida total.
+
+Guardarla entre compilaciones en vez de versionarla se probó y no alcanza:
+depende de que el guardado no se venza, y el día que se venciera volvería a
+pasar sin aviso, que es la peor forma de fallar.
+
+Qué protege esta clave: nada. Sólo firma los APK de prueba que se instalan a
+mano. Lo que habilita a quien tenga el repositorio es compilar un APK que se
+instale encima de éste, y para eso hace falta convencer a la docente de
+instalarlo a mano, igual que cualquier archivo bajado de internet.
+
+**La clave de publicación** no se genera acá ni se versiona nunca. Se genera
+en la computadora de la docente cuando la app vaya a Play Store, y de ahí no
+se mueve.
+
+Conviene ser preciso sobre el riesgo, porque la fama es peor que el hecho.
+Play Store firma las apps nuevas con su propio esquema: Google guarda la
+clave con la que se firma lo que llega a los teléfonos, y la docente sube el
+paquete firmado con una **clave de subida**. Si esa clave de subida se
+pierde, Google la repone. No es el escenario viejo de "se perdió la clave y
+la app no se actualiza nunca más". Sigue conviniendo tener dos copias, una
+de ellas fuera de la nube: reponerla lleva días y mientras tanto no se puede
+publicar nada.
+
+Mientras no exista esa clave, la compilación de publicación queda sin firmar
+y el flujo automático compila sólo la de prueba. La configuración para
+firmarla se agrega junto con la clave, no antes: configuración que no se
+puede probar es configuración que se escribe mal.
+
+### 6.4 Lo demás, ya resuelto en su sección
 
 - Formato de la exportación: sección 2.10.
 - Proveedor de IA, modelo y forma de los prompts: secciones 4.4 y 4.5.
