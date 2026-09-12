@@ -4,7 +4,6 @@ import { dashboardStats, pendingReview, upcomingSessions } from '../store/select
 import { formatMoney } from '../lib/money';
 import { formatDateLong, formatDateShort, formatMonthKey, monthKey, today } from '../lib/dates';
 import { Card, Empty, Stat } from '../components/ui';
-import { Mascot } from '../components/Mascot';
 import { goalProgress } from '../lib/pricing';
 import { patientColor } from '../lib/palette';
 
@@ -35,7 +34,6 @@ export function DashboardPage({ onGo }: { onGo: (page: 'agenda' | 'finanzas' | '
       <>
         <div className="page-head">
           <h1>Inicio</h1>
-          <Mascot />
         </div>
         <Card>
           <Empty>
@@ -59,7 +57,6 @@ export function DashboardPage({ onGo }: { onGo: (page: 'agenda' | 'finanzas' | '
           <span className="muted small cap-first">{formatDateLong(today())}</span>
           <h1>Inicio</h1>
         </div>
-        <Mascot />
       </div>
 
       <section className="hero">

@@ -3,6 +3,7 @@ import { useStore } from '../store/StoreContext';
 import { parseAppData } from '../lib/storage';
 import { today } from '../lib/dates';
 import { Card, Field } from '../components/ui';
+import { Mascot } from '../components/Mascot';
 
 /**
  * Los datos viven solo en este navegador. Sin exportar/importar, limpiar la
@@ -13,6 +14,8 @@ export function SettingsPage() {
   const { data, dispatch } = useStore();
   const fileRef = useRef<HTMLInputElement>(null);
   const [message, setMessage] = useState<{ text: string; ok: boolean } | null>(null);
+  /** Toques sobre el eslogan del pie. A los tres aparece el perro. */
+  const [taps, setTaps] = useState(0);
 
   function exportData() {
     const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
@@ -138,9 +141,19 @@ export function SettingsPage() {
         </p>
       </Card>
 
-      <p className="app-footer">
-        Pipí Cucú · tu agenda, pipí cucú
-      </p>
+      {/* Easter egg: el perro no se muestra solo. Aparece después de tocar el
+          eslogan tres veces, que es la clase de cosa que se encuentra sin
+          buscar y no estorba mientras se trabaja. */}
+      <div className="app-footer">
+        <button className="footer-tap" onClick={() => setTaps((n) => n + 1)}>
+          Pipí Cucú · tu agenda, pipí cucú
+        </button>
+        {taps >= 3 && (
+          <div className="footer-dog">
+            <Mascot />
+          </div>
+        )}
+      </div>
     </>
   );
 }

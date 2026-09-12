@@ -776,14 +776,33 @@ a.btn {
   .mascot-bubble { max-width: 170px; }
 }
 
-/* Firma al pie de Ajustes. */
-.app-footer {
-  text-align: center;
+/* Firma al pie de Ajustes, con el perro escondido detrás. */
+.app-footer { text-align: center; margin: 26px 0 0; }
+.footer-tap {
+  border: 0;
+  background: transparent;
   color: var(--muted);
-  font-size: 0.84rem;
-  margin: 26px 0 0;
   font-family: var(--serif);
+  font-size: 0.84rem;
+  cursor: pointer;
+  padding: 8px 12px;
+  /* Sin resaltado al tocar repetidas veces en el celular: delataría que hay
+     algo ahí antes de tiempo. */
+  -webkit-tap-highlight-color: transparent;
+  user-select: none;
 }
+.footer-dog {
+  display: flex;
+  justify-content: center;
+  margin-top: 10px;
+  animation: dog-in 0.35s ease-out;
+}
+@keyframes dog-in {
+  from { opacity: 0; transform: translateY(6px); }
+  to { opacity: 1; transform: none; }
+}
+.footer-dog .mascot { flex-direction: column-reverse; align-items: center; gap: 6px; }
+.footer-dog .mascot-bubble { max-width: 240px; text-align: center; }
 
 /* ---------- Cierre del día ---------- */
 .close-day-btn {

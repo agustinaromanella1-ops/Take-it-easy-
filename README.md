@@ -54,8 +54,10 @@ Serif de display (Playfair Display) para títulos y cifras principales, sans red
 para el cuerpo, fondo en degradado pastel, tarjetas muy redondeadas y acento turquesa. Los títulos
 de sección van fuera de la tarjeta, con su acción a la derecha.
 
-La mascota es un perro salchicha con sweater a rayas, dibujado en SVG de color plano. Al tocarlo
-cambia el mensaje y mueve la cola.
+La mascota es un perro salchicha con sweater a rayas, dibujado en SVG de color plano. **Es un
+easter egg**: no aparece en ninguna pantalla por su cuenta. Está escondido detrás del eslogan al pie
+de Ajustes, y sale después de tocarlo tres veces. Tocarlo a él cambia el mensaje y le mueve la cola.
+Un guiño que se muestra solo deja de ser un guiño, y además compite con lo que hay que leer.
 
 **Dos naranjas, no uno.** El naranja lindo (`--warm`, #e08a4f) no llega a 4,5:1 sobre blanco, así
 que solo se usa en degradés y rellenos sin texto. Para texto y bordes hay un segundo tono más
