@@ -554,9 +554,14 @@ El precio es el que la app ya prometía: Android entrega como mucho uno de
 estos cada nueve minutos por app. Sigue siendo inexacto, y por eso ningún
 texto promete una hora (1.5).
 
-Las dos están fijadas por tests, porque son invisibles: un `schedule({ at })`
-pelado compila, anda en el navegador, pasa la revisión y en el teléfono no
-llega nunca.
+**Todo aviso se arma en un solo lugar**, tenga hora o no. Estuvieron un rato
+armados en dos, y el de mostrar ahora se quedó sin `isExactNotification: false`:
+tocar «Probar ahora» —un aviso inmediato, sin ninguna alarma de por medio— abría
+igual la pantalla de ajustes del sistema.
+
+Todo esto está fijado por tests, porque son opciones invisibles: un
+`schedule({ at })` pelado compila, anda en el navegador, pasa la revisión y en
+el teléfono no llega nunca.
 
 **«No me llega el aviso» son tres problemas distintos con el mismo síntoma**,
 y Ajustes los separa en vez de mandar a tocar ajustes del teléfono al azar:
@@ -566,15 +571,25 @@ y Ajustes los separa en vez de mandar a tocar ajustes del teléfono al azar:
    ver.
 2. Si Android **anotó** el aviso programado, mirado justo después de pedirlo. Si
    no lo anotó, la app no pudo programarlo, que tampoco es cuestión de batería.
-3. Si Android **todavía lo tiene anotado después de la hora**, mirado al volver
-   a abrir la pantalla. Eso significa que la alarma no se disparó: el teléfono
-   cerró la app del todo y se llevó la alarma. Es lo que hacen los Xiaomi con
-   el ahorro de batería y el inicio automático.
+3. Si el aviso programado **está en la barra de notificaciones**, mirado al
+   volver a abrir la pantalla.
 
 La tercera hay que preguntarla después de cerrar la app, así que se guarda
-cuándo se programó la prueba: sin eso, «Android no lo tiene anotado» y «nunca
-hubo una prueba» se ven iguales, y la pantalla diría que se disparó un aviso
-que no existió. Hay un test que lo fija.
+cuándo se programó la prueba: sin eso, «no está» y «nunca hubo una prueba» se
+ven iguales, y la pantalla hablaría de un aviso que no existió.
+
+**Lo único que se puede afirmar es lo positivo.** `getPending()` no sirve para
+saber si un aviso sonó: devuelve lo que el plugin tiene guardado, y el plugin
+no borra el registro al dispararlo. Su `isTriggered()` es sólo comparar la hora
+con el reloj, así que responde lo mismo haya sonado o no. Una pantalla apoyada
+ahí diría «la alarma no se disparó» con la misma seguridad en los dos casos —y
+eso estuvo escrito acá un rato, hasta que leer el plugin con cuidado lo
+desmintió—. La barra de notificaciones sí es real: si el aviso está, llegó.
+
+Por eso el estado se llama `no-aparece` y no `no-sono`: dice lo que se ve —pasó
+la hora y no está— y deja la causa como sospecha, con algo concreto para
+probar. Hay un test que falla si el veredicto vuelve a apoyarse en lo que el
+plugin tiene guardado.
 
 ### 5.5 Dictado por voz
 
