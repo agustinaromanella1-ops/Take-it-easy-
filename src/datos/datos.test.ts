@@ -121,6 +121,11 @@ describe('asistencia', () => {
 
 describe('calificaciones', () => {
   it('el segundo toque actualiza la nota en vez de duplicarla', async () => {
+    await db.evaluaciones.add({
+      id: evaluacionId, materiaId, nombre: 'Parcial', fecha: '2026-08-01',
+      tipo: 'parcial', escala: numerica,
+    });
+
     await calificar({ evaluacionId, alumnoId, valor: 6 });
     await calificar({ evaluacionId, alumnoId, valor: 8 });
 

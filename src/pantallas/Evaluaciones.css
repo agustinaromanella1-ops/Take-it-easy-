@@ -1,0 +1,121 @@
+.evaluaciones .volver {
+  background: none;
+  border: none;
+  padding: 0 0 10px;
+  font-family: inherit;
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--primario);
+  cursor: pointer;
+}
+
+.evaluaciones .detalle {
+  font-size: 14px;
+  line-height: 1.55;
+  color: var(--secundario);
+  margin-top: 8px;
+}
+
+.evaluaciones .vacio {
+  margin-top: 24px;
+}
+
+.evaluaciones .invitacion {
+  font-size: 16px;
+  font-weight: 700;
+}
+
+.evaluaciones .lista {
+  list-style: none;
+  margin-top: 18px;
+}
+
+.evaluaciones .lista li {
+  margin-bottom: 8px;
+}
+
+.evaluaciones .lista button {
+  display: block;
+  width: 100%;
+  padding: 14px 16px;
+  border: 1px solid var(--borde);
+  border-radius: 14px;
+  background: var(--superficie);
+  font-family: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.evaluaciones .lista .nombre {
+  display: block;
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--texto);
+}
+
+.evaluaciones .lista .detalle {
+  display: block;
+  margin-top: 3px;
+  font-size: 13px;
+}
+
+.evaluaciones label {
+  display: block;
+  margin-top: 16px;
+}
+
+.evaluaciones label span {
+  display: block;
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--secundario);
+  margin-bottom: 6px;
+}
+
+.evaluaciones input {
+  width: 100%;
+  padding: 13px 14px;
+  border: 1px solid var(--borde);
+  border-radius: 12px;
+  background: var(--superficie);
+  color: var(--texto);
+  font-family: inherit;
+  font-size: 16px;
+}
+
+.evaluaciones fieldset {
+  border: none;
+  margin-top: 18px;
+}
+
+.evaluaciones legend {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--secundario);
+  margin-bottom: 8px;
+}
+
+.evaluaciones .opciones {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.evaluaciones .opciones button {
+  padding: 10px 14px;
+  border: 1px solid var(--borde);
+  border-radius: 11px;
+  background: var(--superficie);
+  color: var(--secundario);
+  font-family: inherit;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.evaluaciones .opciones .elegida {
+  background: var(--lila);
+  border-color: var(--lila);
+  color: var(--lila-osc);
+  font-weight: 700;
+}

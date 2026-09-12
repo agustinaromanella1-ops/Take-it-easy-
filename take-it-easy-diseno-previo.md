@@ -277,6 +277,19 @@ En las escalas conceptuales, `Calificacion.valor` guarda el **id** de la
 etiqueta, no su texto. Así, renombrar "MB" a "Muy bueno" no deja huérfanas
 las notas ya cargadas.
 
+La nota se contrasta contra la escala de su evaluación **en la capa de
+datos**, no en el formulario: un 47 en una escala de 1 a 10 no es un cartel
+que se pueda ignorar, es una escritura que no ocurre. Vale igual para una
+etiqueta que no pertenece a esa escala, y para un número donde la escala
+espera una etiqueta.
+
+Un alumno sin nota vale `null`, nunca cero. El que falta corregir y el que
+se sacó un cero son cosas distintas, y confundirlas hace mentir al promedio
+justo cuando la corrección va por la mitad.
+
+Borrar una evaluación se lleva sus notas. Una nota sin su evaluación no
+significa nada: no se sabe contra qué escala leerla.
+
 **El promedio se calcula sólo sobre evaluaciones de escala numérica**, y la
 pantalla dice cuántas quedaron afuera. Promediar etiquetas conceptuales
 —convirtiéndolas a 1, 2, 3— es inventar una distancia entre ellas que nadie

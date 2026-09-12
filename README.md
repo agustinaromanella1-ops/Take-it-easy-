@@ -37,11 +37,11 @@ no lo que está en `src/`.
 ## Estado
 
 Andando: materias y escuelas, carga de alumnos pegando la lista, asistencia,
-Hoy con el horario semanal, archivar y recuperar una materia, copia de
+Hoy con el horario semanal, evaluaciones y carga de notas, archivar y recuperar una materia, copia de
 seguridad a archivo y restaurarla, e instructivo con pistas. Cada push compila
 un APK que se puede instalar desde el teléfono.
 
-Falta: calificaciones, observaciones y ficha de alumno, agenda con
+Falta: observaciones y ficha de alumno, agenda con
 recordatorios, mensajes y dictado por voz.
 
 La app **no necesita internet**. Todo vive en el teléfono, en IndexedDB, y no

@@ -1,4 +1,5 @@
 import { db, nuevoId } from './db';
+import { cabeEnLaEscala } from './escalas';
 import type { Calificacion, Escala, Id } from './tipos';
 
 export interface MarcaCalificacion {
@@ -7,12 +8,31 @@ export interface MarcaCalificacion {
   valor: number | Id;
 }
 
+export class NotaInvalidaError extends Error {
+  constructor(motivo: string) {
+    super(motivo);
+    this.name = 'NotaInvalidaError';
+  }
+}
+
 /**
  * Upsert por el par [evaluacionId + alumnoId]. Sin esto, un doble toque suma
  * una segunda nota y el promedio miente sin que nadie lo note.
+ *
+ * La nota se contrasta contra la escala de su evaluación acá, en la capa de
+ * datos, y no en el formulario: un 47 en una escala de 1 a 10 no es un cartel
+ * que se pueda ignorar, es una escritura que no ocurre.
  */
 export async function calificar(marca: MarcaCalificacion): Promise<Id> {
-  return db.transaction('rw', db.calificaciones, async () => {
+  return db.transaction('rw', db.calificaciones, db.evaluaciones, async () => {
+    const evaluacion = await db.evaluaciones.get(marca.evaluacionId);
+    if (!evaluacion) {
+      throw new NotaInvalidaError('La evaluación no existe.');
+    }
+    if (!cabeEnLaEscala(evaluacion.escala, marca.valor)) {
+      throw new NotaInvalidaError('La nota no entra en la escala de la evaluación.');
+    }
+
     const existente = await db.calificaciones
       .where('[evaluacionId+alumnoId]')
       .equals([marca.evaluacionId, marca.alumnoId])
@@ -75,4 +95,12 @@ export async function promedioDeAlumno(alumnoId: Id, materiaId: Id): Promise<Pro
     numericas,
     conceptuales,
   };
+}
+
+/** Borrar la nota es distinto de ponerle cero: vuelve a "sin corregir". */
+export async function borrarCalificacion(evaluacionId: Id, alumnoId: Id): Promise<void> {
+  await db.calificaciones
+    .where('[evaluacionId+alumnoId]')
+    .equals([evaluacionId, alumnoId])
+    .delete();
 }

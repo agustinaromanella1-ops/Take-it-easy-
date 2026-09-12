@@ -2,6 +2,7 @@ import { useLiveQuery } from 'dexie-react-hooks';
 
 import { DIAS, hoy } from '../fecha';
 import { bloquesDeMateria } from '../datos/bloques';
+import { evaluacionesDeMateria } from '../datos/evaluaciones';
 import { darDeBaja, alumnosInscriptos } from '../datos/inscripciones';
 import {
   comoSeLlama,
@@ -19,6 +20,7 @@ interface Props {
   agregarAlumnos: () => void;
   editarHorario: () => void;
   tomarAsistencia: () => void;
+  verEvaluaciones: () => void;
 }
 
 export default function Materia({
@@ -27,6 +29,7 @@ export default function Materia({
   agregarAlumnos,
   editarHorario,
   tomarAsistencia,
+  verEvaluaciones,
 }: Props) {
   const datos = useLiveQuery(async () => {
     const m = await buscarMateria(materiaId);
@@ -35,6 +38,7 @@ export default function Materia({
       escuela: m ? await nombreDeEscuela(m.escuelaId) : '',
       alumnos: await alumnosInscriptos(materiaId),
       bloques: await bloquesDeMateria(materiaId),
+      evaluaciones: await evaluacionesDeMateria(materiaId),
     };
   }, [materiaId]);
 
@@ -43,7 +47,7 @@ export default function Materia({
 
   if (!datos?.materia) return <div className="pantalla materia" />;
 
-  const { materia, escuela, alumnos, bloques } = datos;
+  const { materia, escuela, alumnos, bloques, evaluaciones } = datos;
 
   return (
     <div className="pantalla materia">
@@ -63,6 +67,15 @@ export default function Materia({
             : bloques
                 .map((b) => `${DIAS[b.diaSemana - 1].nombre} ${b.horaInicio}`)
                 .join(' · ')}
+        </span>
+      </button>
+
+      <button className="horario" onClick={verEvaluaciones}>
+        <span className="rotulo">Evaluaciones</span>
+        <span className="valor">
+          {evaluaciones.length === 0
+            ? 'Ninguna todavía'
+            : `${evaluaciones.length} ${evaluaciones.length === 1 ? 'cargada' : 'cargadas'}`}
         </span>
       </button>
 
