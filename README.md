@@ -4,8 +4,7 @@ Agenda docente para profesores de secundaria en Argentina. Web app empaquetada
 con Capacitor para Android.
 
 - `take-it-easy-especificacion-v2.md` — qué hace la app
-- `take-it-easy-diseno-previo.md` — pantallas, modelo de datos, filtro de
-  anonimización, backend y riesgos
+- `take-it-easy-diseno-previo.md` — pantallas, modelo de datos y riesgos
 - `prototipos/` — cuatro pantallas en HTML, referencia visual
 
 ## Correr en el navegador
@@ -37,5 +36,13 @@ no lo que está en `src/`.
 
 ## Estado
 
-Paso 1 del orden de trabajo: el proyecto Capacitor con una pantalla mínima.
-Todavía no hay persistencia ni carga de alumnos.
+Andando: materias y escuelas, carga de alumnos pegando la lista, asistencia,
+Hoy con el horario semanal, archivar y recuperar una materia, copia de
+seguridad a archivo y restaurarla, e instructivo con pistas. Cada push compila
+un APK que se puede instalar desde el teléfono.
+
+Falta: calificaciones, observaciones y ficha de alumno, agenda con
+recordatorios, mensajes y dictado por voz.
+
+La app **no necesita internet**. Todo vive en el teléfono, en IndexedDB, y no
+hay ninguna función que dependa de la red.

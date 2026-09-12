@@ -1,7 +1,7 @@
 # Take It Easy — Diseño previo
 
 Cómo se construye lo que describe `take-it-easy-especificacion-v2.md`:
-pantallas, modelo de datos, filtro de anonimización, backend y riesgos.
+pantallas, modelo de datos y riesgos.
 Este documento define decisiones estructurales, no detalles de
 implementación que se resuelven mejor escribiendo el código.
 
@@ -56,8 +56,6 @@ un toque desde el arranque.
 | Calificaciones de una evaluación | Cargar notas |
 | Agenda | Agregar una entrada |
 | Redactar (observación, mensaje, entrada de agenda) | Guardar |
-| Preguntar al asistente | Revisar lo que se envía |
-| Revisión de envío al asistente | Enviar |
 | Ajustes | — |
 
 ### 1.3 Reglas de interacción que atraviesan todas las pantallas
@@ -205,7 +203,9 @@ Cambiar de capa es una acción explícita y posterior del docente.
 Una `Plantilla` de ámbito `grupal` no puede contener un nombre de alumno
 (regla innegociable 3). La validación vive en la **capa de datos**: al
 guardar una plantilla grupal, y al aplicarla a más de un alumno, el texto
-se contrasta contra el índice de nombres conocidos (sección 3.2). Si hay
+se contrasta contra un índice de nombres conocidos —cada palabra de cada
+nombre y apellido, normalizada, sin las partículas que no identifican a
+nadie—. Si hay
 coincidencia, la operación se rechaza con un error. No es un cartel en la
 interfaz que el docente pueda ignorar: es una escritura que no ocurre.
 
@@ -322,243 +322,59 @@ eso la exportación manual no es una comodidad: es la única red que queda.
 
 ---
 
-## 3. Filtro de anonimización
+## 3. El asistente de IA, retirado
 
-**La IA nunca recibe un nombre de alumno** (regla innegociable 1). Esta
-sección define cómo se cumple.
+El diseño de este documento incluía un asistente de inteligencia artificial
+—redacción asistida de observaciones y mensajes, y preguntas libres—, con
+todo lo que hacía falta para que ningún nombre de alumno saliera del
+teléfono: un filtro de anonimización, una pantalla de revisión obligatoria,
+un segundo escaneo defensivo y un proxy sin base de datos que no registraba
+ni un carácter del texto.
 
-Aplica a todo texto que salga del dispositivo hacia el servicio de IA, sin
-excepción: observaciones, borradores de mensajes, entradas de agenda,
-preguntas libres del docente al asistente.
+Se construyó entero y se retiró el 12 de septiembre de 2026, antes de
+desplegarlo. El motivo es de producto, no técnico: **lo que la app resuelve
+se resuelve en el día a día sin IA.** Tomar asistencia, anotar qué pasó en
+una clase y redactar un mensaje son tareas que una docente hace mejor y más
+rápido escribiéndolas que revisando lo que escribió una máquina.
 
-El texto se escribe con los nombres reales —es lo que el docente escribiría
-en un papel— y se filtra al pasar a la revisión. Lo que sí se recorta antes
-de guardar el borrador son los correos y los números largos: la app le dice
-al docente que no guarda documentos, teléfonos ni correos, y eso vale
-también para lo escrito a medias. No se pierde nada útil, porque el filtro
-los reemplaza igual antes de cualquier envío; la pantalla lo avisa en vez de
-alterar el texto en silencio.
+Lo que costaba tenerlo, y dejó de costar:
 
-### 3.1 Principio rector
+- Un servidor prendido, con su precio mensual, que a este volumen salía más
+  caro que la IA misma.
+- Una clave de API y una cuenta en dólares.
+- Una dirección de proxy adentro de un APK público, que obligaba a poner un
+  techo diario a la factura porque no había forma de impedir el abuso sin
+  cuentas ni login.
+- Una superficie de privacidad entera: el único texto que salía del
+  dispositivo era el del asistente, y era el único lugar donde un nombre
+  podía filtrarse.
 
-**Errar por exceso.** Sustituir de más produce un texto un poco raro;
-sustituir de menos produce una fuga. Ante la duda, el filtro sustituye.
+Sin asistente, la app **no necesita internet para nada**. No hay
+degradación elegante que diseñar, no hay backend, no hay clave que cuidar, y
+la declaración de datos de Play Store se vuelve trivial: no se transmite
+nada.
 
-### 3.2 Índice de nombres conocidos
+Lo que sobrevive, porque nunca fue del asistente:
 
-Se construye en memoria desde IndexedDB, en el momento de filtrar:
+- **El índice de nombres conocidos** (`src/datos/nombres.ts`), que sostiene
+  la regla innegociable 3: una plantilla grupal que nombra a un alumno se
+  rechaza en la capa de datos (2.6).
+- **El dictado por voz local** (regla innegociable 2), que no tiene nada que
+  ver con la IA: es reconocimiento en el dispositivo o no existe.
+- **La regla de que los datos son locales** (regla 7), que ahora no tiene
+  ninguna excepción.
 
-- Nombre completo, apellido completo, y **cada palabra por separado** de
-  ambos, de todos los alumnos del docente (no sólo los de la materia en
-  curso: el texto puede mencionar a cualquiera).
-- Cada entrada en forma normalizada: minúsculas, sin acentos, sin signos.
-- El nombre del propio docente y el nombre de la escuela también entran al
-  índice, y se sustituyen por `la docente` y `la escuela`.
-
-La coincidencia es **por palabra completa**, con límites de palabra Unicode
-— nunca por subcadena, para no romper palabras que contienen un nombre
-adentro.
-
-La escuela es la excepción: se busca **como frase**, no palabra por palabra.
-En "Escuela N.º 12" ninguna palabra identifica sola —"escuela" es común y
-"12" es un número cualquiera, que suelto convertiría "tengo 12 alumnos" en
-"tengo la escuela alumnos"—, así que por palabras no se sustituía nada y el
-nombre de la escuela viajaba entero. El ruido ordinal se saltea de los dos
-lados, de modo que "Escuela N.º 12", "Escuela Nº 12" y "Escuela 12" son la
-misma escuela. Una mención parcial que empiece con una partícula ("San
-Martín" por "Colegio San Martín") sólo se resuelve por palabras, y deja la
-partícula escrita: se pierde prolijidad, no privacidad.
-
-Los alias `la docente` y `la escuela` ya traen artículo, así que se comen el
-que venía pegado: "la Escuela N.º 12" queda como "la escuela" y no como "la
-la escuela", y "del Colegio San Martín" como "de la escuela".
-
-### 3.3 Pipeline
-
-Cuatro pasos, en este orden, sin saltear ninguno:
-
-**a. Sustitución determinística.** Cada nombre conocido se reemplaza por un
-alias neutro y estable: `Estudiante A`, `Estudiante B`, … El mismo alumno
-recibe el mismo alias durante toda la conversación, para que el texto
-mantenga sentido. Los alias no llevan género ni número de lista.
-
-**b. Barrido heurístico.** Sobre el texto ya sustituido se busca lo que el
-índice no puede conocer:
-
-- Palabras capitalizadas fuera de inicio de oración que no estén en la
-  lista de palabras comunes y lugares: se marcan como **posible nombre no
-  conocido** (por ejemplo, un hermano, un docente de otra materia).
-- Teléfonos, correos, URLs, arrobas y secuencias largas de dígitos: se
-  sustituyen por un marcador genérico.
-
-Lo marcado en este paso no se envía hasta que el docente decida en el paso
-siguiente.
-
-**c. Pantalla de revisión obligatoria.** El docente ve el texto **exacto**
-que se va a enviar, con las sustituciones resaltadas y los posibles nombres
-no conocidos señalados esperando decisión. Puede editar el texto final.
-
-Esta pantalla no se puede desactivar, no tiene "no volver a mostrar" y no
-se saltea cuando el envío se dispara desde otra pantalla. Su acción
-primaria es *Enviar*; la secundaria, *Volver*.
-
-Decidir sobre una palabra marcada es elegir entre **sacarla** —queda
-`[un nombre]` en su lugar— y **dejarla**, declarando que no es un nombre.
-Mientras quede una sin decidir, *Enviar* no está disponible: una marca que
-se puede ignorar es una marca que se ignora.
-
-Un nombre que el índice sí conoce no se ofrece como duda. Preguntar si es
-un nombre, al lado del cartel que dice que lo es, invita a contestar que no
-y a creer que con eso se destraba. Para ése la única salida es sacarlo del
-texto.
-
-**d. Segundo escaneo defensivo.** Justo antes del envío, sobre el payload
-final —ya con las ediciones del docente— se vuelve a correr la sustitución
-del paso (a). Si aparece un nombre conocido, **el envío no ocurre**: se
-vuelve a la revisión con el hallazgo marcado.
-
-Este paso existe para el caso concreto de que el docente vuelva a escribir
-un nombre a mano en la pantalla de revisión. Sin él, la revisión sería el
-punto por donde se filtra un nombre.
-
-### 3.4 El mapa alias → alumno
-
-El mapa vive **sólo en memoria**, en el estado de la sesión del asistente.
-
-- No se persiste en IndexedDB, ni en `localStorage`, ni en ningún store con
-  persistencia.
-- No se serializa: no entra en el payload, no se loguea, no viaja en
-  telemetría ni en reportes de fallo.
-- Se limpia al cerrar la pantalla del asistente.
-
-Conviene tenerlo en cuenta al elegir manejo de estado y reporte de errores:
-un store persistido o un crash reporter que capture el estado completo
-rompen esta regla sin que nadie escriba una línea de código maliciosa.
-
-Por eso la sesión **falla al serializarse**: su `toJSON` tira un error. Si
-algún día un store con persistencia, un log o un reporte de fallo intenta
-guardarla, rompe fuerte en vez de escribir nombres de alumnos en disco sin
-que nadie se entere.
-
-### 3.5 La respuesta
-
-La respuesta de la IA vuelve con los alias. Se re-personaliza
-**localmente**, en el dispositivo, usando el mapa en memoria, sólo para
-mostrarla. Si el docente guarda ese texto como observación, se guarda con
-los nombres reales: es un dato local, y ahí sí corresponde.
-
-### 3.6 Prueba
-
-El filtro es una función pura y su batería de tests es parte del criterio
-de "hecho" del asistente, no un agregado posterior. Casos mínimos: nombre
-compuesto, apellido que también es palabra común, nombre en minúscula,
-nombre con acento escrito sin acento, nombre pegado a un signo de
-puntuación, y el caso del paso (d) —nombre reescrito en la revisión.
+El diseño completo del filtro y del proxy —el pipeline de cuatro pasos, el
+mapa alias → alumno que vivía sólo en memoria, la forma de los prompts— está
+en la historia de este repositorio, hasta el commit que los quitó. Si algún
+día vuelve la decisión, no hay que volver a pensarlo desde cero.
 
 ---
 
-## 4. Backend
-
-### 4.1 Qué es
-
-Un **proxy delgado y sin estado** hacia el proveedor de IA. Existe por una
-sola razón: no meter la clave de API del proveedor dentro del APK.
-
-### 4.2 Qué no tiene
-
-- **No tiene base de datos de alumnos.** No tiene base de datos.
-- **No guarda prompts ni respuestas.** El texto pasa y no queda.
-- No tiene cuentas, ni email, ni login. La app se identifica con un token
-  de instalación anónimo generado en el dispositivo, que sirve para
-  limitar el uso y para nada más.
-
-### 4.3 Registro
-
-Sólo metadata operativa: momento, código de estado, latencia, cantidad de
-tokens, token de instalación. **Nunca el cuerpo del pedido ni el de la
-respuesta.** Esto se decide ahora porque un log de cuerpos agregado más
-tarde "para depurar" es exactamente la forma en que se filtra un texto.
-
-### 4.4 Proveedor y modelo
-
-**Claude API de Anthropic**, modelo `claude-opus-5`, a través del SDK
-oficial `@anthropic-ai/sdk` desde el proxy — nunca desde la app, que no
-tiene la clave.
-
-Configuración de partida:
-
-- `thinking: { type: "adaptive" }` y `output_config: { effort: "low" }`.
-  Redactar una observación o un mensaje es trabajo corto: el esfuerzo alto
-  no mejora el resultado y cuesta más. Se sube sólo si se mide que hace
-  falta, y por caso de uso, no en general.
-- Respuesta en streaming, para que el texto aparezca de a poco en el
-  teléfono en vez de dejar la pantalla quieta.
-- `stop_reason` se lee **antes** que el contenido: si el clasificador del
-  modelo rechaza un pedido, la respuesta llega con `stop_reason: "refusal"`
-  y sin texto útil. Se habilita el respaldo del servidor
-  (`fallbacks: "default"`) para que un rechazo no deje la pantalla vacía.
-- Sin prefill del turno del asistente: `claude-opus-5` lo rechaza. El
-  formato de la respuesta se controla desde la instrucción de sistema.
-
-Se contrata con retención cero de datos donde esté disponible, y sin uso de
-lo enviado para entrenamiento. Aun así, el filtro de la sección 3 no se
-relaja: el compromiso del proveedor es una segunda capa, no la primera.
-
-### 4.5 Forma de los prompts
-
-Tres reglas que la instrucción de sistema tiene que fijar, porque cada una
-sostiene una regla del proyecto:
-
-1. **Los alumnos llegan como `Estudiante A`, `Estudiante B`.** El modelo usa
-   exactamente esos identificadores y no inventa nombres propios. Si
-   inventara uno, la re-personalización de la respuesta (3.5) lo dejaría
-   pasar como si fuera un alumno real.
-2. **No se califica a la persona.** El texto describe hechos observables —
-   qué entregó, qué dijo, a qué faltó— y no atribuye estados de ánimo,
-   actitudes ni rasgos. Vale para la salida del modelo igual que para el
-   resto de la app.
-3. **Nada de salud ni de diagnóstico**, ni siquiera si el texto del docente
-   lo insinúa.
-
-Los prompts se versionan con el código, en archivos propios, no incrustados
-entre la lógica de la pantalla.
-
-### 4.6 Cómo contesta
-
-Una línea de JSON por evento, a medida que el modelo escribe: `texto`, `fin`,
-`error`. No texto pelado, porque un rechazo o una falla tienen que poder
-llegar en el medio de la respuesta, y entre caracteres sueltos no hay forma de
-distinguirlos. Un error después del primer trozo llega igual, y lo que ya se
-escribió queda en pantalla.
-
-Los topes de uso viven en memoria y se pierden al reiniciar. Es a propósito:
-el proxy no tiene base de datos (4.2), y son topes de gasto, no un control de
-acceso. Lo que protegen es la cuenta de la docente, no los datos, que nunca
-llegan al proxy.
-
-Son dos, y hacen falta los dos. El de instalación evita que un teléfono se
-desboque. El diario, que cubre todo el proxy junto, existe porque la dirección
-del proxy viaja dentro del APK y el APK es público: el token de instalación lo
-genera el teléfono, así que cualquiera puede inventarse uno nuevo por consulta
-y saltearse el primero. El techo diario no impide el abuso; le pone un límite
-a la factura, que es lo que se puede hacer sin cuentas ni login.
-
-### 4.7 Sin red
-
-El asistente es la **única** función que necesita conexión. Sin red, la app
-funciona completa: asistencia, notas, agenda, observaciones y dictado. El
-asistente muestra que no está disponible ahora, sin dramatismo, y el resto
-sigue andando.
-
----
-
-## 5. Riesgos
+## 4. Riesgos
 
 | Riesgo | Qué lo dispara | Mitigación |
 |---|---|---|
-| Un nombre de alumno llega a la IA | Texto libre con un nombre que el índice no cubre | Pipeline de la sección 3.3 completo, con el principio de errar por exceso |
-| El docente reescribe un nombre en la revisión | Edición manual en el último paso | Segundo escaneo defensivo (3.3.d): el envío no ocurre |
-| El mapa alias → alumno se persiste sin querer | Store persistido, log de estado, reporte de fallo que captura memoria | El mapa nunca sale de memoria (3.4); revisar el reporte de fallos antes de publicar |
 | Una plantilla con nombre llega a un grupo | Plantilla individual reutilizada como grupal | Validación en la capa de datos (2.6), no en la interfaz |
 | El dictado cae a reconocimiento por servidor | Cambio de plugin, cambio de versión de Android, respaldo automático del plugin | Módulo propio que verifica disponibilidad local; si no hay reconocimiento local, el micrófono no aparece (regla innegociable 2) |
 | Un nombre de alumno aparece en una notificación en la pantalla bloqueada | Recordatorio que muestra el texto que escribió el docente | Cuerpo fijo, materia y curso en el título, nada escrito por el docente (1.5) |
@@ -566,15 +382,14 @@ sigue andando.
 | El archivo exportado, que sí tiene nombres reales, queda en un lugar poco cuidado | Exportación guardada en una carpeta que se sincroniza sola a la nube | Se guarda con el selector de archivos del sistema, elegido por la docente; la pantalla de exportación dice qué contiene el archivo |
 | "Hoy" muestra el día equivocado | Uso de UTC en una fecha de calendario | Fechas locales como texto (2.7); tests con zona `America/Argentina/Buenos_Aires` a las 23:30 |
 | Un registro duplicado hace mentir el promedio | Doble toque | Índices únicos y upsert por par en la capa de datos (2.3) |
-| La IA devuelve una etiqueta sobre un alumno | Redacción asistida de observaciones | Instrucción de sistema que prohíbe calificar personas; el docente edita antes de guardar; ningún texto de la app califica a un alumno |
-| Rechazo o revisión extra en Play Store | Política de datos de menores | La app no recolecta ni transmite datos personales; declarar con precisión qué viaja al asistente y qué no |
-| Alguien mira el teléfono del docente | Uso en sala de profesores | Fuera del MVP; bloqueo con la credencial del dispositivo más adelante (6.2) |
+| Rechazo o revisión extra en Play Store | Política de datos de menores | La app no recolecta ni transmite nada: no hay red, ni backend, ni analítica. La declaración de datos dice exactamente eso |
+| Alguien mira el teléfono del docente | Uso en sala de profesores | Fuera del MVP; bloqueo con la credencial del dispositivo más adelante (5.2) |
 
 ---
 
-## 6. Decisiones técnicas
+## 5. Decisiones técnicas
 
-### 6.1 Interfaz y manejo de estado
+### 5.1 Interfaz y manejo de estado
 
 **React + TypeScript sobre Vite**, con **Dexie** para IndexedDB.
 
@@ -591,15 +406,12 @@ Qué aporta cada pieza, y por qué esa y no otra:
   el estado de la app es la base de datos.
 
 **No hay librería de manejo de estado global, y menos con persistencia.**
-No es sólo una preferencia: un store persistido es la forma más probable de
-que el mapa alias → alumno de la sección 3.4 termine escrito en disco sin
-que nadie lo haya decidido. El poco estado que no es la base —la sesión del
-asistente— vive en memoria y muere con la pantalla.
+La base de datos ya es el estado, y un store persistido encima sólo agrega
+una segunda copia que se desincroniza. El poco estado que no es la base —el
+paso en el que va un formulario, qué fila se está editando— vive en la
+pantalla y muere con ella.
 
-Por la misma razón, si más adelante se agrega reporte de fallos, se revisa
-antes que no capture el estado de la aplicación.
-
-### 6.2 Bloqueo de la app
+### 5.2 Bloqueo de la app
 
 **Fuera del MVP.** El riesgo que cubre —alguien mira el teléfono en la sala
 de profesores— es real pero menor frente al costo de sumar una pantalla de
@@ -609,7 +421,7 @@ Cuando entre, entra así: con la **credencial del dispositivo** (el mismo
 PIN, patrón o huella que desbloquea el teléfono), nunca con un PIN propio
 de la app, y detrás de un módulo propio como cualquier otra API nativa.
 
-### 6.3 Firma de la app
+### 5.3 Firma de la app
 
 Son dos claves distintas, con dueños y riesgos distintos. Confundirlas es el
 error caro.
@@ -651,18 +463,15 @@ y el flujo automático compila sólo la de prueba. La configuración para
 firmarla se agrega junto con la clave, no antes: configuración que no se
 puede probar es configuración que se escribe mal.
 
-### 6.4 Lo demás, ya resuelto en su sección
+### 5.4 Lo demás, ya resuelto en su sección
 
 - Formato de la exportación: sección 2.10.
-- Proveedor de IA, modelo y forma de los prompts: secciones 4.4 y 4.5.
 
-## 7. Lo que sigue sin definir
+## 6. Lo que sigue sin definir
 
 Queda poco, y nada de estructura. Lo que falta se congela al construir cada
 parte, no antes:
 
-- **El texto de los prompts.** La forma está en 4.5; las palabras exactas se
-  escriben con el asistente andando, porque se ajustan probando.
 - **El esquema de la exportación campo por campo.** La `version 1` se
   congela cuando la capa de datos esté terminada: fijarla antes garantiza
   tener que corregirla.

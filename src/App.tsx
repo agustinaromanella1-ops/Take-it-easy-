@@ -1,6 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 
-import Asistente from './asistente/Asistente';
 import { escucharBotonAtras } from './nativo/botonAtras';
 import Intro from './instructivo/Intro';
 import { useIntro } from './instructivo/useInstructivo';
@@ -19,7 +18,6 @@ type Pantalla =
   | { nombre: 'hoy' }
   | { nombre: 'materias' }
   | { nombre: 'ajustes' }
-  | { nombre: 'asistente' }
   | { nombre: 'materia-nueva' }
   | { nombre: 'materia'; materiaId: Id }
   | { nombre: 'alumnos'; materiaId: Id }
@@ -51,7 +49,7 @@ export default function App() {
   // Vuelve por la pila; sólo cierra la app cuando ya no queda a dónde volver.
   useEffect(() => escucharBotonAtras(volver), [volver]);
 
-  type Seccion = 'hoy' | 'materias' | 'asistente' | 'ajustes';
+  type Seccion = 'hoy' | 'materias' | 'ajustes';
 
   function seccion(nombre: Seccion) {
     setPila([{ nombre }]);
@@ -60,9 +58,7 @@ export default function App() {
   // Todo lo que cuelga de materias —una materia, sus alumnos, su horario, la
   // asistencia— sigue siendo la sección materias mientras se navega adentro.
   const seccionActual: Seccion =
-    actual.nombre === 'hoy' || actual.nombre === 'asistente' || actual.nombre === 'ajustes'
-      ? actual.nombre
-      : 'materias';
+    actual.nombre === 'hoy' || actual.nombre === 'ajustes' ? actual.nombre : 'materias';
 
   if (mostrarIntro) return <Intro terminar={terminarIntro} />;
 
@@ -92,8 +88,6 @@ export default function App() {
           alCrear={(id, nombre) => setReciencreada({ id, nombre })}
         />
       )}
-
-      {actual.nombre === 'asistente' && <Asistente />}
 
       {actual.nombre === 'ajustes' && (
         <Ajustes verInstructivo={volverAMostrar} />
@@ -130,7 +124,6 @@ export default function App() {
           [
             ['hoy', 'Hoy'],
             ['materias', 'Materias'],
-            ['asistente', 'Asistente'],
             ['ajustes', 'Ajustes'],
           ] as const
         ).map(([nombre, etiqueta]) => (

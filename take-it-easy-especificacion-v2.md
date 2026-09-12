@@ -3,8 +3,7 @@
 Agenda docente para profesores de secundaria en Argentina. Este documento
 describe **qué hace la app**: para quién es, qué problemas resuelve, qué
 funcionalidades tiene y en qué orden se construyen. El **cómo** (pantallas,
-modelo de datos, filtro de anonimización, backend, riesgos) vive en
-`take-it-easy-diseno-previo.md`.
+modelo de datos, riesgos) vive en `take-it-easy-diseno-previo.md`.
 
 ## 1. Propósito
 
@@ -35,6 +34,12 @@ herramienta personal del docente para no perder el hilo.
   ninguna pantalla (regla innegociable 5).
 - No depende de que el colegio adopte nada: corre sola, con los datos del
   propio docente, sin backend con base de alumnos (regla innegociable 7).
+- **No tiene asistente de inteligencia artificial.** Lo tuvo especificado y
+  construido, y se retiró: lo que la app resuelve —tomar asistencia, anotar
+  una observación, redactar un mensaje— se resuelve en el día a día sin IA.
+  Sacarlo dejó a la app sin servidor, sin clave de API, sin costo por uso y
+  sin ningún texto que salga del teléfono. El detalle de por qué está en la
+  sección 3 del documento de diseño.
 
 ## 4. Funcionalidades
 
@@ -119,25 +124,11 @@ por defecto, sin dictado por servidor, sin datos sensibles, fechas locales.
   familia o un alumno (por ejemplo, para copiar y pegar en WhatsApp o
   email institucional) — la app no envía nada por sí misma ni gestiona
   contactos.
-- Si el docente pide ayuda del asistente de IA para redactar el mensaje,
-  el texto que sale hacia el servicio de IA pasa por el mismo filtro de
-  anonimización que el resto de la app (ver 4.9 y regla innegociable 1).
-
-### 4.9 Asistente (IA)
-
-- Ayuda al docente a redactar (observaciones, mensajes, planificación de
-  agenda) a partir de lo que ya cargó en la app.
-- **Ningún nombre de alumno sale del dispositivo.** Todo texto que se
-  envía a la IA pasa antes por el filtro de anonimización, con una
-  pantalla de revisión obligatoria donde el docente ve exactamente qué se
-  va a enviar, y un segundo escaneo defensivo justo antes del envío
-  (regla innegociable 1). El mapa alias → alumno vive sólo en memoria de
-  la sesión: no se guarda ni se serializa en ningún lado.
 - Una plantilla de mensaje u observación que nombra a un alumno no puede
   aplicarse a un grupo entero: ese bloqueo lo valida la capa de datos, no
   un aviso que el docente puede ignorar (regla innegociable 3).
 
-### 4.10 Dictado por voz
+### 4.9 Dictado por voz
 
 - Disponible donde tenga sentido cargar texto por voz (observaciones,
   mensajes, agenda).
@@ -153,6 +144,9 @@ por defecto, sin dictado por servidor, sin datos sensibles, fechas locales.
 - Cualquier forma de sincronización entre dispositivos o backend con base
   de datos de alumnos (regla innegociable 7): los datos viven en el
   dispositivo, en IndexedDB.
+
+Sin asistente de IA, la app **no necesita internet para nada**. No es una
+degradación elegante: no hay ninguna función que dependa de la red.
 
 ## 6. Plataforma
 
@@ -170,8 +164,8 @@ por defecto, sin dictado por servidor, sin datos sensibles, fechas locales.
 3. Cargar alumnos (pegado y parseo) — sección 4.2.
 4. Asistencia — sección 4.3.
 5. Hoy — sección 4.4.
-6. Recién entonces: calificaciones, agenda, observaciones, mensajes,
-   asistente — secciones 4.5 a 4.9.
+6. Recién entonces: calificaciones, agenda, observaciones y mensajes —
+   secciones 4.5 a 4.8.
 
 Empaquetar temprano, no al final: el proyecto Capacitor tiene que andar en
 un teléfono real desde el paso 1, no como última etapa.
