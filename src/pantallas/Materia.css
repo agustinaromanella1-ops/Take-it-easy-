@@ -44,12 +44,17 @@
   font-weight: 600;
 }
 
-.materia .alumnos span {
+/* El nombre abre la ficha, así que es un botón; se sigue leyendo como texto. */
+.materia .alumnos .nombre {
   flex: 1;
   min-width: 0;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+  text-align: left;
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--texto);
 }
 
 .materia .alumnos button {

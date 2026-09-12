@@ -33,6 +33,25 @@ export async function cambiarCapa(id: Id, capa: Capa): Promise<void> {
   await db.observaciones.update(id, { capa });
 }
 
-export function observacionesDeAlumno(alumnoId: Id): Promise<Observacion[]> {
-  return db.observaciones.where('alumnoId').equals(alumnoId).reverse().sortBy('fecha');
+/**
+ * De la más nueva a la más vieja. Dos del mismo día se desempatan por cuándo
+ * se escribieron: sin desempate el orden lo decide la base, que ordena por un
+ * uuid, y la lista se ve barajada entre visitas.
+ */
+export async function observacionesDeAlumno(alumnoId: Id): Promise<Observacion[]> {
+  const observaciones = await db.observaciones.where('alumnoId').equals(alumnoId).toArray();
+  return observaciones.sort((a, b) => b.fecha.localeCompare(a.fecha) || b.creadoEn - a.creadoEn);
+}
+
+export async function borrarObservacion(id: Id): Promise<void> {
+  await db.observaciones.delete(id);
+}
+
+/**
+ * Vuelve a poner una observación borrada, con su id, su fecha y su capa. No es
+ * una observación nueva: si lo fuera, una privada que se borró por error
+ * volvería con la fecha de hoy, y eso es perder el dato en vez de recuperarlo.
+ */
+export async function restaurarObservacion(observacion: Observacion): Promise<void> {
+  await db.observaciones.put(observacion);
 }

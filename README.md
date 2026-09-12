@@ -37,7 +37,8 @@ no lo que está en `src/`.
 ## Estado
 
 Andando: materias y escuelas, carga de alumnos pegando la lista, asistencia,
-Hoy con el horario semanal, evaluaciones y carga de notas, archivar y recuperar una materia, copia de
+Hoy con el horario semanal, evaluaciones y carga de notas, ficha de alumno con
+observaciones, archivar y recuperar una materia, copia de
 seguridad a archivo y restaurarla, e instructivo con pistas. Cada push compila
 un APK que se puede instalar desde el teléfono.
 

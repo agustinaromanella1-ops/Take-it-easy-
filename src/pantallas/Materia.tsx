@@ -21,6 +21,7 @@ interface Props {
   editarHorario: () => void;
   tomarAsistencia: () => void;
   verEvaluaciones: () => void;
+  verFicha: (alumnoId: Id) => void;
 }
 
 export default function Materia({
@@ -30,6 +31,7 @@ export default function Materia({
   editarHorario,
   tomarAsistencia,
   verEvaluaciones,
+  verFicha,
 }: Props) {
   const datos = useLiveQuery(async () => {
     const m = await buscarMateria(materiaId);
@@ -95,9 +97,9 @@ export default function Materia({
           <ul className="alumnos">
             {alumnos.map((alumno) => (
               <li key={alumno.id}>
-                <span>
+                <button className="nombre" onClick={() => verFicha(alumno.id)}>
                   {alumno.apellido}, {alumno.nombre}
-                </span>
+                </button>
                 <button onClick={() => darDeBaja(materiaId, alumno.id, hoy())}>Dar de baja</button>
               </li>
             ))}

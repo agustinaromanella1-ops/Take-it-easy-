@@ -196,7 +196,15 @@ no durante unos segundos.
 **Toda observación nueva nace en `privada`** (regla innegociable 4). La
 capa de datos no acepta una escritura sin capa y no toma otro valor por
 defecto; el formulario no preselecciona `compartible` en ningún caso.
-Cambiar de capa es una acción explícita y posterior del docente.
+Cambiar de capa es una acción explícita y posterior del docente: un toque
+sobre la etiqueta de la observación, que la devuelve a privada con otro
+toque. Ese segundo toque es el deshacer, y por eso no hace falta un diálogo
+de confirmación.
+
+Borrar una observación tampoco lo lleva: se borra y queda una barra para
+deshacer, como en el resto de la app. Deshacer la devuelve con su id, su
+fecha y su capa, no como una observación nueva. Si volviera con la fecha de
+hoy, deshacer sería perder el dato en vez de recuperarlo.
 
 ### 2.6 Plantillas: el bloqueo del nombre
 

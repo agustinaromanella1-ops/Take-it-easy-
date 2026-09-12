@@ -7,6 +7,7 @@ import type { Id } from './datos/tipos';
 import Ajustes from './pantallas/Ajustes';
 import Asistencia from './pantallas/Asistencia';
 import Evaluaciones from './pantallas/Evaluaciones';
+import FichaAlumno from './pantallas/FichaAlumno';
 import Notas from './pantallas/Notas';
 import CargarAlumnos from './pantallas/CargarAlumnos';
 import Horario from './pantallas/Horario';
@@ -26,7 +27,8 @@ type Pantalla =
   | { nombre: 'horario'; materiaId: Id }
   | { nombre: 'asistencia'; materiaId: Id; bloqueHorarioId?: Id }
   | { nombre: 'evaluaciones'; materiaId: Id }
-  | { nombre: 'notas'; evaluacionId: Id };
+  | { nombre: 'notas'; evaluacionId: Id }
+  | { nombre: 'ficha'; alumnoId: Id; materiaId: Id };
 
 export default function App() {
   const [pila, setPila] = useState<Pantalla[]>([{ nombre: 'hoy' }]);
@@ -105,6 +107,7 @@ export default function App() {
           editarHorario={() => ir({ nombre: 'horario', materiaId: actual.materiaId })}
           tomarAsistencia={() => ir({ nombre: 'asistencia', materiaId: actual.materiaId })}
           verEvaluaciones={() => ir({ nombre: 'evaluaciones', materiaId: actual.materiaId })}
+          verFicha={(alumnoId) => ir({ nombre: 'ficha', alumnoId, materiaId: actual.materiaId })}
         />
       )}
 
@@ -126,6 +129,10 @@ export default function App() {
 
       {actual.nombre === 'notas' && (
         <Notas evaluacionId={actual.evaluacionId} volver={volver} />
+      )}
+
+      {actual.nombre === 'ficha' && (
+        <FichaAlumno alumnoId={actual.alumnoId} materiaId={actual.materiaId} volver={volver} />
       )}
 
       {actual.nombre === 'asistencia' && (
