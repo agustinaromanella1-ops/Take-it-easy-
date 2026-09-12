@@ -1,4 +1,13 @@
-import type { AppData, Frequency, Patient, PatientKind, Payment, Session, Settings } from '../types';
+import type {
+  AppData,
+  Frequency,
+  Patient,
+  PatientKind,
+  Payment,
+  Session,
+  Settings,
+  TaxCondition,
+} from '../types';
 import { PATIENT_COLORS } from './palette';
 import { isValidISODate, isValidTime } from './dates';
 
@@ -65,6 +74,13 @@ function isRecord(v: unknown): v is Record<string, unknown> {
 
 const FREQUENCIES = new Set<Frequency>(['semanal', 'quincenal', 'mensual', 'puntual']);
 const KINDS = new Set<PatientKind>(['particular', 'institucion', 'evaluacion']);
+const TAX_CONDITIONS = new Set<TaxCondition>([
+  'consumidor_final',
+  'responsable_inscripto',
+  'monotributo',
+  'exento',
+  'no_responsable',
+]);
 
 /** Acota un número al rango dado, devolviendo el valor por defecto si no es finito. */
 function clamp(v: unknown, min: number, max: number, fallback: number): number {
@@ -87,7 +103,12 @@ function parsePatient(raw: unknown): Patient | null {
     colorIndex: clamp(raw.colorIndex, 0, PATIENT_COLORS.length - 1, 0),
     frequency: FREQUENCIES.has(str(raw.frequency) as Frequency) ? (raw.frequency as Frequency) : 'semanal',
     kind: KINDS.has(str(raw.kind) as PatientKind) ? (raw.kind as PatientKind) : 'particular',
+    legalName: str(raw.legalName),
     document: str(raw.document),
+    taxId: str(raw.taxId),
+    taxCondition: TAX_CONDITIONS.has(str(raw.taxCondition) as TaxCondition)
+      ? (raw.taxCondition as TaxCondition)
+      : 'consumidor_final',
     memberNumber: str(raw.memberNumber),
     insurer: str(raw.insurer),
     lastRaise: isValidISODate(str(raw.lastRaise)) ? str(raw.lastRaise) : null,

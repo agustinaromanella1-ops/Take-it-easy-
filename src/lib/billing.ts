@@ -1,4 +1,4 @@
-import type { Cents, Patient, Session } from '../types';
+import type { Cents, Patient, Session, TaxCondition } from '../types';
 import { formatMoney } from './money';
 import { fromISODate, MONTH_NAMES } from './dates';
 import { isBillable } from '../store/selectors';
@@ -9,6 +9,46 @@ import { isBillable } from '../store/selectors';
  * La idea es copiar y pegar en el sistema de facturación, así que el texto sale
  * listo y no hay que completar nada a mano.
  */
+
+/** Cómo se nombra cada condición frente al IVA en el formulario de factura. */
+export const TAX_CONDITION_LABEL: Record<TaxCondition, string> = {
+  consumidor_final: 'Consumidor final',
+  responsable_inscripto: 'Responsable inscripto',
+  monotributo: 'Monotributista',
+  exento: 'Exento',
+  no_responsable: 'No responsable',
+};
+
+/**
+ * Nombre que va en la factura: el completo si está cargado, y si no el de la
+ * agenda. En la agenda conviene un nombre corto; la factura necesita el entero.
+ */
+export function invoiceName(patient: Patient): string {
+  const legal = patient.legalName.trim();
+  return legal === '' ? patient.name : legal;
+}
+
+/** Los datos fiscales del paciente, listos para transcribir campo por campo. */
+export interface InvoiceField {
+  label: string;
+  value: string;
+}
+
+/**
+ * Devuelve solo los campos que tienen dato. Mostrar filas vacías obligaría a
+ * revisar cuáles están completas en lugar de leer y copiar de corrido.
+ */
+export function invoiceFields(patient: Patient): InvoiceField[] {
+  const fields: InvoiceField[] = [
+    { label: 'Nombre completo', value: invoiceName(patient) },
+    { label: 'DNI', value: patient.document.trim() },
+    { label: 'CUIT / CUIL', value: patient.taxId.trim() },
+    { label: 'Condición frente al IVA', value: TAX_CONDITION_LABEL[patient.taxCondition] },
+    { label: 'Obra social', value: patient.insurer.trim() },
+    { label: 'N.º de afiliado', value: patient.memberNumber.trim() },
+  ];
+  return fields.filter((f) => f.value !== '');
+}
 
 export interface BillingLine {
   patient: Patient;
@@ -90,11 +130,11 @@ export function billingText(line: BillingLine, options: BillingTextOptions): str
   const { profession, currency } = options;
 
   if (dates.length === 0) {
-    return `No hay sesiones facturables de ${patient.name} en el período elegido.`;
+    return `No hay sesiones facturables de ${invoiceName(patient)} en el período elegido.`;
   }
 
   const parts: string[] = [
-    `Honorarios por sesión de ${profession} del paciente ${patient.name}`,
+    `Honorarios por sesión de ${profession} del paciente ${invoiceName(patient)}`,
   ];
 
   // El número de afiliado es lo que pide la obra social; el DNI sirve cuando no

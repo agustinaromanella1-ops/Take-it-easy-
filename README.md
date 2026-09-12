@@ -23,7 +23,8 @@ La carpeta `dist/` es HTML estático: no necesita servidor ni base de datos.
 **Inicio.** Facturado y cobrado del mes, deuda pendiente y turnos de la semana. Avisa de las
 sesiones que ya pasaron pero siguen sin cerrar y permite cerrarlas ahí mismo.
 
-**Pacientes.** Tarjetas con honorario, tipo (particular, institución o evaluación), frecuencia,
+**Pacientes.** Datos de contacto, datos para facturar (nombre completo, DNI, CUIT, condición frente
+al IVA, obra social y número de afiliado) y tarjetas con honorario, tipo, frecuencia,
 sesiones realizadas, porcentaje de cancelación, saldo y fecha del último aumento. Color
 identificatorio, botón de WhatsApp, y ficha con historial de sesiones, pagos y saldo.
 
@@ -40,7 +41,9 @@ del teléfono con alarma.
 **Finanzas.** Tres pestañas. **Resumen**: meta mensual, facturado contra cobrado mes a mes, saldos
 pendientes, registro de pagos y calculadora de tarifa. **Monitoreo**: quién pagó y quién debe,
 asistencia por paciente y comparación de honorarios contra la tarifa sugerida. **Facturación**:
-elegís mes y paciente y sale el texto de la factura listo para copiar.
+elegís mes y paciente y aparecen todos sus datos fiscales —nombre completo, DNI, CUIT, condición
+frente al IVA, obra social y afiliado— para copiar uno por uno mientras completás el formulario, más
+el texto de la factura listo para pegar.
 
 **Ajustes.** Moneda, duración por defecto, política de ausencias, antelación de la alarma, y
 exportar/importar los datos.
@@ -71,6 +74,13 @@ dos pasa cómoda (`src/components/charts.tsx`).
 
 **Los valores van escritos sobre las barras, no en un globo al pasar el mouse.** La app se usa sobre
 todo en el celular, donde el hover no existe.
+
+**El nombre de la agenda y el de la factura son campos distintos.** En la agenda conviene un nombre
+corto —"José H."— y la factura necesita el entero. Si el nombre completo está vacío se usa el de la
+agenda, así nadie tiene que cargar lo mismo dos veces.
+
+**Los datos fiscales sin cargar no se muestran como filas vacías**, porque obligarían a revisar
+cuáles están completas en lugar de leer y copiar de corrido.
 
 **El texto de la factura omite los datos que faltan en vez de dejar el hueco.** Una factura que dice
 "DNI:" sin número se ve peor que una que no lo menciona. Si el paciente tiene número de afiliado se
@@ -184,7 +194,7 @@ borra el historial**, así que conviene exportar una copia desde Ajustes cada ta
 ## Desarrollo
 
 ```bash
-npm test          # 181 tests unitarios
+npm test          # 188 tests unitarios
 npm run typecheck # TypeScript en modo strict
 npm run build
 ```

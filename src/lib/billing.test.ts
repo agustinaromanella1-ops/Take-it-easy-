@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import type { Patient, Session } from '../types';
-import { billingLine, billingText, formatDateList } from './billing';
+import { billingLine, billingText, formatDateList, invoiceFields, invoiceName } from './billing';
 
 function patient(over: Partial<Patient> = {}): Patient {
   return {
@@ -13,7 +13,10 @@ function patient(over: Partial<Patient> = {}): Patient {
     colorIndex: 0,
     frequency: 'semanal',
     kind: 'particular',
+    legalName: '',
     document: '',
+    taxId: '',
+    taxCondition: 'consumidor_final',
     memberNumber: '',
     insurer: '',
     lastRaise: null,
@@ -158,5 +161,52 @@ describe('billingText', () => {
   it('avisa cuando no hay nada que facturar', () => {
     const line = billingLine(patient(), [], '2026-03-01', '2026-03-31');
     expect(billingText(line, OPCIONES)).toBe('No hay sesiones facturables de María Gómez en el período elegido.');
+  });
+});
+
+describe('invoiceName', () => {
+  it('prefiere el nombre completo cuando está cargado', () => {
+    expect(invoiceName(patient({ legalName: 'María Elena Gómez Sosa' }))).toBe('María Elena Gómez Sosa');
+  });
+
+  it('cae al nombre de la agenda si no hay nombre completo', () => {
+    expect(invoiceName(patient())).toBe('María Gómez');
+  });
+
+  it('ignora un nombre completo que es solo espacios', () => {
+    expect(invoiceName(patient({ legalName: '   ' }))).toBe('María Gómez');
+  });
+
+  it('el texto de la factura usa el nombre completo', () => {
+    const p = patient({ legalName: 'María Elena Gómez Sosa' });
+    const line = billingLine(p, [session('a', '2026-03-03')], '2026-03-01', '2026-03-31');
+    expect(billingText(line, OPCIONES)).toContain('del paciente María Elena Gómez Sosa');
+  });
+});
+
+describe('invoiceFields', () => {
+  it('arma las filas para transcribir a la factura', () => {
+    const p = patient({ legalName: 'María Elena Gómez', document: '30123456', taxId: '27301234568',
+      taxCondition: 'monotributo', insurer: 'OSDE', memberNumber: '999/01' });
+    expect(invoiceFields(p)).toEqual([
+      { label: 'Nombre completo', value: 'María Elena Gómez' },
+      { label: 'DNI', value: '30123456' },
+      { label: 'CUIT / CUIL', value: '27301234568' },
+      { label: 'Condición frente al IVA', value: 'Monotributista' },
+      { label: 'Obra social', value: 'OSDE' },
+      { label: 'N.º de afiliado', value: '999/01' },
+    ]);
+  });
+
+  it('omite los campos sin dato en vez de mostrarlos vacíos', () => {
+    // Con filas vacías habría que revisar cuáles están completas en lugar de
+    // leer y copiar de corrido.
+    const labels = invoiceFields(patient({ document: '30123456' })).map((f) => f.label);
+    expect(labels).toEqual(['Nombre completo', 'DNI', 'Condición frente al IVA']);
+  });
+
+  it('la condición siempre está: consumidor final es un dato, no un vacío', () => {
+    const campos = invoiceFields(patient());
+    expect(campos.find((f) => f.label === 'Condición frente al IVA')?.value).toBe('Consumidor final');
   });
 });

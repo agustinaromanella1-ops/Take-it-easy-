@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react';
-import type { Frequency, Patient, PatientKind } from '../types';
+import type { Frequency, Patient, PatientKind, TaxCondition } from '../types';
 import { useStore } from '../store/StoreContext';
 import { patientBalances } from '../store/selectors';
 import { centsToInput, formatMoney, parseMoney } from '../lib/money';
@@ -7,6 +7,7 @@ import { formatDateShort, today } from '../lib/dates';
 import { ConfirmButton, Empty, Field, Modal } from '../components/ui';
 import { nextFreeColor, PATIENT_COLORS, patientColor } from '../lib/palette';
 import { whatsappLink } from '../lib/contact';
+import { TAX_CONDITION_LABEL } from '../lib/billing';
 
 interface FormState {
   name: string;
@@ -17,7 +18,10 @@ interface FormState {
   colorIndex: number;
   frequency: Frequency;
   kind: PatientKind;
+  legalName: string;
   document: string;
+  taxId: string;
+  taxCondition: TaxCondition;
   memberNumber: string;
   insurer: string;
   notes: string;
@@ -46,7 +50,10 @@ function toForm(p: Patient): FormState {
     colorIndex: p.colorIndex,
     frequency: p.frequency,
     kind: p.kind,
+    legalName: p.legalName,
     document: p.document,
+    taxId: p.taxId,
+    taxCondition: p.taxCondition,
     memberNumber: p.memberNumber,
     insurer: p.insurer,
     notes: p.notes,
@@ -67,7 +74,10 @@ export function PatientsPage({ onOpenPatient }: { onOpenPatient: (id: string) =>
     colorIndex: 0,
     frequency: 'semanal',
     kind: 'particular',
+    legalName: '',
     document: '',
+    taxId: '',
+    taxCondition: 'consumidor_final',
     memberNumber: '',
     insurer: '',
     notes: '',
@@ -114,7 +124,10 @@ export function PatientsPage({ onOpenPatient }: { onOpenPatient: (id: string) =>
       colorIndex: nextFreeColor(data.patients.map((p) => p.colorIndex)),
       frequency: 'semanal',
       kind: 'particular',
+      legalName: '',
       document: '',
+      taxId: '',
+      taxCondition: 'consumidor_final',
       memberNumber: '',
       insurer: '',
       notes: '',
@@ -151,7 +164,10 @@ export function PatientsPage({ onOpenPatient }: { onOpenPatient: (id: string) =>
       colorIndex: form.colorIndex,
       frequency: form.frequency,
       kind: form.kind,
+      legalName: form.legalName.trim(),
       document: form.document.trim(),
+      taxId: form.taxId.trim(),
+      taxCondition: form.taxCondition,
       memberNumber: form.memberNumber.trim(),
       insurer: form.insurer.trim(),
       notes: form.notes.trim(),
@@ -355,15 +371,47 @@ export function PatientsPage({ onOpenPatient }: { onOpenPatient: (id: string) =>
               ))}
             </div>
           </div>
+          <h3 className="form-section">Datos para facturar</h3>
+
+          <Field label="Nombre completo">
+            <input
+              value={form.legalName}
+              onChange={(e) => setForm({ ...form, legalName: e.target.value })}
+              placeholder={form.name.trim() === '' ? 'Como figura en el documento' : form.name}
+            />
+          </Field>
+
           <div className="field-row">
             <Field label="DNI">
               <input
                 inputMode="numeric"
                 value={form.document}
                 onChange={(e) => setForm({ ...form, document: e.target.value })}
-                placeholder="Para la factura"
               />
             </Field>
+            <Field label="CUIT / CUIL">
+              <input
+                inputMode="numeric"
+                value={form.taxId}
+                onChange={(e) => setForm({ ...form, taxId: e.target.value })}
+              />
+            </Field>
+          </div>
+
+          <Field label="Condición frente al IVA">
+            <select
+              value={form.taxCondition}
+              onChange={(e) => setForm({ ...form, taxCondition: e.target.value as TaxCondition })}
+            >
+              {(Object.keys(TAX_CONDITION_LABEL) as TaxCondition[]).map((c) => (
+                <option key={c} value={c}>
+                  {TAX_CONDITION_LABEL[c]}
+                </option>
+              ))}
+            </select>
+          </Field>
+
+          <div className="field-row">
             <Field label="Obra social / prepaga">
               <input value={form.insurer} onChange={(e) => setForm({ ...form, insurer: e.target.value })} />
             </Field>

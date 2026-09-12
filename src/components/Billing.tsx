@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react';
 import { useStore } from '../store/StoreContext';
-import { billingLine, billingText } from '../lib/billing';
+import { billingLine, billingText, invoiceFields } from '../lib/billing';
 import { formatMoney } from '../lib/money';
 import { addMonths, daysInMonth, formatMonthKey, monthKey, today } from '../lib/dates';
 import { patientColor } from '../lib/palette';
@@ -18,7 +18,8 @@ export function Billing() {
 
   const [month, setMonth] = useState(() => monthKey(today()));
   const [patientId, setPatientId] = useState<string>('');
-  const [copied, setCopied] = useState(false);
+  /** Qué se copió último, para confirmarlo sin un cartel por cada campo. */
+  const [copied, setCopied] = useState<string | null>(null);
 
   const from = `${month}-01`;
   const to = `${month}-${String(daysInMonth(from)).padStart(2, '0')}`;
@@ -42,14 +43,14 @@ export function Billing() {
     ? billingText(selected, { profession: data.settings.profession, currency })
     : '';
 
-  async function copy() {
+  async function copy(what: string, value: string) {
     try {
-      await navigator.clipboard.writeText(text);
-      setCopied(true);
-      window.setTimeout(() => setCopied(false), 2000);
+      await navigator.clipboard.writeText(value);
+      setCopied(what);
+      window.setTimeout(() => setCopied((c) => (c === what ? null : c)), 1800);
     } catch {
-      // Sin permiso de portapapeles queda el textarea para copiar a mano.
-      setCopied(false);
+      // Sin permiso de portapapeles quedan los campos para copiar a mano.
+      setCopied(null);
     }
   }
 
@@ -95,10 +96,49 @@ export function Billing() {
 
       {selected && (
         <Card
+          title="Datos del paciente"
+          action={
+            <button
+              className="btn small"
+              onClick={() =>
+                copy(
+                  'todos',
+                  invoiceFields(selected.patient)
+                    .map((f) => `${f.label}: ${f.value}`)
+                    .join('\n'),
+                )
+              }
+            >
+              {copied === 'todos' ? '✓ Copiado' : 'Copiar todo'}
+            </button>
+          }
+        >
+          <p className="small muted" style={{ marginTop: 0 }}>
+            Tocá un dato para copiarlo y pegarlo en el formulario de la factura.
+          </p>
+          <div className="fields-list">
+            {invoiceFields(selected.patient).map((f) => (
+              <button key={f.label} className="field-row-copy" onClick={() => copy(f.label, f.value)}>
+                <span className="field-label">{f.label}</span>
+                <span className="field-value">{f.value}</span>
+                <span className="field-copy">{copied === f.label ? '✓' : '⧉'}</span>
+              </button>
+            ))}
+          </div>
+
+          <div className="fields-total">
+            <span>Total del período</span>
+            <strong>{formatMoney(selected.total, currency)}</strong>
+          </div>
+        </Card>
+      )}
+
+      {selected && (
+        <Card
           title="Texto para la factura"
           action={
-            <button className="btn primary small" onClick={copy}>
-              {copied ? '✓ Copiado' : 'Copiar'}
+            <button className="btn primary small" onClick={() => copy('texto', text)}>
+              {copied === 'texto' ? '✓ Copiado' : 'Copiar'}
             </button>
           }
         >

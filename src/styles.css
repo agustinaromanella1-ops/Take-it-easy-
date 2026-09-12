@@ -939,3 +939,53 @@ a.btn {
   line-height: 1.6;
   background: var(--surface-soft);
 }
+
+/* Separador dentro de un formulario largo. */
+.form-section {
+  margin: 22px 0 12px;
+  padding-top: 16px;
+  border-top: 1px solid var(--border);
+  font-size: 1rem;
+  color: var(--muted);
+  font-family: var(--sans);
+  font-weight: 700;
+}
+
+/* ---------- Datos para transcribir a la factura ---------- */
+.fields-list { display: flex; flex-direction: column; gap: 2px; margin-top: 12px; }
+.field-row-copy {
+  display: grid;
+  grid-template-columns: minmax(96px, 34%) 1fr auto;
+  gap: 12px;
+  align-items: baseline;
+  width: 100%;
+  text-align: left;
+  border: 0;
+  background: transparent;
+  font: inherit;
+  padding: 11px 12px;
+  border-radius: 10px;
+  cursor: pointer;
+}
+.field-row-copy:hover { background: var(--surface-soft); }
+.field-row-copy:active { background: var(--accent-soft); }
+.field-label { font-size: 0.82rem; color: var(--muted); }
+.field-value {
+  color: var(--text);
+  font-weight: 650;
+  overflow-wrap: anywhere;
+}
+.field-copy { color: var(--accent); font-size: 0.95rem; }
+
+.fields-total {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 12px;
+  margin-top: 14px;
+  padding-top: 13px;
+  border-top: 1px solid var(--border);
+  color: var(--muted);
+  font-size: 0.9rem;
+}
+.fields-total strong { color: var(--accent-dark); font-size: 1.15rem; font-variant-numeric: tabular-nums; }

@@ -30,6 +30,14 @@ export type Frequency = 'semanal' | 'quincenal' | 'mensual' | 'puntual';
 /** De dónde viene el paciente. Cambia cómo se lee la agenda de un vistazo. */
 export type PatientKind = 'particular' | 'institucion' | 'evaluacion';
 
+/** Condición del paciente frente al IVA, como la pide el formulario de factura. */
+export type TaxCondition =
+  | 'consumidor_final'
+  | 'responsable_inscripto'
+  | 'monotributo'
+  | 'exento'
+  | 'no_responsable';
+
 export interface Patient {
   id: string;
   name: string;
@@ -42,8 +50,18 @@ export interface Patient {
   colorIndex: number;
   frequency: Frequency;
   kind: PatientKind;
+  /**
+   * Nombre completo como figura en el documento. Vacío significa usar `name`.
+   *
+   * Existe aparte porque en la agenda conviene un nombre corto —"José H."— y la
+   * factura necesita el nombre entero.
+   */
+  legalName: string;
   /** DNI del paciente. Va en la factura cuando no hay número de afiliado. */
   document: string;
+  /** CUIT o CUIL, para cuando la factura lo exige en lugar del DNI. */
+  taxId: string;
+  taxCondition: TaxCondition;
   /** Número de afiliado a la obra social o prepaga. */
   memberNumber: string;
   /** Nombre de la obra social o prepaga, si corresponde. */
