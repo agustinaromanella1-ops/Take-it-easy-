@@ -54,9 +54,25 @@ Serif de display (Playfair Display) para títulos y cifras principales, sans red
 para el cuerpo, fondo en degradado pastel, tarjetas muy redondeadas y acento turquesa. Los títulos
 de sección van fuera de la tarjeta, con su acción a la derecha.
 
-La mascota es un perro salchicha dibujado en SVG con tres poses —estirado, corriendo y echado— que
-se alternan al tocarlo. Es dibujo propio en estilo de línea continua, no una copia de ninguna
-ilustración existente. En celular
+La mascota es un perro salchicha con sweater a rayas, dibujado en SVG de color plano. Al tocarlo
+cambia el mensaje y mueve la cola.
+
+**Dos naranjas, no uno.** El naranja lindo (`--warm`, #e08a4f) no llega a 4,5:1 sobre blanco, así
+que solo se usa en degradés y rellenos sin texto. Para texto y bordes hay un segundo tono más
+oscuro (`--warm-ink`, #ad5417) que sí pasa. Lo mismo en el héroe: el turquesa de la interfaz da
+3,2:1 sobre el degradé y ahí hay texto chico, así que ese bloque usa `--accent-ink` (#2f6273, 5,4:1).
+
+**El naranja es calidez de marca, no jerarquía.** Turquesa es acción, el ámbar de los gráficos es
+"pendiente", y el naranja queda para lo cálido y celebratorio. Si el naranja marcara además lo
+importante, el mismo color tendría dos significados.
+
+**Los degradés van sobre superficies grandes y tranquilas** —el héroe, el botón de cierre del día,
+la burbuja de la mascota, el ícono— y nunca sobre marcas de datos, donde el color significa algo y
+un degradé lo volvería ambiguo.
+
+**`prefers-reduced-motion` anula todo el movimiento**, incluida la cola del perro, que ni siquiera
+se monta. Para varias personas el movimiento no es adorno sino una distracción que compite con lo
+que están tratando de hacer. En celular
 la navegación pasa a una barra inferior con un botón flotante para la acción principal de cada
 pantalla. Las fuentes están alojadas en el propio proyecto en lugar de pedirlas a Google: así la app se ve
 igual sin conexión (una PWA que depende de un CDN externo pierde su tipografía apenas se corta

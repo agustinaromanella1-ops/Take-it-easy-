@@ -8,9 +8,9 @@
   color-scheme: light;
 
   /* Fondo: azul muy claro arriba, lavanda al medio, durazno abajo. */
-  --bg-top: #eef2f7;
-  --bg-mid: #f1eef6;
-  --bg-bottom: #fdf1ec;
+  --bg-top: #edf1f7;
+  --bg-mid: #f1edf6;
+  --bg-bottom: #fdf0e6;
 
   --surface: #ffffff;
   --surface-soft: #faf8fc;
@@ -23,6 +23,16 @@
   --accent: #5a9aae;      /* turquesa */
   --accent-dark: #47899d;
   --accent-soft: #e4f0f4;
+  /* Turquesa para texto chico sobre los degradés del héroe, donde el
+     --accent-dark solo llega a 3,2:1. Este da 5,4:1. */
+  --accent-ink: #2f6273;
+
+  /* Dos naranjas, porque uno solo no alcanza:
+     --warm es el lindo, para degradés y rellenos SIN texto encima.
+     --warm-ink es el que pasa 4,5:1 y puede llevar o ser texto. */
+  --warm: #e08a4f;
+  --warm-ink: #ad5417;
+  --warm-soft: #fdeadb;
 
   --ok: #4f9e84;
   --warn: #c08a4a;
@@ -135,17 +145,20 @@ h3 { font-size: 1.05rem; }
 
 /* Tarjeta destacada: el degradado lavanda-durazno del original. */
 .hero {
-  background: linear-gradient(135deg, #e9e5f5 0%, #f2ecf4 50%, #fbe9e6 100%);
+  /* Lavanda a rosa a durazno: el degradé va donde no hay texto largo, y el
+     texto que sí lleva encima usa --accent-ink, que pasa el contraste contra
+     los dos extremos. */
+  background: linear-gradient(135deg, #e8e3f6 0%, #f6ecf1 42%, #fde4d6 100%);
   border-radius: 26px;
   padding: 26px;
   margin-bottom: 22px;
 }
-.hero-label { color: var(--accent-dark); font-weight: 600; font-size: 0.95rem; }
+.hero-label { color: var(--accent-ink); font-weight: 700; font-size: 0.95rem; }
 .hero-value {
   font-family: var(--serif);
   font-size: clamp(2.2rem, 8vw, 3rem);
   font-weight: 700;
-  color: var(--accent-dark);
+  color: var(--accent-ink);
   line-height: 1.1;
   margin: 6px 0 4px;
   font-variant-numeric: tabular-nums;
@@ -153,10 +166,10 @@ h3 { font-size: 1.05rem; }
 .hero-hint { color: var(--muted); font-size: 0.95rem; }
 .hero-note {
   margin-top: 16px;
-  background: rgba(255, 255, 255, 0.65);
+  background: rgba(255, 255, 255, 0.72);
   border-radius: var(--radius-sm);
   padding: 12px 16px;
-  color: var(--accent-dark);
+  color: var(--accent-ink);
   font-size: 0.95rem;
 }
 
@@ -254,7 +267,7 @@ button.btn.ghost:hover { background: var(--accent-soft); }
   height: 58px;
   border-radius: 50%;
   border: 0;
-  background: var(--accent);
+  background: linear-gradient(160deg, #6aa8bb 0%, var(--accent) 55%, #4d8da2 100%);
   color: #fff;
   font-size: 1.9rem;
   line-height: 1;
@@ -422,7 +435,7 @@ td { color: var(--body); }
 /* ---------- Mascota ---------- */
 .mascot { display: flex; align-items: center; gap: 10px; }
 .mascot-bubble {
-  background: var(--surface);
+  background: linear-gradient(140deg, #fff 0%, var(--warm-soft) 100%);
   border-radius: 16px;
   padding: 9px 15px;
   font-size: 0.88rem;
@@ -776,8 +789,8 @@ a.btn {
 .close-day-btn {
   width: 100%;
   border: 0;
-  background: var(--accent-soft);
-  color: var(--accent-dark);
+  background: linear-gradient(120deg, var(--accent-soft) 0%, #eef3f0 60%, var(--warm-soft) 100%);
+  color: var(--accent-ink);
   font: inherit;
   font-weight: 700;
   font-size: 1rem;
@@ -790,7 +803,7 @@ a.btn {
   gap: 9px;
   margin-bottom: 18px;
 }
-.close-day-btn:hover { background: #d7e8ee; }
+.close-day-btn:hover { filter: brightness(0.97); }
 .close-day-btn .badge {
   background: var(--accent);
   color: #fff;
@@ -989,3 +1002,31 @@ a.btn {
   font-size: 0.9rem;
 }
 .fields-total strong { color: var(--accent-dark); font-size: 1.15rem; font-variant-numeric: tabular-nums; }
+
+/* ---------- Estados cálidos ----------
+   El naranja marca lo bueno y celebratorio, no lo importante ni lo urgente.
+   Eso evita enseñar dos significados para un mismo color: turquesa es acción,
+   ámbar en los gráficos es "pendiente", y el naranja es calidez de marca. */
+.warm-note {
+  background: linear-gradient(120deg, var(--warm-soft) 0%, #fdf3e9 100%);
+  color: var(--warm-ink);
+  border-radius: var(--radius-sm);
+  padding: 13px 16px;
+  font-size: 0.92rem;
+  font-weight: 600;
+}
+
+/* ---------- Movimiento ----------
+   Quien pidió menos movimiento en su sistema no debería ver ninguno: para
+   varias personas el movimiento no es adorno, es una distracción que compite
+   con lo que están tratando de hacer. */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+    scroll-behavior: auto !important;
+  }
+}

@@ -1,9 +1,9 @@
-import { useCallback, useMemo, useState } from 'react';
-import { Dachshund, DOG_POSES } from './Dachshund';
+import { useCallback, useMemo, useRef, useState } from 'react';
+import { Dachshund } from './Dachshund';
 
 /**
  * Recordatorio de que la app mide el trabajo, no a la persona que lo hace.
- * Tocar al perrito cambia el mensaje y le cambia la pose.
+ * Tocar al perrito cambia el mensaje y le mueve la cola.
  */
 const MESSAGES = [
   'Tus números no definen tu valor ✨',
@@ -24,21 +24,31 @@ const WEEKDAY_MESSAGES: Record<number, string> = {
 export function Mascot() {
   const initial = useMemo(() => WEEKDAY_MESSAGES[new Date().getDay()] ?? MESSAGES[0]!, []);
   const [message, setMessage] = useState(initial);
-  const [poseIndex, setPoseIndex] = useState(0);
+  const [wagging, setWagging] = useState(false);
+  const timer = useRef<number | undefined>(undefined);
 
   const next = useCallback(() => {
-    setPoseIndex((i) => (i + 1) % DOG_POSES.length);
+    // Si el sistema pide menos movimiento, el perro cambia de mensaje pero no
+    // mueve la cola: el movimiento es adorno y no vale la distracción.
+    const quieto = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
     setMessage((current) => {
       const options = MESSAGES.filter((m) => m !== current);
       return options[Math.floor(Math.random() * options.length)] ?? current;
     });
+    // Se remonta el SVG para reiniciar la animación de la cola aunque ya
+    // estuviera moviéndose.
+    if (quieto) return;
+    setWagging(false);
+    window.clearTimeout(timer.current);
+    timer.current = window.setTimeout(() => setWagging(true), 10);
   }, []);
 
   return (
     <div className="mascot">
       <span className="mascot-bubble">{message}</span>
       <button className="mascot-dog" onClick={next} aria-label="Otro mensaje" title="Tocame">
-        <Dachshund pose={DOG_POSES[poseIndex]!} />
+        <Dachshund wag={wagging} />
       </button>
     </div>
   );

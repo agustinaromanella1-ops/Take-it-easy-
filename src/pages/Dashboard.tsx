@@ -73,7 +73,7 @@ export function DashboardPage({ onGo }: { onGo: (page: 'agenda' | 'finanzas' | '
             Te faltan <strong>{formatMoney(goal.remaining, currency)}</strong> para tu meta del mes.
           </div>
         )}
-        {goal?.done && <div className="hero-note">¡Llegaste a tu meta del mes! 🎉</div>}
+        {goal?.done && <div className="hero-note warm-note">¡Llegaste a tu meta del mes! 🎉</div>}
         {!goal && porCobrarMes > 0 && (
           <div className="hero-note">
             Te queda {formatMoney(porCobrarMes, currency)} por cobrar de este mes.

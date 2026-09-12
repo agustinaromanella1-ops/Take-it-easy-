@@ -214,6 +214,14 @@ export function AgendaPage() {
 
   const todayISO = today();
 
+  /** Vuelve al día de hoy en las tres vistas de una sola vez. */
+  function goToday() {
+    const hoy = today();
+    setSelectedDay(hoy);
+    setWeekStart(startOfWeek(hoy));
+    setMonth(monthKey(hoy));
+  }
+
   // Sesiones del día elegido que siguen sin resolverse. Es lo que el cierre
   // viene a resolver, y el número que se muestra en el botón.
   const pendingToClose = useMemo(
@@ -234,7 +242,9 @@ export function AgendaPage() {
       <div className="page-head">
         <h1>Agenda</h1>
         <div className="actions">
-          <button className="btn" onClick={() => setWeekStart(startOfWeek(todayISO))}>
+          {/* Secundario: no debe competir con la acción principal de la
+              pantalla, que es agregar o cerrar el día. */}
+          <button className="btn ghost" onClick={() => goToday()}>
             Hoy
           </button>
           <button
