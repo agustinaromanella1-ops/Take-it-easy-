@@ -11,6 +11,13 @@ import {
   type Copia,
   type Resumen,
 } from '../datos/exportacion';
+import {
+  cancelarLaPrueba,
+  elSistemaLoTiene,
+  probarElAviso,
+  textoDeLaPrueba,
+  type Resultado,
+} from '../agenda/prueba';
 import { olvidarInstructivo } from '../datos/preferencias';
 import { guardarArchivo } from '../nativo/archivos';
 import './Ajustes.css';
@@ -34,6 +41,8 @@ export default function Ajustes({ verInstructivo }: { verInstructivo: () => void
   const [actual, setActual] = useState<Resumen | null>(null);
   const [restaurada, setRestaurada] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [prueba, setPrueba] = useState<Resultado | null>(null);
+  const [anotado, setAnotado] = useState<boolean | null>(null);
 
   async function exportar() {
     if (exportando) return;
@@ -141,6 +150,59 @@ export default function Ajustes({ verInstructivo }: { verInstructivo: () => void
           </>
         )}
         {error && <p className="error">{error}</p>}
+      </section>
+
+      <section>
+        <h2>Avisos</h2>
+        <p className="detalle">
+          Programa un aviso de prueba para dentro de un minuto. Cerrá la app y
+          esperá: si llega, los recordatorios de la agenda te van a llegar
+          igual.
+        </p>
+
+        {prueba?.estado === 'programado' ? (
+          <>
+            <p className="hecho2">
+              Programado para las <strong>{prueba.hora}</strong>. Va a decir
+              «{textoDeLaPrueba().titulo}: {textoDeLaPrueba().cuerpo}»
+              {anotado === true && ', y el sistema ya lo tiene anotado'}
+              {anotado === false && ', pero el sistema no lo tiene anotado'}.
+            </p>
+            <button
+              className="terciario"
+              onClick={async () => {
+                await cancelarLaPrueba();
+                setPrueba(null);
+                setAnotado(null);
+              }}
+            >
+              Cancelar el aviso de prueba
+            </button>
+          </>
+        ) : (
+          <button
+            className="secundario"
+            onClick={async () => {
+              const resultado = await probarElAviso();
+              setPrueba(resultado);
+              setAnotado(resultado.estado === 'programado' ? await elSistemaLoTiene() : null);
+            }}
+          >
+            Probar el aviso
+          </button>
+        )}
+
+        {prueba?.estado === 'sin-permiso' && (
+          <p className="aviso">
+            Android no dio permiso para avisarte. Se habilita desde los ajustes
+            del teléfono, en las notificaciones de Take It Easy.
+          </p>
+        )}
+        {prueba?.estado === 'sin-notificaciones' && (
+          <p className="aviso">
+            En el navegador no hay avisos. Esto anda en el teléfono.
+          </p>
+        )}
       </section>
 
       <section>

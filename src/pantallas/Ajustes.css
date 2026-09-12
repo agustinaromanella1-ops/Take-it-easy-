@@ -88,3 +88,13 @@
   color: var(--lila);
   cursor: pointer;
 }
+
+.ajustes .hecho2 {
+  margin-top: 12px;
+  padding: 12px 14px;
+  border-radius: 12px;
+  background: var(--noche);
+  color: var(--noche-osc);
+  font-size: 13px;
+  line-height: 1.55;
+}
