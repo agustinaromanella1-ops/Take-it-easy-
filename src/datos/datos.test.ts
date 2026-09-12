@@ -3,7 +3,8 @@ import { beforeEach, describe, expect, it } from 'vitest';
 
 import { db, nuevoId } from './db';
 import { altaMasiva } from './alumnos';
-import { marcarAsistencia, tocarEstado } from './asistencia';
+import { comoVaLaAsistencia, marcarAsistencia, tocarEstado } from './asistencia';
+import { claseDelDia } from './clases';
 import { calificar, promedioDeAlumno } from './calificaciones';
 import { crearObservacion } from './observaciones';
 import { PlantillaConNombreError, guardarPlantilla } from './plantillas';
@@ -116,6 +117,57 @@ describe('asistencia', () => {
     await marcarAsistencia({ claseSesionId, alumnoId: 'alumno-2', estado: 'ausente' });
 
     expect(await db.registrosAsistencia.count()).toBe(2);
+  });
+});
+
+describe('si ya se tomó lista hoy', () => {
+  const fecha = '2026-09-12';
+
+  it('preguntar no crea la clase', async () => {
+    // La pantalla de la materia pregunta cada vez que se abre. Si preguntar
+    // creara la clase, mirar una materia dejaría clases vacías inventadas en
+    // la base, que después contarían en la ficha del alumno.
+    await comoVaLaAsistencia(materiaId, fecha, undefined, 3);
+    expect(await db.clasesSesion.count()).toBe(0);
+  });
+
+  it('sin clase todavía, no hay nada registrado', async () => {
+    expect(await comoVaLaAsistencia(materiaId, fecha, undefined, 3)).toEqual({
+      registradas: 0,
+      total: 3,
+    });
+  });
+
+  it('cuenta los que ya tienen estado puesto', async () => {
+    const clase = await claseDelDia(materiaId, fecha);
+    await marcarAsistencia({ claseSesionId: clase.id, alumnoId: 'a1', estado: 'presente' });
+    await marcarAsistencia({ claseSesionId: clase.id, alumnoId: 'a2', estado: 'ausente' });
+
+    expect(await comoVaLaAsistencia(materiaId, fecha, undefined, 3)).toEqual({
+      registradas: 2,
+      total: 3,
+    });
+  });
+
+  it('no mezcla la clase de otro día', async () => {
+    const clase = await claseDelDia(materiaId, '2026-09-11');
+    await marcarAsistencia({ claseSesionId: clase.id, alumnoId: 'a1', estado: 'presente' });
+
+    expect(await comoVaLaAsistencia(materiaId, fecha, undefined, 3)).toMatchObject({
+      registradas: 0,
+    });
+  });
+
+  it('no mezcla dos bloques del mismo día', async () => {
+    const clase = await claseDelDia(materiaId, fecha, 'bloque-1');
+    await marcarAsistencia({ claseSesionId: clase.id, alumnoId: 'a1', estado: 'presente' });
+
+    expect(await comoVaLaAsistencia(materiaId, fecha, 'bloque-2', 3)).toMatchObject({
+      registradas: 0,
+    });
+    expect(await comoVaLaAsistencia(materiaId, fecha, 'bloque-1', 3)).toMatchObject({
+      registradas: 1,
+    });
   });
 });
 

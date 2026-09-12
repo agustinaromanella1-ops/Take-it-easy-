@@ -51,13 +51,29 @@ export function hayDictado(): boolean {
 }
 
 /**
- * Si este teléfono reconoce voz sin mandar el audio a ningún lado, en
- * castellano. Hace falta Android 13 o más nuevo y el idioma bajado.
+ * APAGADO: el plugin cierra la app al preguntar.
  *
- * Es la única pregunta de disponibilidad que hace la app. Un `false` acá no
- * habilita ningún otro camino: esconde el micrófono.
+ * `isOnDeviceRecognitionAvailable` del plugin llama a
+ * `SpeechRecognizer.createOnDeviceSpeechRecognizer()` y `checkRecognitionSupport()`
+ * sin pasar al hilo principal, y `SpeechRecognizer` de Android sólo se puede
+ * usar desde ahí. Capacitor corre los métodos de los plugins en un hilo aparte,
+ * así que la excepción sale y Capacitor la relanza en ese hilo: la app se cierra
+ * de golpe. Pasa en la pantalla de un alumno, que es la que pregunta al abrirse.
+ *
+ * El `try/catch` de JavaScript no sirve para esto: el proceso muere antes de que
+ * ninguna promesa se rechace.
+ *
+ * Está igual en la 8.3.0, así que no se arregla actualizando. Hasta que el
+ * dictado tenga un camino propio que pregunte en el hilo principal, la app no
+ * toca el plugin: devolver `false` acá es lo único que hace falta, porque todo
+ * lo demás cuelga de esta respuesta y el micrófono no se dibuja.
  */
 export async function seEscuchaAcaMismo(): Promise<boolean> {
+  return false;
+}
+
+/** Lo que haría si el plugin se pudiera preguntar sin cerrar la app. */
+export async function preguntarSiSeEscuchaAcaMismo(): Promise<boolean> {
   if (!hayDictado()) return false;
   try {
     const { available } = await SpeechRecognition.isOnDeviceRecognitionAvailable({

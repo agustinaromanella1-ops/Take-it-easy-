@@ -1,7 +1,8 @@
 import { useLiveQuery } from 'dexie-react-hooks';
 
 import { DIAS, hoy } from '../fecha';
-import { bloquesDeMateria } from '../datos/bloques';
+import { comoVaLaAsistencia } from '../datos/asistencia';
+import { bloqueSugerido, bloquesDeMateria } from '../datos/bloques';
 import { evaluacionesDeMateria } from '../datos/evaluaciones';
 import { darDeBaja, alumnosInscriptos } from '../datos/inscripciones';
 import {
@@ -50,12 +51,20 @@ export default function Materia({
 }: Props) {
   const datos = useLiveQuery(async () => {
     const m = await buscarMateria(materiaId);
+    const alumnos = await alumnosInscriptos(materiaId);
+    const fecha = hoy();
     return {
       materia: m,
       escuela: m ? await nombreDeEscuela(m.escuelaId) : '',
-      alumnos: await alumnosInscriptos(materiaId),
+      alumnos,
       bloques: await bloquesDeMateria(materiaId),
       evaluaciones: await evaluacionesDeMateria(materiaId),
+      asistencia: await comoVaLaAsistencia(
+        materiaId,
+        fecha,
+        await bloqueSugerido(materiaId, fecha),
+        alumnos.length,
+      ),
     };
   }, [materiaId]);
 
@@ -64,7 +73,12 @@ export default function Materia({
 
   if (!datos?.materia) return <div className="pantalla materia" />;
 
-  const { materia, escuela, alumnos, bloques, evaluaciones } = datos;
+  const { materia, escuela, alumnos, bloques, evaluaciones, asistencia } = datos;
+  // Tomada del todo, empezada, o sin empezar: son tres cosas distintas y el
+  // botón tiene que decir cuál. «Tomar asistencia» cuando ya está tomada hace
+  // dudar de si se guardó.
+  const yaSeTomo = asistencia.total > 0 && asistencia.registradas >= asistencia.total;
+  const aMedias = asistencia.registradas > 0 && !yaSeTomo;
 
   return (
     <div className="pantalla materia">
@@ -131,8 +145,15 @@ export default function Materia({
           />
         )}
         {alumnos.length > 0 && (
-          <button className="primario" onClick={tomarAsistencia}>
-            Tomar asistencia
+          <button
+            className={yaSeTomo ? 'secundario' : 'primario'}
+            onClick={tomarAsistencia}
+          >
+            {yaSeTomo
+              ? 'Asistencia tomada · revisar'
+              : aMedias
+                ? `Seguir la asistencia · ${asistencia.registradas} de ${asistencia.total}`
+                : 'Tomar asistencia'}
           </button>
         )}
         <button

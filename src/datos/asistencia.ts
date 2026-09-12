@@ -1,4 +1,5 @@
-import { db, nuevoId } from './db';
+import { SIN_BLOQUE, db, nuevoId } from './db';
+import type { FechaLocal } from '../fecha';
 import type { EstadoAsistencia, Id, RegistroAsistencia } from './tipos';
 
 export interface MarcaAsistencia {
@@ -89,4 +90,35 @@ export async function borrarAsistencia(claseSesionId: Id, alumnoId: Id): Promise
     .where('[claseSesionId+alumnoId]')
     .equals([claseSesionId, alumnoId])
     .delete();
+}
+
+export interface ComoVaLaAsistencia {
+  /** Cuántos alumnos ya tienen un estado puesto hoy. */
+  registradas: number;
+  /** Cuántos hay en el curso. */
+  total: number;
+}
+
+/**
+ * Si ya se tomó lista hoy, para que el botón de la materia no diga «Tomar
+ * asistencia» cuando ya está tomada.
+ *
+ * Sólo lee: a diferencia de `claseDelDia`, no crea la clase si no existe.
+ * Preguntar desde la pantalla de la materia no puede dejar clases vacías
+ * inventadas en la base, que después contarían en la ficha del alumno.
+ */
+export async function comoVaLaAsistencia(
+  materiaId: Id,
+  fecha: FechaLocal,
+  bloqueHorarioId: Id | undefined,
+  total: number,
+): Promise<ComoVaLaAsistencia> {
+  const clase = await db.clasesSesion
+    .where('[materiaId+fecha+bloqueHorarioId]')
+    .equals([materiaId, fecha, bloqueHorarioId ?? SIN_BLOQUE])
+    .first();
+  if (!clase) return { registradas: 0, total };
+
+  const registros = await asistenciaDeLaClase(clase.id);
+  return { registradas: registros.length, total };
 }

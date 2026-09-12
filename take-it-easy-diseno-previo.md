@@ -599,6 +599,22 @@ vez y `false` ninguna, y que `available()` no se consulte nunca. Se verificó
 rompiéndolos: poner la opción en `false` y agregar un `catch` que reintenta
 sin ella hacen fallar a los tests que corresponden.
 
+**Apagado por ahora: el plugin cierra la app al preguntar.** Su
+`isOnDeviceRecognitionAvailable` llama a `createOnDeviceSpeechRecognizer()` y
+`checkRecognitionSupport()` sin pasar al hilo principal, y `SpeechRecognizer`
+de Android sólo se puede usar desde ahí. Capacitor corre los métodos de los
+plugins en un hilo aparte (`taskHandler.post`) y relanza cualquier excepción
+con `throw new RuntimeException(ex)`: en ese hilo eso cierra la app entera. Se
+ve al abrir la ficha de un alumno, que es la pantalla que pregunta al cargarse.
+El `try/catch` de JavaScript no sirve: el proceso muere antes de que ninguna
+promesa se rechace. Está igual en la 8.3.0.
+
+Mientras tanto la app no toca el plugin: `seEscuchaAcaMismo()` devuelve `false`
+sin preguntar, y como todo lo demás cuelga de esa respuesta, el micrófono no se
+dibuja y no hay forma de llegar a `start`. La salida es un plugin propio de
+unas pocas líneas que pregunte en el hilo principal, y de paso deja de ser una
+dependencia de terceros.
+
 **El permiso de micrófono se escribe también en el manifiesto de la app**,
 aunque lo declare el plugin. Un permiso de este tamaño tiene que verse en el
 repositorio y no llegar callado desde `node_modules`.

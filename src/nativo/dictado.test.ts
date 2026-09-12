@@ -35,6 +35,7 @@ const {
   empezarADictar,
   hayDictado,
   opcionesDeDictado,
+  preguntarSiSeEscuchaAcaMismo,
   seEscuchaAcaMismo,
 } = await import('./dictado');
 
@@ -73,9 +74,26 @@ describe('encender el micrófono', () => {
   });
 });
 
+describe('mientras el plugin cierre la app al preguntar', () => {
+  // El plugin pregunta desde un hilo que no es el principal, y SpeechRecognizer
+  // de Android no lo permite: la app se cierra entera. Lo único que evita eso
+  // es no preguntar.
+  it('no se le pregunta nada al plugin', async () => {
+    expect(await seEscuchaAcaMismo()).toBe(false);
+    expect(plugin.isOnDeviceRecognitionAvailable).not.toHaveBeenCalled();
+  });
+
+  it('y entonces el micrófono no se dibuja en ninguna pantalla', async () => {
+    // Todo lo demás cuelga de esta respuesta: sin ella no hay botón, y sin
+    // botón no hay forma de llegar a `start`.
+    plugin.isOnDeviceRecognitionAvailable.mockResolvedValue({ available: true });
+    expect(await seEscuchaAcaMismo()).toBe(false);
+  });
+});
+
 describe('preguntar si se puede', () => {
   it('pregunta por el reconocimiento en el dispositivo y no por el otro', async () => {
-    expect(await seEscuchaAcaMismo()).toBe(true);
+    expect(await preguntarSiSeEscuchaAcaMismo()).toBe(true);
     expect(plugin.isOnDeviceRecognitionAvailable).toHaveBeenCalledWith({ language: 'es-AR' });
     // `available()` incluye el reconocedor que manda el audio al servidor.
     // Que dé `true` no habilita nada, así que ni se lo consulta.
@@ -84,18 +102,18 @@ describe('preguntar si se puede', () => {
 
   it('sin reconocimiento en el dispositivo, no hay dictado', async () => {
     plugin.isOnDeviceRecognitionAvailable.mockResolvedValue({ available: false });
-    expect(await seEscuchaAcaMismo()).toBe(false);
+    expect(await preguntarSiSeEscuchaAcaMismo()).toBe(false);
   });
 
   it('si ni siquiera se puede preguntar, la respuesta es que no', async () => {
     plugin.isOnDeviceRecognitionAvailable.mockRejectedValue(new Error('boom'));
-    expect(await seEscuchaAcaMismo()).toBe(false);
+    expect(await preguntarSiSeEscuchaAcaMismo()).toBe(false);
   });
 
   it('en el navegador no hay dictado y no se toca el plugin', async () => {
     esNativaAhora = false;
     expect(hayDictado()).toBe(false);
-    expect(await seEscuchaAcaMismo()).toBe(false);
+    expect(await preguntarSiSeEscuchaAcaMismo()).toBe(false);
     await empezarADictar(sinHacerNada);
     expect(plugin.isOnDeviceRecognitionAvailable).not.toHaveBeenCalled();
     expect(plugin.start).not.toHaveBeenCalled();

@@ -14,6 +14,7 @@ import {
 import {
   cancelarLaPrueba,
   elSistemaLoTiene,
+  probarAhora,
   probarElAviso,
   textoDeLaPrueba,
   type Resultado,
@@ -155,10 +156,31 @@ export default function Ajustes({ verInstructivo }: { verInstructivo: () => void
       <section>
         <h2>Avisos</h2>
         <p className="detalle">
-          Programa un aviso de prueba para dentro de un minuto. Cerrá la app y
-          esperá: si llega, los recordatorios de la agenda te van a llegar
-          igual.
+          Dos pruebas, y conviene hacerlas en orden: la de <strong>ahora</strong>{' '}
+          dice si el teléfono muestra los avisos de la app, y la de{' '}
+          <strong>un minuto</strong> dice si además los muestra cuando la app
+          está cerrada. Si no llega ninguno de los dos, el problema es otro que
+          si llega el primero y no el segundo.
         </p>
+
+        <button
+          className="secundario"
+          onClick={async () => {
+            setPrueba(await probarAhora());
+            setAnotado(null);
+          }}
+        >
+          Probar ahora
+        </button>
+
+        {prueba?.estado === 'mostrado' && (
+          <p className="hecho2">
+            Mandado. Tendría que aparecer en este momento, sin esperar.
+            {' '}Si aparece, probá el de un minuto. Si no aparece, el teléfono no
+            está mostrando los avisos de esta app y lo que hay que revisar son
+            sus notificaciones en los ajustes del teléfono.
+          </p>
+        )}
 
         {prueba?.estado === 'programado' ? (
           <>
@@ -168,6 +190,20 @@ export default function Ajustes({ verInstructivo }: { verInstructivo: () => void
               {anotado === true && ', y el sistema ya lo tiene anotado'}
               {anotado === false && ', pero el sistema no lo tiene anotado'}.
             </p>
+            {anotado === false && (
+              <p className="aviso">
+                Android no lo anotó, así que no va a sonar. Eso no es el ahorro
+                de batería: es que la app no pudo programarlo.
+              </p>
+            )}
+            {anotado === true && (
+              <p className="detalle">
+                Cerrá la app y esperá. Si el de ahora llegó y éste no, lo que lo
+                frena es el ahorro de batería del teléfono: buscá Take It Easy
+                en los ajustes y ponelo en «sin restricciones», y activale el
+                inicio automático.
+              </p>
+            )}
             <button
               className="terciario"
               onClick={async () => {
@@ -188,7 +224,7 @@ export default function Ajustes({ verInstructivo }: { verInstructivo: () => void
               setAnotado(resultado.estado === 'programado' ? await elSistemaLoTiene() : null);
             }}
           >
-            Probar el aviso
+            Probar en un minuto
           </button>
         )}
 

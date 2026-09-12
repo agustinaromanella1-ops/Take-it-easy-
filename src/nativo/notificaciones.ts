@@ -73,6 +73,20 @@ export async function programar(
   });
 }
 
+/**
+ * Lo mismo pero ahora, sin alarma de por medio. Sirve para separar dos cosas
+ * que se confunden cuando un aviso no llega: que el teléfono no muestre
+ * notificaciones de esta app, o que sí las muestre y lo que falle sea la
+ * alarma que la despierta más tarde.
+ */
+export async function mostrarAhora(idNotificacion: number, aviso: Aviso): Promise<void> {
+  if (!hayNotificaciones()) return;
+  const { titulo, cuerpo } = textoDelAviso(aviso);
+  await LocalNotifications.schedule({
+    notifications: [{ id: idNotificacion, title: titulo, body: cuerpo }],
+  });
+}
+
 export async function cancelar(idNotificacion: number): Promise<void> {
   if (!hayNotificaciones()) return;
   await LocalNotifications.cancel({ notifications: [{ id: idNotificacion }] });
