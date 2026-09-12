@@ -39,7 +39,7 @@ export function DashboardPage({ onGo }: { onGo: (page: 'agenda' | 'finanzas' | '
         </div>
         <Card>
           <Empty>
-            <strong>Bienvenida a PsicoFinance.</strong>
+            <strong>Bienvenida a Encuadre.</strong>
             <br />
             Para empezar, cargá tu primer paciente; después vas a poder agendar sesiones y registrar cobros.
             <br />

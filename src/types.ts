@@ -1,5 +1,5 @@
 /**
- * Modelo de datos de PsicoFinance.
+ * Modelo de datos de Encuadre.
  *
  * Dos decisiones de diseño que atraviesan todo el modelo:
  *

@@ -19,7 +19,7 @@ export function SettingsPage() {
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
-    a.download = `psicofinance-${today()}.json`;
+    a.download = `encuadre-${today()}.json`;
     a.click();
     URL.revokeObjectURL(url);
   }
@@ -35,7 +35,7 @@ export function SettingsPage() {
       dispatch({ type: 'data/replace', payload: parsed });
       setMessage({ text: 'Datos importados correctamente.', ok: true });
     } catch {
-      setMessage({ text: 'No se pudo leer el archivo. ¿Es una copia de PsicoFinance?', ok: false });
+      setMessage({ text: 'No se pudo leer el archivo. ¿Es una copia de Encuadre?', ok: false });
     } finally {
       if (fileRef.current) fileRef.current.value = '';
     }

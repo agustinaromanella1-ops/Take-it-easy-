@@ -1,9 +1,9 @@
 {
-  "name": "psicofinance",
+  "name": "encuadre",
   "private": true,
   "version": "1.0.0",
   "type": "module",
-  "description": "Agenda y finanzas para consultorio psicologico",
+  "description": "Agenda de pacientes y honorarios para consultorio psicologico",
   "scripts": {
     "dev": "vite",
     "build": "tsc --noEmit && vite build",

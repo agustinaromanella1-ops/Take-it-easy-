@@ -2,7 +2,17 @@ import type { AppData, Frequency, Patient, PatientKind, Payment, Session, Settin
 import { PATIENT_COLORS } from './palette';
 import { isValidISODate, isValidTime } from './dates';
 
-export const STORAGE_KEY = 'psicofinance:data';
+export const STORAGE_KEY = 'encuadre:data';
+
+/**
+ * Claves que usó la app antes de llamarse Encuadre.
+ *
+ * Renombrar la app no puede borrarle los datos a quien ya la venía usando: si
+ * no aparece nada bajo la clave actual, se lee de las viejas. La clave vieja no
+ * se borra —queda como respaldo— porque a partir del primer guardado la app
+ * escribe siempre en la nueva.
+ */
+const LEGACY_KEYS = ['psicofinance:data'] as const;
 export const SCHEMA_VERSION = 1;
 
 export const DEFAULT_SETTINGS: Settings = {
@@ -168,9 +178,20 @@ function parseSettings(raw: Record<string, unknown>): Settings {
   };
 }
 
+/** Lee la clave actual y, si está vacía, las de versiones anteriores. */
+function readRaw(): string | null {
+  const current = localStorage.getItem(STORAGE_KEY);
+  if (current !== null) return current;
+  for (const key of LEGACY_KEYS) {
+    const legacy = localStorage.getItem(key);
+    if (legacy !== null) return legacy;
+  }
+  return null;
+}
+
 export function loadData(): AppData {
   try {
-    const raw = localStorage.getItem(STORAGE_KEY);
+    const raw = readRaw();
     if (!raw) return emptyData();
     return parseAppData(JSON.parse(raw));
   } catch {

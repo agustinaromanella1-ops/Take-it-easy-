@@ -11,9 +11,9 @@ export default defineConfig({
       registerType: 'autoUpdate',
       includeAssets: ['apple-touch-icon.png', 'favicon-48.png', 'fonts/*.woff2'],
       manifest: {
-        name: 'PsicoFinance — agenda y finanzas',
-        short_name: 'PsicoFinance',
-        description: 'Agenda y finanzas para consultorio psicológico.',
+        name: 'Encuadre — agenda de pacientes',
+        short_name: 'Encuadre',
+        description: 'Agenda, pacientes y honorarios para consultorio psicológico.',
         lang: 'es',
         dir: 'ltr',
         start_url: '/',
