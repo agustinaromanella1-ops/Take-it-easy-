@@ -1,7 +1,10 @@
+import type { ReactNode } from 'react';
+
 import './Pista.css';
 
 interface Props {
-  texto: string;
+  /** Acepta formato: algunas pistas necesitan resaltar el nombre de un botón. */
+  texto: ReactNode;
   onEntendido: () => void;
 }
 
@@ -13,7 +16,7 @@ interface Props {
 export default function Pista({ texto, onEntendido }: Props) {
   return (
     <div className="pista" role="note">
-      <p>{texto}</p>
+      <div className="dice">{texto}</div>
       <button onClick={onEntendido}>Entendido</button>
     </div>
   );

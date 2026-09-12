@@ -6,7 +6,9 @@
   color: var(--lila-osc);
   border-radius: 12px;
   display: flex;
-  align-items: center;
+  /* Al final del texto y no en el medio: con dos párrafos, centrado queda
+     flotando al costado de la nada. */
+  align-items: flex-end;
   gap: 12px;
   font-size: 14px;
   line-height: 1.45;
@@ -24,8 +26,12 @@
   transform: rotate(45deg);
 }
 
-.pista p {
+.pista .dice {
   flex: 1;
+}
+
+.pista .dice p + p {
+  margin-top: 7px;
 }
 
 .pista button {

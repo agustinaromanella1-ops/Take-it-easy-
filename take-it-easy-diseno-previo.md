@@ -90,6 +90,35 @@ El pie de cada pantalla se pega justo encima de la barra, no al borde de la
 ventana, o la taparía. La barra tiene alto fijo (`--alto-nav`) para que ese
 número sea cierto por construcción y no uno adivinado.
 
+### 1.3.2 Las pistas del camino de las notas
+
+Cargar notas es lo que más pasos tiene y lo único que alguien puede no
+encontrar solo, así que el instructivo lo acompaña con cinco pistas —una por
+lugar, la primera vez, y no vuelven—:
+
+1. **En la materia**, apenas hay alumnos: dónde van las notas.
+2. **En la lista de evaluaciones**: que las de antes también entran, con la
+   fecha del día en que se tomaron.
+3. **En el formulario**, arriba de «Cómo se califica»: con nota o conceptual,
+   y por qué las conceptuales no promedian.
+4. **En la planilla numérica**: que cada nota se guarda sola, y el «siguiente»
+   del teclado para bajar de alumno sin tocar la pantalla.
+5. **En la planilla conceptual**: que se toca la etiqueta, y que volver a
+   tocarla la saca.
+
+**Las dos planillas llevan marcas distintas.** Escribir un número y tocar una
+etiqueta se cargan distinto; con una sola marca, quien empezara por una
+numérica no veía nunca cómo se usa la conceptual.
+
+**Cada pista va pegada a lo que señala, y nunca encima.** La de las escalas
+estuvo un rato en el pie pegajoso y tapaba justo los dos botones que explica.
+La de la planilla estuvo en el pie también, que ahí es estático y va después de
+todo el curso: se leía al terminar de cargar, que es cuando ya no sirve.
+
+**Una sola a la vez.** La de «dónde van las notas» espera a que la materia
+tenga alumnos, porque antes la pantalla está pidiendo otra cosa y dos pistas
+juntas no se leen: se saltean.
+
 ### 1.4 Identidad visual aplicada
 
 - Cada materia toma uno de los seis pastel de la paleta, elegido al

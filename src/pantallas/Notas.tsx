@@ -6,6 +6,8 @@ import { borrarCalificacion, calificar } from '../datos/calificaciones';
 import { cabeEnLaEscala, comoSeEscribe, leerNumero } from '../datos/escalas';
 import { distribucion, planillaDeEvaluacion, promedioDeEvaluacion } from '../datos/evaluaciones';
 import type { Id } from '../datos/tipos';
+import Pista from '../instructivo/Pista';
+import { usePista } from '../instructivo/useInstructivo';
 import './Notas.css';
 
 /**
@@ -29,6 +31,16 @@ export default function Notas({ evaluacionId, volver, listo }: Props) {
   // Cada nota se guarda sola al escribirla, y guardar en silencio hace dudar.
   // El cartel se va solo: es un aviso, no una tarea pendiente.
   const [recienGuardada, setRecienGuardada] = useState(false);
+  // Dos marcas y no una: escribir un número y tocar una etiqueta se cargan
+  // distinto, así que cada planilla se explica la primera vez que se la ve.
+  // Con una sola marca, quien empezara por una numérica no veía nunca cómo se
+  // usa la conceptual.
+  const comoSeCarga = usePista(
+    planilla?.evaluacion.escala.tipo === 'conceptual'
+      ? 'cargar-notas-conceptuales'
+      : 'cargar-notas-numericas',
+    planilla !== undefined,
+  );
 
   useEffect(() => {
     if (!recienGuardada) return;
@@ -93,6 +105,35 @@ export default function Notas({ evaluacionId, volver, listo }: Props) {
         </p>
         {recienGuardada && <p className="guardada">Guardado</p>}
       </header>
+
+      {comoSeCarga.mostrarPista && notas.length > 0 && (
+        <Pista
+          onEntendido={comoSeCarga.entendido}
+          texto={
+            escala.tipo === 'numerica' ? (
+              <>
+                <p>
+                  <strong>Cada nota se guarda sola</strong> al terminar de
+                  escribirla. No hay que confirmar nada.
+                </p>
+                <p>
+                  Con el «siguiente» del teclado pasás al alumno de abajo sin
+                  tocar la pantalla: con la planilla de papel al lado, cargás la
+                  columna entera de corrido.
+                </p>
+              </>
+            ) : (
+              <>
+                <p>
+                  <strong>Tocá la etiqueta que le corresponde</strong> a cada
+                  alumno. Se guarda sola, y si te equivocaste, tocás la que ya
+                  estaba puesta y se saca.
+                </p>
+              </>
+            )
+          }
+        />
+      )}
 
       {notas.length === 0 ? (
         <section className="vacio">

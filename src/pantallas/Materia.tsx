@@ -70,6 +70,9 @@ export default function Materia({
 
   const sinAlumnos = datos !== undefined && datos.alumnos.length === 0;
   const { mostrarPista, entendido } = usePista('agregar-alumnos', sinAlumnos);
+  // Sólo cuando ya hay alumnos: antes de eso la pantalla está pidiendo otra
+  // cosa, y dos pistas juntas no se leen, se saltean.
+  const notas = usePista('dónde-van-las-notas', datos !== undefined && !sinAlumnos);
 
   if (!datos?.materia) return <div className="pantalla materia" />;
 
@@ -100,6 +103,21 @@ export default function Materia({
                 .join(' · ')}
         </span>
       </button>
+
+      {notas.mostrarPista && (
+        <Pista
+          onEntendido={notas.entendido}
+          texto={
+            <>
+              <p>
+                <strong>Las notas van acá.</strong> Cada parcial, trabajo
+                práctico u oral es una evaluación, y adentro le ponés la nota a
+                todo el curso de una vez.
+              </p>
+            </>
+          }
+        />
+      )}
 
       <button className="horario" onClick={verEvaluaciones}>
         <span className="rotulo">Evaluaciones</span>

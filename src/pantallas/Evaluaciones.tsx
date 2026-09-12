@@ -5,6 +5,8 @@ import { enPalabras, hoy } from '../fecha';
 import { CONCEPTUAL_COMUN, NUMERICA_1_10, comoSeLlamaLaEscala } from '../datos/escalas';
 import { crearEvaluacion, evaluacionesDeMateria } from '../datos/evaluaciones';
 import { comoSeLlama, materia as buscarMateria } from '../datos/materias';
+import Pista from '../instructivo/Pista';
+import { usePista } from '../instructivo/useInstructivo';
 import type { Escala, Id } from '../datos/tipos';
 import './Evaluaciones.css';
 
@@ -33,6 +35,8 @@ export default function Evaluaciones({ materiaId, volver, abrir, alCrear }: Prop
   const [tipo, setTipo] = useState(TIPOS[0]);
   const [escala, setEscala] = useState<Escala | null>(null);
   const [guardando, setGuardando] = useState(false);
+  const previas = usePista('notas-de-antes', datos !== undefined);
+  const escalas = usePista('con-nota-o-conceptual', true);
 
   if (!datos?.materia) return <div className="pantalla evaluaciones" />;
 
@@ -95,6 +99,26 @@ export default function Evaluaciones({ materiaId, volver, abrir, alCrear }: Prop
             ))}
           </div>
         </fieldset>
+
+        {escalas.mostrarPista && (
+          <Pista
+            onEntendido={escalas.entendido}
+            texto={
+              <>
+                <p>
+                  <strong>Con nota o conceptual</strong>, como la hayas tomado.
+                  Cada evaluación se guarda con su escala, así que podés
+                  mezclarlas en la misma materia.
+                </p>
+                <p>
+                  Las conceptuales no entran en el promedio: promediar «En
+                  proceso» y «Logrado» inventa una distancia que nadie definió.
+                  Se cuentan aparte.
+                </p>
+              </>
+            }
+          />
+        )}
 
         <fieldset>
           <legend>Cómo se califica</legend>
@@ -161,6 +185,20 @@ export default function Evaluaciones({ materiaId, volver, abrir, alCrear }: Prop
       )}
 
       <div className="pie">
+        {previas.mostrarPista && (
+          <Pista
+            onEntendido={previas.entendido}
+            texto={
+              <>
+                <p>
+                  <strong>Las notas de antes también entran.</strong> Si ya
+                  tomaste evaluaciones este año, cargalas con la fecha del día
+                  en que las tomaste: se ordenan solas y cuentan en el promedio.
+                </p>
+              </>
+            }
+          />
+        )}
         <button className="primario" onClick={() => setCreando(true)}>
           Nueva evaluación
         </button>
