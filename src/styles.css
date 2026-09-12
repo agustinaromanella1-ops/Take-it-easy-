@@ -766,3 +766,81 @@ a.btn {
   margin: 26px 0 0;
   font-family: var(--serif);
 }
+
+/* ---------- Cierre del día ---------- */
+.close-day-btn {
+  width: 100%;
+  border: 0;
+  background: var(--accent-soft);
+  color: var(--accent-dark);
+  font: inherit;
+  font-weight: 700;
+  font-size: 1rem;
+  padding: 15px;
+  border-radius: var(--radius);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 9px;
+  margin-bottom: 18px;
+}
+.close-day-btn:hover { background: #d7e8ee; }
+.close-day-btn .badge {
+  background: var(--accent);
+  color: #fff;
+  border-radius: 999px;
+  padding: 1px 9px;
+  font-size: 0.82rem;
+}
+
+.close-list { display: flex; flex-direction: column; gap: 12px; }
+.close-row {
+  border-left: 4px solid var(--pc, var(--accent));
+  background: var(--surface-soft);
+  border-radius: var(--radius-sm);
+  padding: 13px 15px;
+  display: flex;
+  flex-direction: column;
+  gap: 9px;
+}
+/* Lo ya resuelto se aparta visualmente para que salte lo que falta decidir. */
+.close-row.is-decided { background: var(--surface); box-shadow: inset 0 0 0 1px var(--border); }
+.close-who { display: flex; justify-content: space-between; align-items: baseline; gap: 10px; flex-wrap: wrap; }
+.close-who strong { color: var(--text); font-weight: 700; }
+.close-who span { color: var(--muted); font-size: 0.85rem; font-variant-numeric: tabular-nums; }
+
+/* Selector de asistencia: tres opciones, una sola elegida. */
+.seg { display: flex; gap: 0; background: var(--surface); border-radius: 999px; padding: 3px; }
+.seg button {
+  flex: 1;
+  border: 0;
+  background: transparent;
+  font: inherit;
+  font-weight: 650;
+  font-size: 0.88rem;
+  color: var(--muted);
+  padding: 8px 6px;
+  border-radius: 999px;
+  cursor: pointer;
+}
+.seg button:hover { color: var(--text); }
+.seg button.is-on { background: var(--accent); color: #fff; }
+
+.close-summary {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin-top: 16px;
+  padding-top: 14px;
+  border-top: 1px solid var(--border);
+  font-size: 0.88rem;
+  color: var(--muted);
+}
+.close-summary strong { color: var(--text); }
+
+/* Encabezado del cierre: el atajo y el medio de pago, en una sola línea. */
+.close-head { display: flex; gap: 10px; align-items: center; margin-bottom: 14px; }
+.close-head select { width: auto; flex: 1; min-width: 0; font-size: 0.88rem; padding: 8px 10px; }
+.close-head .btn.small { white-space: nowrap; }

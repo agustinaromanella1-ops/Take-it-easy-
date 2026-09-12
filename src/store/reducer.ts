@@ -12,6 +12,13 @@ export type Action =
   | { type: 'session/remove'; payload: { id: string } }
   | { type: 'session/setStatus'; payload: { id: string; status: Session['status'] } }
   | { type: 'payment/add'; payload: Omit<Payment, 'id'> }
+  | {
+      type: 'day/close';
+      payload: {
+        updates: { id: string; status: Session['status']; chargeable: boolean }[];
+        payments: Omit<Payment, 'id'>[];
+      };
+    }
   | { type: 'payment/remove'; payload: { id: string } }
   | { type: 'settings/update'; payload: Partial<Settings> }
   | { type: 'data/replace'; payload: AppData };
@@ -78,6 +85,25 @@ export function reducer(state: AppData, action: Action): AppData {
 
     case 'payment/add':
       return { ...state, payments: [...state.payments, { ...action.payload, id: newId() }] };
+
+    case 'day/close': {
+      // El cierre entra como un solo cambio de estado: cerrar ocho sesiones y
+      // registrar sus cobros de a uno dispararía dieciséis renders y guardados,
+      // y dejaría estados intermedios donde una sesión está cerrada pero su
+      // cobro todavía no existe.
+      const { updates, payments } = action.payload;
+      if (updates.length === 0 && payments.length === 0) return state;
+
+      const byId = new Map(updates.map((u) => [u.id, u]));
+      return {
+        ...state,
+        sessions: state.sessions.map((s) => {
+          const update = byId.get(s.id);
+          return update ? { ...s, status: update.status, chargeable: update.chargeable } : s;
+        }),
+        payments: [...state.payments, ...payments.map((p) => ({ ...p, id: newId() }))],
+      };
+    }
 
     case 'payment/remove':
       return { ...state, payments: state.payments.filter((p) => p.id !== action.payload.id) };

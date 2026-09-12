@@ -18,6 +18,7 @@ import {
 } from '../lib/dates';
 import { Card, ConfirmButton, Empty, Field, Modal, Section } from '../components/ui';
 import { MonthCalendar } from '../components/MonthCalendar';
+import { DayClose } from '../components/DayClose';
 import { IconBell } from '../components/icons';
 import { patientColor } from '../lib/palette';
 import { MAX_OCCURRENCES, occurrences, REPEAT_LABEL, type Repeat } from '../lib/recurrence';
@@ -50,6 +51,7 @@ export function AgendaPage() {
   const [weekStart, setWeekStart] = useState(() => startOfWeek(today()));
   const [selectedDay, setSelectedDay] = useState(() => today());
   const [month, setMonth] = useState(() => monthKey(today()));
+  const [closingDay, setClosingDay] = useState(false);
   const [editing, setEditing] = useState<Session | 'new' | null>(null);
   const [form, setForm] = useState<FormState | null>(null);
   const [errors, setErrors] = useState<Partial<Record<keyof FormState, string>>>({});
@@ -212,6 +214,13 @@ export function AgendaPage() {
 
   const todayISO = today();
 
+  // Sesiones del día elegido que siguen sin resolverse. Es lo que el cierre
+  // viene a resolver, y el número que se muestra en el botón.
+  const pendingToClose = useMemo(
+    () => daySessions.filter((s) => s.status === 'programada').length,
+    [daySessions],
+  );
+
   // Vista previa de la serie que se va a crear, para que el número de sesiones
   // y la fecha final se vean antes de confirmar.
   const series = useMemo(() => {
@@ -340,6 +349,13 @@ export function AgendaPage() {
         </Section>
       )}
 
+      {pendingToClose > 0 && (
+        <button className="close-day-btn" onClick={() => setClosingDay(true)}>
+          🌙 Cierre del día
+          <span className="badge">{pendingToClose}</span>
+        </button>
+      )}
+
       <Section
         title={view === 'dia' ? 'Sesiones del día' : `Sesiones del ${formatDateShort(selectedDay)}`}
         action={
@@ -429,6 +445,15 @@ export function AgendaPage() {
       >
         +
       </button>
+
+      {closingDay && (
+        <DayClose
+          date={selectedDay}
+          sessions={daySessions}
+          patientsById={patientsById}
+          onClose={() => setClosingDay(false)}
+        />
+      )}
 
       {editing && form && (
         <Modal

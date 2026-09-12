@@ -27,6 +27,10 @@ sesiones que ya pasaron pero siguen sin cerrar y permite cerrarlas ahí mismo.
 sesiones realizadas, porcentaje de cancelación, saldo y fecha del último aumento. Color
 identificatorio, botón de WhatsApp, y ficha con historial de sesiones, pagos y saldo.
 
+**Cierre del día.** Al terminar la jornada, un botón en la agenda abre el repaso de las sesiones
+del día: en dos toques por paciente se marca vino / faltó / canceló y si ya se cobró. Todo entra
+como un único cambio, con el resumen de lo facturado y lo cobrado antes de confirmar.
+
 **Agenda.** Tres vistas en pestañas: **Día** (los pacientes de la jornada, con estado y acciones a
 mano), **Semana** (grilla de siete días) y **Mes** (calendario con un punto del color de cada
 paciente en los días con sesión). Detecta y marca turnos superpuestos. Una serie recurrente
@@ -68,6 +72,11 @@ tiene que seguir siendo el martes a las 15:00 (`src/lib/dates.ts`).
 
 **El honorario se congela en cada sesión.** Se copia del paciente al agendar, pero después no se
 toca: subir la tarifa no debe reescribir lo ya facturado.
+
+**El cierre del día solo toca lo que está pendiente.** Las sesiones ya cerradas se muestran para
+dar contexto, pero sin controles. Un pago no está atado a una sesión concreta —el saldo del paciente
+es lo facturado menos lo pagado— así que volver a ofrecer "cobrar" sobre una sesión ya cerrada
+registraría un cobro duplicado sin que se note (`src/lib/dayclose.ts`).
 
 **Una sesión genera deuda solo si se realizó, o si fue una ausencia marcada como cobrable.** Las
 canceladas y las todavía programadas no cuentan. El saldo de un paciente es facturado − pagado;
@@ -157,7 +166,7 @@ borra el historial**, así que conviene exportar una copia desde Ajustes cada ta
 ## Desarrollo
 
 ```bash
-npm test          # 139 tests unitarios
+npm test          # 158 tests unitarios
 npm run typecheck # TypeScript en modo strict
 npm run build
 ```
@@ -166,7 +175,7 @@ npm run build
 src/
 ├── types.ts            Modelo de datos
 ├── lib/                money, dates, storage, pricing, recurrence, calendar,
-│                       contact, palette — lógica pura, sin React
+│                       contact, palette, dayclose — lógica pura, sin React
 ├── store/              reducer, selectores y contexto
 ├── components/ui.tsx   Card, Stat, Modal, Field
 └── pages/              Dashboard, Patients, PatientDetail, Agenda, Finance, Settings

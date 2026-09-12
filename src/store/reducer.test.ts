@@ -135,3 +135,50 @@ describe('settings', () => {
     expect(state.settings.defaultDurationMin).toBe(emptyData().settings.defaultDurationMin);
   });
 });
+
+describe('cierre del día', () => {
+  it('cierra varias sesiones y registra sus cobros de una sola vez', () => {
+    let state = seeded();
+    const paciente = state.patients[0]!.id;
+    state = reducer(state, {
+      type: 'session/add',
+      payload: {
+        patientId: paciente,
+        date: '2026-03-11',
+        time: '11:00',
+        durationMin: 50,
+        status: 'programada',
+        fee: 400000,
+        chargeable: true,
+        notes: '',
+      },
+    });
+    const pendiente = state.sessions[state.sessions.length - 1]!;
+
+    const next = reducer(state, {
+      type: 'day/close',
+      payload: {
+        updates: [{ id: pendiente.id, status: 'realizada', chargeable: true }],
+        payments: [{ patientId: paciente, date: '2026-03-11', amount: 400000, method: 'efectivo', notes: '' }],
+      },
+    });
+
+    expect(next.sessions.find((s) => s.id === pendiente.id)!.status).toBe('realizada');
+    expect(next.payments).toHaveLength(state.payments.length + 1);
+  });
+
+  it('no toca el estado si no hay nada que aplicar', () => {
+    const state = seeded();
+    expect(reducer(state, { type: 'day/close', payload: { updates: [], payments: [] } })).toBe(state);
+  });
+
+  it('deja intactas las sesiones que no menciona', () => {
+    const state = seeded();
+    const otra = state.sessions[0]!;
+    const next = reducer(state, {
+      type: 'day/close',
+      payload: { updates: [{ id: 'no-existe', status: 'realizada', chargeable: true }], payments: [] },
+    });
+    expect(next.sessions.find((s) => s.id === otra.id)).toEqual(otra);
+  });
+});
