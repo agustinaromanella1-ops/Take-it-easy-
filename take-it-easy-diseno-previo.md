@@ -606,64 +606,59 @@ en qué teléfonos pasa y qué dos ajustes lo evitan.
 
 ### 5.5 Dictado por voz
 
-El dictado es local o no existe (1.2). Es la regla que decide qué plugin se
-puede usar, y descarta al obvio.
+El dictado es local o no existe (1.2). Es la regla que decide de dónde sale el
+código, y ninguno de los dos plugins que hay servía.
 
-**El plugin habitual no sirve.** `@capacitor-community/speech-recognition`
-llama a `SpeechRecognizer.createSpeechRecognizer()` sin ninguna opción de
+**El plugin de la comunidad sube el audio.**
+`@capacitor-community/speech-recognition` llama a
+`SpeechRecognizer.createSpeechRecognizer()` sin ninguna opción de
 reconocimiento sin conexión. En la práctica eso manda el audio al servicio de
-reconocimiento del teléfono, que en casi todos los Android es Google y lo
-sube. Una observación dictada sobre un alumno se iría a un servidor.
+reconocimiento del teléfono, que en casi todos los Android es Google.
 
-**Se usa `@capgo/capacitor-speech-recognition`**, que expone
-`createOnDeviceSpeechRecognizer()` y `EXTRA_PREFER_OFFLINE`. Lo que lo hace
-elegible no es que pueda reconocer en el dispositivo, sino cómo se comporta
-cuando no puede: rechaza. Hay tres puertas —disponibilidad, idioma soportado,
-error en vivo— y las tres terminan en un rechazo explícito, ninguna en el
-reconocedor del servidor.
+**El de capgo cierra la app.** Sí reconoce en el dispositivo, pero llama a
+`SpeechRecognizer` desde el hilo en el que Capacitor corre los plugins, y
+Android sólo lo permite desde el principal. La excepción que eso tira no se
+puede atajar: Capacitor la relanza en ese hilo y el proceso muere. Se veía al
+abrir la ficha de un alumno, que es la pantalla que pregunta al cargarse. Está
+igual en la 8.3.0.
 
-**La app pregunta una sola cosa.** El plugin ofrece dos preguntas,
-`available()` y `isOnDeviceRecognitionAvailable()`. La envoltura de la app
-sólo tiene la segunda. "Hay reconocimiento" incluyendo el del servidor no es
-disponibilidad para este proyecto, así que esa pregunta no se hace: un `true`
-ahí no habilitaría nada.
+**Así que el dictado es un plugin de esta app**, en
+`android/app/src/main/java/ar/takeiteasy/agenda/DictadoPlugin.java`, registrado
+desde `MainActivity`. No es una dependencia: la regla que más importa la cumple
+código propio, y se lee entera en un archivo de doscientas líneas.
 
-**Las opciones se arman en una función sin parámetros.** No hay una rama que
-pueda quedar sin `useOnDeviceRecognition`, porque no hay rama. `popup` queda
-en `false` por la misma razón: el diálogo del sistema es el reconocedor de
-Android.
+Tiene dos garantías, y son su razón de ser:
+
+1. **Sólo reconocimiento en el dispositivo.** Usa
+   `createOnDeviceSpeechRecognizer()` y nunca `createSpeechRecognizer()`, y la
+   intención lleva siempre `EXTRA_PREFER_OFFLINE`. Son dos puertas distintas y
+   las dos están cerradas. No hay una rama que caiga al reconocedor del
+   servidor, ni siquiera cuando el otro falla: si falla, falló, y se escribe a
+   mano.
+2. **Todo lo que toca `SpeechRecognizer` corre en el hilo principal.** No
+   hacerlo no da un error: cierra la app.
+
+No hay red en ese archivo.
 
 **Si no se puede, el micrófono no aparece.** No es un botón gris con una
-explicación: no se dibuja. Quien no lo tiene escribe con el teclado y no se
-entera de que existía. Hace falta Android 13 o más nuevo y el idioma bajado.
-
-**Un respaldo por servidor se escribe en dos líneas**, arregla un síntoma
-real y rompe la regla en silencio. Por eso, además de los tests de
-comportamiento, hay tres que miran la forma del módulo: que el micrófono se
-encienda en un solo lugar, que `useOnDeviceRecognition: true` aparezca una
-vez y `false` ninguna, y que `available()` no se consulte nunca. Se verificó
-rompiéndolos: poner la opción en `false` y agregar un `catch` que reintenta
-sin ella hacen fallar a los tests que corresponden.
-
-**Apagado por ahora: el plugin cierra la app al preguntar.** Su
-`isOnDeviceRecognitionAvailable` llama a `createOnDeviceSpeechRecognizer()` y
-`checkRecognitionSupport()` sin pasar al hilo principal, y `SpeechRecognizer`
-de Android sólo se puede usar desde ahí. Capacitor corre los métodos de los
-plugins en un hilo aparte (`taskHandler.post`) y relanza cualquier excepción
-con `throw new RuntimeException(ex)`: en ese hilo eso cierra la app entera. Se
-ve al abrir la ficha de un alumno, que es la pantalla que pregunta al cargarse.
-El `try/catch` de JavaScript no sirve: el proceso muere antes de que ninguna
-promesa se rechace. Está igual en la 8.3.0.
-
-Mientras tanto la app no toca el plugin: `seEscuchaAcaMismo()` devuelve `false`
-sin preguntar, y como todo lo demás cuelga de esa respuesta, el micrófono no se
-dibuja y no hay forma de llegar a `start`. La salida es un plugin propio de
-unas pocas líneas que pregunte en el hilo principal, y de paso deja de ser una
-dependencia de terceros.
+explicación: no se dibuja. Hace falta Android 13 o más nuevo, que es cuando
+aparece el reconocimiento en el dispositivo. Si el castellano todavía no está
+bajado, Android lo dice al empezar a escuchar y la app lo cuenta en castellano
+en vez de mostrar un código.
 
 **El permiso de micrófono se escribe también en el manifiesto de la app**,
 aunque lo declare el plugin. Un permiso de este tamaño tiene que verse en el
 repositorio y no llegar callado desde `node_modules`.
+
+**Un respaldo por servidor se escribe en una línea**, arregla un síntoma real y
+rompe la regla en silencio. Por eso los tests miran la forma de los dos
+archivos, no sólo lo que hacen: que el Java cree un solo reconocedor y que sea
+el del dispositivo, que `createSpeechRecognizer` no aparezca, que
+`EXTRA_PREFER_OFFLINE` esté en la única intención que se arma, que no haya red,
+y que todo lo que toca el reconocedor esté después de un `runOnUiThread`. Se
+verificaron rompiéndolos: agregar un respaldo con el reconocedor común hace
+fallar uno, y sacar el hilo principal, otro. Los comentarios se quitan antes de
+mirar el código, porque nombran justamente lo que está prohibido.
 
 ### 5.6 Lo demás, ya resuelto en su sección
 

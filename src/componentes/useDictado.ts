@@ -6,6 +6,7 @@ import {
   pedirMicrofono,
   seEscuchaAcaMismo,
   tenemosMicrofono,
+  type MotivoDelFin,
 } from '../nativo/dictado';
 
 /**
@@ -64,6 +65,10 @@ export function useDictado(alDictar: (texto: string) => void) {
           },
           alTerminar: (motivo) => {
             prendido.current = false;
+            // El reconocedor puede terminar solo —por silencio o por error— y
+            // ahí nadie llamó a `parar`: sin esto los oyentes quedan colgados.
+            // Se difiere porque esto corre dentro de uno de ellos.
+            void Promise.resolve().then(dejarDeDictar);
             if (!vivo.current) return;
             setEscuchando(false);
             if (motivo) setProblema(quePaso(motivo));
@@ -90,16 +95,22 @@ export function useDictado(alDictar: (texto: string) => void) {
 }
 
 /**
- * Los códigos del plugin no se le muestran a nadie. Lo que importa es si vale
- * la pena volver a intentar o hay que escribir.
+ * Los códigos no se le muestran a nadie. Lo que importa es si vale la pena
+ * volver a intentar o hay que escribir.
  */
-function quePaso(motivo: string): string {
-  const m = motivo.toUpperCase();
-  if (m.includes('PERMISSION')) return 'Android no dio permiso para usar el micrófono.';
-  if (m.includes('NO_MATCH') || m.includes('SPEECH_TIMEOUT')) return 'No se entendió nada. Probá de nuevo.';
-  if (m.includes('LOCALE') || m.includes('UNAVAILABLE')) {
-    return 'Este teléfono no puede dictar en castellano sin conexión. Escribilo a mano.';
+export function quePaso(motivo: MotivoDelFin | string): string {
+  switch (motivo) {
+    case 'SIN_PERMISO':
+      return 'Android no dio permiso para usar el micrófono.';
+    case 'NO_SE_ENTENDIO':
+      return 'No se entendió nada. Probá de nuevo.';
+    case 'IDIOMA_NO_DISPONIBLE':
+      return 'Este teléfono todavía no tiene el castellano bajado para dictar sin conexión. Escribilo a mano.';
+    case 'OCUPADO':
+      return 'El micrófono está ocupado. Esperá un segundo.';
+    case 'AUDIO':
+      return 'No se pudo grabar. Probá de nuevo.';
+    default:
+      return 'Se cortó el dictado. Probá de nuevo o escribilo a mano.';
   }
-  if (m.includes('BUSY')) return 'El micrófono está ocupado. Esperá un segundo.';
-  return 'Se cortó el dictado. Probá de nuevo o escribilo a mano.';
 }

@@ -3,27 +3,37 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 // El código del módulo como texto, para poder afirmar cosas sobre su forma y
 // no sólo sobre lo que hace hoy. `?raw` es de Vite: no hace falta @types/node.
 import fuente from './dictado.ts?raw';
+import javaConComentarios from '../../android/app/src/main/java/ar/takeiteasy/agenda/DictadoPlugin.java?raw';
+
+/**
+ * El Java sin comentarios. Los comentarios de ese archivo nombran justamente lo
+ * que está prohibido —para explicar por qué—, así que contar apariciones sobre
+ * el texto entero daba tres donde hay una. Lo que se afirma es sobre el código.
+ */
+const androide = javaConComentarios
+  .replace(/\/\*[\s\S]*?\*\//g, '')
+  .replace(/\/\/.*/g, '');
 
 /**
  * La regla 1.2 dice que el dictado es local o no existe. Estos tests son los
- * que la sostienen: comprueban que el micrófono nunca se enciende sin pedir
- * reconocimiento en el dispositivo, y que un fallo no abre otro camino.
+ * que la sostienen, de los dos lados: el módulo de JavaScript y el plugin de
+ * Android que vive en este mismo repositorio.
  */
 
 const plugin = {
-  isOnDeviceRecognitionAvailable: vi.fn(),
-  available: vi.fn(),
-  start: vi.fn(),
-  stop: vi.fn(),
-  addListener: vi.fn(),
+  disponible: vi.fn(),
+  empezar: vi.fn(),
+  parar: vi.fn(),
+  estaEscuchando: vi.fn(),
   checkPermissions: vi.fn(),
   requestPermissions: vi.fn(),
+  addListener: vi.fn(),
 };
 
 let esNativaAhora = true;
 
-vi.mock('@capgo/capacitor-speech-recognition', () => ({
-  SpeechRecognition: plugin,
+vi.mock('@capacitor/core', () => ({
+  registerPlugin: () => plugin,
 }));
 
 vi.mock('./plataforma', () => ({
@@ -32,10 +42,10 @@ vi.mock('./plataforma', () => ({
 }));
 
 const {
+  IDIOMA,
+  dejarDeDictar,
   empezarADictar,
   hayDictado,
-  opcionesDeDictado,
-  preguntarSiSeEscuchaAcaMismo,
   seEscuchaAcaMismo,
 } = await import('./dictado');
 
@@ -44,96 +54,103 @@ const sinHacerNada = { alEntender: () => {}, alTerminar: () => {} };
 beforeEach(() => {
   esNativaAhora = true;
   vi.clearAllMocks();
-  plugin.isOnDeviceRecognitionAvailable.mockResolvedValue({ available: true });
-  plugin.available.mockResolvedValue({ available: true });
-  plugin.start.mockResolvedValue({});
-  plugin.stop.mockResolvedValue(undefined);
+  plugin.disponible.mockResolvedValue({ disponible: true });
+  plugin.empezar.mockResolvedValue(undefined);
+  plugin.parar.mockResolvedValue(undefined);
   plugin.addListener.mockResolvedValue({ remove: vi.fn().mockResolvedValue(undefined) });
 });
 
 describe('encender el micrófono', () => {
-  it('siempre pide reconocimiento en el dispositivo', async () => {
-    await empezarADictar(sinHacerNada);
-    expect(plugin.start).toHaveBeenCalledTimes(1);
-    expect(plugin.start.mock.calls[0][0]).toMatchObject({ useOnDeviceRecognition: true });
-  });
-
-  it('nunca abre el diálogo del sistema, que es el que sube el audio', async () => {
-    await empezarADictar(sinHacerNada);
-    expect(plugin.start.mock.calls[0][0]).toMatchObject({ popup: false });
-  });
-
   it('dicta en castellano de acá', async () => {
-    expect(opcionesDeDictado().language).toBe('es-AR');
+    await empezarADictar(sinHacerNada);
+    expect(plugin.empezar).toHaveBeenCalledWith({ idioma: 'es-AR' });
+    expect(IDIOMA).toBe('es-AR');
   });
 
-  it('si falla, falla: no reintenta sin la opción de dispositivo', async () => {
-    plugin.start.mockRejectedValue(new Error('ON_DEVICE_RECOGNITION_UNAVAILABLE'));
+  it('si falla, falla: no reintenta por otro camino', async () => {
+    plugin.empezar.mockRejectedValue(new Error('NO_SE_PUDO_EMPEZAR'));
     await expect(empezarADictar(sinHacerNada)).rejects.toThrow();
-    expect(plugin.start).toHaveBeenCalledTimes(1);
-  });
-});
-
-describe('mientras el plugin cierre la app al preguntar', () => {
-  // El plugin pregunta desde un hilo que no es el principal, y SpeechRecognizer
-  // de Android no lo permite: la app se cierra entera. Lo único que evita eso
-  // es no preguntar.
-  it('no se le pregunta nada al plugin', async () => {
-    expect(await seEscuchaAcaMismo()).toBe(false);
-    expect(plugin.isOnDeviceRecognitionAvailable).not.toHaveBeenCalled();
+    expect(plugin.empezar).toHaveBeenCalledTimes(1);
   });
 
-  it('y entonces el micrófono no se dibuja en ninguna pantalla', async () => {
-    // Todo lo demás cuelga de esta respuesta: sin ella no hay botón, y sin
-    // botón no hay forma de llegar a `start`.
-    plugin.isOnDeviceRecognitionAvailable.mockResolvedValue({ available: true });
-    expect(await seEscuchaAcaMismo()).toBe(false);
+  it('apagar no falla hacia afuera, y suelta los oyentes igual', async () => {
+    const sacar = vi.fn().mockResolvedValue(undefined);
+    plugin.addListener.mockResolvedValue({ remove: sacar });
+    await empezarADictar(sinHacerNada);
+    plugin.parar.mockRejectedValue(new Error('no estaba escuchando'));
+
+    await expect(dejarDeDictar()).resolves.toBeUndefined();
+    expect(sacar).toHaveBeenCalledTimes(2);
   });
 });
 
 describe('preguntar si se puede', () => {
-  it('pregunta por el reconocimiento en el dispositivo y no por el otro', async () => {
-    expect(await preguntarSiSeEscuchaAcaMismo()).toBe(true);
-    expect(plugin.isOnDeviceRecognitionAvailable).toHaveBeenCalledWith({ language: 'es-AR' });
-    // `available()` incluye el reconocedor que manda el audio al servidor.
-    // Que dé `true` no habilita nada, así que ni se lo consulta.
-    expect(plugin.available).not.toHaveBeenCalled();
-  });
-
   it('sin reconocimiento en el dispositivo, no hay dictado', async () => {
-    plugin.isOnDeviceRecognitionAvailable.mockResolvedValue({ available: false });
-    expect(await preguntarSiSeEscuchaAcaMismo()).toBe(false);
+    plugin.disponible.mockResolvedValue({ disponible: false });
+    expect(await seEscuchaAcaMismo()).toBe(false);
   });
 
   it('si ni siquiera se puede preguntar, la respuesta es que no', async () => {
-    plugin.isOnDeviceRecognitionAvailable.mockRejectedValue(new Error('boom'));
-    expect(await preguntarSiSeEscuchaAcaMismo()).toBe(false);
+    plugin.disponible.mockRejectedValue(new Error('boom'));
+    expect(await seEscuchaAcaMismo()).toBe(false);
   });
 
   it('en el navegador no hay dictado y no se toca el plugin', async () => {
     esNativaAhora = false;
     expect(hayDictado()).toBe(false);
-    expect(await preguntarSiSeEscuchaAcaMismo()).toBe(false);
+    expect(await seEscuchaAcaMismo()).toBe(false);
     await empezarADictar(sinHacerNada);
-    expect(plugin.isOnDeviceRecognitionAvailable).not.toHaveBeenCalled();
-    expect(plugin.start).not.toHaveBeenCalled();
+    expect(plugin.disponible).not.toHaveBeenCalled();
+    expect(plugin.empezar).not.toHaveBeenCalled();
   });
 });
 
-describe('la regla, en el código', () => {
-  // Los tests de arriba prueban el camino que hay hoy. Este prueba que no se
-  // le pueda agregar otro sin que salte: un respaldo por servidor se escribe
-  // en dos líneas y arregla un síntoma real, así que tiene que doler ponerlo.
-  it('el módulo enciende el micrófono en un solo lugar', () => {
-    expect(fuente.match(/SpeechRecognition\.start\(/g)).toHaveLength(1);
+describe('la regla, en el plugin de Android', () => {
+  // Un respaldo por servidor se escribe en una línea y arregla un síntoma real,
+  // así que tiene que doler ponerlo. Estos tests miran el Java: no lo compilan,
+  // pero sí comprueban que no aparezca el camino que la regla prohíbe.
+
+  it('sólo crea el reconocedor del dispositivo', () => {
+    expect(androide.match(/createOnDeviceSpeechRecognizer/g)).toHaveLength(1);
   });
 
-  it('no hay ninguna forma de arrancar sin reconocimiento en el dispositivo', () => {
-    expect(fuente).not.toMatch(/useOnDeviceRecognition:\s*false/);
-    expect(fuente.match(/useOnDeviceRecognition:\s*true/g)).toHaveLength(1);
+  it('nunca crea el reconocedor común, que es el que sube el audio', () => {
+    expect(androide).not.toMatch(/createSpeechRecognizer/);
   });
 
-  it('no consulta la disponibilidad que incluye al reconocedor del servidor', () => {
-    expect(fuente).not.toMatch(/SpeechRecognition\.available\(/);
+  it('pide sin conexión en la única intención que arma', () => {
+    expect(androide.match(/EXTRA_PREFER_OFFLINE/g)).toHaveLength(1);
+    expect(androide).toMatch(/EXTRA_PREFER_OFFLINE, true/);
+  });
+
+  it('no hay red en el archivo', () => {
+    expect(androide).not.toMatch(/java\.net|HttpURL|okhttp|Retrofit/);
+  });
+
+  it('todo lo que toca el reconocedor corre en el hilo principal', () => {
+    // Llamar a SpeechRecognizer desde otro hilo no da un error: cierra la app.
+    // Es el defecto por el que este archivo existe.
+    for (const llamada of ['createOnDeviceSpeechRecognizer', 'startListening', 'setRecognitionListener']) {
+      const i = androide.indexOf(llamada);
+      const antes = androide.slice(0, i);
+      expect(antes).toMatch(/runOnUiThread/);
+    }
+  });
+
+  it('el que suelta el reconocedor también', () => {
+    expect(androide).toMatch(/private void soltarReconocedor\(\)/);
+    // Se llama desde empezar y parar, que ya están dentro de runOnUiThread, y
+    // desde handleOnDestroy, que Capacitor corre en el hilo principal.
+    expect(androide).toMatch(/handleOnDestroy/);
+  });
+});
+
+describe('la regla, en el módulo de JavaScript', () => {
+  it('el micrófono se enciende en un solo lugar', () => {
+    expect(fuente.match(/plugin\.empezar\(/g)).toHaveLength(1);
+  });
+
+  it('no queda ninguna referencia al plugin de terceros', () => {
+    expect(fuente).not.toMatch(/capgo|capacitor-community/);
   });
 });
