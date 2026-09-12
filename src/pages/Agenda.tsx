@@ -111,8 +111,11 @@ export function AgendaPage() {
       status: 'programada',
       chargeable: data.settings.chargeNoShowByDefault,
       notes: '',
-      // La frecuencia del paciente propone la repetición, que igual se puede cambiar.
-      repeat: first && first.frequency !== 'puntual' ? (first.frequency as Repeat) : 'ninguna',
+      // Agendar un turno agenda UN turno. Proponer la repetición según la
+      // frecuencia del paciente ahorraba un toque, pero hacía que tocar "+" y
+      // guardar creara cuatro sesiones de una: el costo de borrar tres supera
+      // al de elegir la repetición cuando de verdad se quiere una serie.
+      repeat: 'ninguna',
       repeatCount: '4',
     });
     setErrors({});

@@ -215,6 +215,11 @@ borra el historial**, así que conviene exportar una copia desde Ajustes cada ta
 npm test          # 188 tests unitarios
 npm run typecheck # TypeScript en modo strict
 npm run build
+
+# Prueba de aceptación: carga datos por la interfaz real y comprueba que
+# sobrevivan a una recarga, a exportar/borrar/importar y a estar sin conexión.
+npx vite preview --port 4173 &
+npm run test:e2e
 ```
 
 ```
