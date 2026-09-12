@@ -517,7 +517,52 @@ tiene el mismo id.
 identifica una notificación con un entero de 32 bits, así que el uuid de la
 entrada no sirve; y hace falta recordarlo para poder cancelarla.
 
-### 5.5 Lo demás, ya resuelto en su sección
+### 5.5 Dictado por voz
+
+El dictado es local o no existe (1.2). Es la regla que decide qué plugin se
+puede usar, y descarta al obvio.
+
+**El plugin habitual no sirve.** `@capacitor-community/speech-recognition`
+llama a `SpeechRecognizer.createSpeechRecognizer()` sin ninguna opción de
+reconocimiento sin conexión. En la práctica eso manda el audio al servicio de
+reconocimiento del teléfono, que en casi todos los Android es Google y lo
+sube. Una observación dictada sobre un alumno se iría a un servidor.
+
+**Se usa `@capgo/capacitor-speech-recognition`**, que expone
+`createOnDeviceSpeechRecognizer()` y `EXTRA_PREFER_OFFLINE`. Lo que lo hace
+elegible no es que pueda reconocer en el dispositivo, sino cómo se comporta
+cuando no puede: rechaza. Hay tres puertas —disponibilidad, idioma soportado,
+error en vivo— y las tres terminan en un rechazo explícito, ninguna en el
+reconocedor del servidor.
+
+**La app pregunta una sola cosa.** El plugin ofrece dos preguntas,
+`available()` y `isOnDeviceRecognitionAvailable()`. La envoltura de la app
+sólo tiene la segunda. "Hay reconocimiento" incluyendo el del servidor no es
+disponibilidad para este proyecto, así que esa pregunta no se hace: un `true`
+ahí no habilitaría nada.
+
+**Las opciones se arman en una función sin parámetros.** No hay una rama que
+pueda quedar sin `useOnDeviceRecognition`, porque no hay rama. `popup` queda
+en `false` por la misma razón: el diálogo del sistema es el reconocedor de
+Android.
+
+**Si no se puede, el micrófono no aparece.** No es un botón gris con una
+explicación: no se dibuja. Quien no lo tiene escribe con el teclado y no se
+entera de que existía. Hace falta Android 13 o más nuevo y el idioma bajado.
+
+**Un respaldo por servidor se escribe en dos líneas**, arregla un síntoma
+real y rompe la regla en silencio. Por eso, además de los tests de
+comportamiento, hay tres que miran la forma del módulo: que el micrófono se
+encienda en un solo lugar, que `useOnDeviceRecognition: true` aparezca una
+vez y `false` ninguna, y que `available()` no se consulte nunca. Se verificó
+rompiéndolos: poner la opción en `false` y agregar un `catch` que reintenta
+sin ella hacen fallar a los tests que corresponden.
+
+**El permiso de micrófono se escribe también en el manifiesto de la app**,
+aunque lo declare el plugin. Un permiso de este tamaño tiene que verse en el
+repositorio y no llegar callado desde `node_modules`.
+
+### 5.6 Lo demás, ya resuelto en su sección
 
 - Formato de la exportación: sección 2.10.
 

@@ -1,6 +1,8 @@
 import { useLiveQuery } from 'dexie-react-hooks';
 import { useState } from 'react';
 
+import { BotonDeDictado } from '../componentes/Dictado';
+import { useDictado } from '../componentes/useDictado';
 import { enPalabras, hoy } from '../fecha';
 import { promedioDeAlumno } from '../datos/calificaciones';
 import { db } from '../datos/db';
@@ -55,6 +57,9 @@ export default function FichaAlumno({ alumnoId, materiaId, volver }: Props) {
   // Lo borrado se guarda entero hasta que se vaya de la pantalla: borrar de un
   // toque sin vuelta atrás no cumple la regla de deshacer en lugar de confirmar.
   const [borrada, setBorrada] = useState<Observacion | null>(null);
+  // El micrófono sólo aparece si este teléfono reconoce voz sin mandar el
+  // audio a ningún lado. Si no puede, no hay botón (1.2).
+  const dictado = useDictado(setTexto);
 
   if (!datos?.alumno || !datos.materia) return <div className="pantalla ficha" />;
 
@@ -65,6 +70,7 @@ export default function FichaAlumno({ alumnoId, materiaId, volver }: Props) {
     if (guardando || texto.trim() === '') return;
     setGuardando(true);
     try {
+      if (dictado.escuchando) await dictado.parar();
       await crearObservacion({ ambito: 'alumno', alumnoId, materiaId, fecha: hoy(), texto: texto.trim() });
       setTexto('');
       setAnotando(false);
@@ -77,7 +83,15 @@ export default function FichaAlumno({ alumnoId, materiaId, volver }: Props) {
     return (
       <div className="pantalla ficha">
         <header>
-          <button className="volver" onClick={() => setAnotando(false)}>
+          <button
+            className="volver"
+            onClick={() => {
+              // Salir de la pantalla apaga el micrófono: dejarlo prendido en
+              // la ficha sería escuchar sin que nada lo muestre.
+              if (dictado.escuchando) void dictado.parar();
+              setAnotando(false);
+            }}
+          >
             ← Volver a la ficha
           </button>
           <h1>Anotar</h1>
@@ -95,6 +109,17 @@ export default function FichaAlumno({ alumnoId, materiaId, volver }: Props) {
           rows={7}
           autoFocus
         />
+
+        {dictado.disponible && (
+          <BotonDeDictado
+            escuchando={dictado.escuchando}
+            loEscrito={texto}
+            arrancar={dictado.arrancar}
+            parar={dictado.parar}
+          />
+        )}
+
+        {dictado.problema && <p className="dictado-problema">{dictado.problema}</p>}
 
         <p className="privada">
           Queda en la <strong>capa privada</strong>: sólo la ves vos. Cambiarla

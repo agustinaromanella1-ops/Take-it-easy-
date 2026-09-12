@@ -51,4 +51,12 @@
     <uses-permission
         android:name="android.permission.SCHEDULE_EXACT_ALARM"
         tools:node="remove" />
+
+    <!-- El micrófono, para dictar una observación. Lo declara el plugin de
+         dictado; se escribe también acá para que un permiso de este tamaño se
+         vea en el repositorio y no llegue callado desde node_modules.
+
+         El audio no sale del teléfono: la app pide reconocimiento en el
+         dispositivo y, si no lo hay, no enciende el micrófono (1.2). -->
+    <uses-permission android:name="android.permission.RECORD_AUDIO" />
 </manifest>

@@ -1,0 +1,50 @@
+.dictar {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  width: 100%;
+  margin-top: 12px;
+  padding: 12px 14px;
+  border: 1px solid var(--borde);
+  border-radius: 14px;
+  background: var(--superficie);
+  color: var(--texto);
+  font-family: inherit;
+  font-size: 15px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.dictar .icono {
+  font-size: 18px;
+  line-height: 1;
+}
+
+.dictar.escuchando {
+  border-color: var(--rosa-osc);
+  background: var(--rosa);
+  color: var(--rosa-osc);
+  animation: escuchando 1.4s ease-in-out infinite;
+}
+
+@keyframes escuchando {
+  50% {
+    opacity: 0.62;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .dictar.escuchando {
+    animation: none;
+  }
+}
+
+.dictado-problema {
+  margin-top: 10px;
+  padding: 12px 14px;
+  border-radius: 12px;
+  background: var(--durazno);
+  color: var(--durazno-osc);
+  font-size: 14px;
+}
