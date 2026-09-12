@@ -4,6 +4,17 @@ import { isBillable, patientBalances } from '../store/selectors';
 import { formatMoney } from '../lib/money';
 import { formatDateShort, timeToMinutes } from '../lib/dates';
 import { Card, Empty, Stat } from '../components/ui';
+import { patientColor } from '../lib/palette';
+import { whatsappLink } from '../lib/contact';
+
+/** Logo de WhatsApp, simplificado a una sola silueta. */
+function WhatsAppIcon() {
+  return (
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+      <path d="M12 2a10 10 0 0 0-8.6 15l-1.3 4.7 4.8-1.3A10 10 0 1 0 12 2Zm5.5 14.1c-.2.6-1.2 1.2-1.7 1.2-.5.1-1 .1-1.6-.1a13 13 0 0 1-5-4.4c-.6-.9-1-1.9-1-2.9 0-1 .5-1.5.7-1.8.2-.2.5-.3.7-.3h.5c.2 0 .4 0 .6.4l.8 2c.1.2 0 .4-.1.5l-.4.5c-.1.2-.3.3-.1.6.4.6.8 1.2 1.4 1.7.6.5 1.1.7 1.4.9.2.1.4.1.5-.1l.7-.8c.2-.2.3-.2.5-.1l2 1c.2 0 .3.2.4.3 0 .2 0 .8-.3 1.4Z" />
+    </svg>
+  );
+}
 
 export function PatientDetailPage({ patientId, onBack }: { patientId: string; onBack: () => void }) {
   const { data } = useStore();
@@ -44,6 +55,9 @@ export function PatientDetailPage({ patientId, onBack }: { patientId: string; on
 
   const saldo = balance?.balance ?? 0;
 
+  // El primer nombre alcanza para un saludo y evita sonar a formulario.
+  const wapp = whatsappLink(patient.phone, `Hola ${patient.name.split(' ')[0] ?? ''}, ¿cómo estás?`);
+
   return (
     <>
       <div className="page-head">
@@ -52,6 +66,7 @@ export function PatientDetailPage({ patientId, onBack }: { patientId: string; on
             ← Pacientes
           </button>
           <h1>
+            <span className="dot" style={{ background: patientColor(patient.colorIndex).solid }} />
             {patient.name}{' '}
             {patient.status === 'inactivo' && <span className="tag inactivo">inactivo</span>}
           </h1>
@@ -59,6 +74,11 @@ export function PatientDetailPage({ patientId, onBack }: { patientId: string; on
             {[patient.email, patient.phone].filter(Boolean).join(' · ') || 'Sin datos de contacto'}
           </p>
         </div>
+        {wapp && (
+          <a className="btn wapp" href={wapp} target="_blank" rel="noopener noreferrer">
+            <WhatsAppIcon /> Mandar mensaje
+          </a>
+        )}
       </div>
 
       <div className="stat-grid">

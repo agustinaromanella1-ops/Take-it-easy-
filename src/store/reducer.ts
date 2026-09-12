@@ -6,6 +6,7 @@ export type Action =
   | { type: 'patient/update'; payload: Patient }
   | { type: 'patient/remove'; payload: { id: string } }
   | { type: 'session/add'; payload: Omit<Session, 'id'> }
+  | { type: 'session/addMany'; payload: Omit<Session, 'id'>[] }
   | { type: 'session/update'; payload: Session }
   | { type: 'session/remove'; payload: { id: string } }
   | { type: 'session/setStatus'; payload: { id: string; status: Session['status'] } }
@@ -42,6 +43,14 @@ export function reducer(state: AppData, action: Action): AppData {
 
     case 'session/add':
       return { ...state, sessions: [...state.sessions, { ...action.payload, id: newId() }] };
+
+    case 'session/addMany':
+      // Una serie recurrente entra como un solo cambio de estado: si se
+      // agregaran de a una, cada sesión dispararía un render y un guardado.
+      return {
+        ...state,
+        sessions: [...state.sessions, ...action.payload.map((s) => ({ ...s, id: newId() }))],
+      };
 
     case 'session/update':
       return {

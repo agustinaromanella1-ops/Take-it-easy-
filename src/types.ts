@@ -24,6 +24,9 @@ export type Cents = number;
 
 export type PatientStatus = 'activo' | 'inactivo';
 
+/** Cada cuánto se ve al paciente. Define la repetición sugerida al agendar. */
+export type Frequency = 'semanal' | 'quincenal' | 'mensual' | 'puntual';
+
 export interface Patient {
   id: string;
   name: string;
@@ -32,6 +35,9 @@ export interface Patient {
   /** Honorario habitual por sesión, en centavos. Se usa como valor por defecto al agendar. */
   defaultFee: Cents;
   status: PatientStatus;
+  /** Índice dentro de `PATIENT_COLORS`. Identifica al paciente de un vistazo en la agenda. */
+  colorIndex: number;
+  frequency: Frequency;
   notes: string;
   createdAt: string;
 }
@@ -74,6 +80,23 @@ export interface Payment {
   notes: string;
 }
 
+/**
+ * Lo que la usuaria carga en la calculadora de tarifa. Se guarda para no tener
+ * que volver a escribirlo cada vez que quiere recalcular.
+ */
+export interface RateInputs {
+  /** Lo que quiere llevarse por mes, ya limpio de impuestos y gastos. */
+  targetIncome: Cents;
+  /** Gastos fijos del consultorio por mes: alquiler, supervisión, matrícula. */
+  fixedCosts: Cents;
+  /** Sesiones que puede dar por semana. */
+  sessionsPerWeek: number;
+  /** Porcentaje que se va en impuestos y aportes (0-99). */
+  taxPercent: number;
+  /** Porcentaje de sesiones que espera perder por ausencias y cancelaciones (0-99). */
+  noShowPercent: number;
+}
+
 export interface Settings {
   /** Símbolo de moneda a mostrar. El cálculo es agnóstico a la moneda. */
   currency: string;
@@ -81,6 +104,11 @@ export interface Settings {
   defaultDurationMin: number;
   /** Si las ausencias sin aviso se cobran por defecto. */
   chargeNoShowByDefault: boolean;
+  /** Cuánto se propone facturar por mes. Cero significa sin meta definida. */
+  monthlyGoal: Cents;
+  /** Minutos de antelación de la alarma al mandar un turno al calendario. */
+  reminderMinutes: number;
+  rateInputs: RateInputs;
 }
 
 export interface AppData {

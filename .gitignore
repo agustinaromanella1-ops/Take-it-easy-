@@ -2,3 +2,11 @@ node_modules
 dist
 .DS_Store
 *.local
+
+# Claves de firma de Android: NUNCA deben subirse al repositorio.
+# Quien tenga el keystore y su contraseña puede publicar actualizaciones
+# de la app haciéndose pasar por vos.
+*.keystore
+*.jks
+signing-key-info*
+keystore.properties

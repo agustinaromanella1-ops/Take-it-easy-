@@ -5,6 +5,8 @@ import { formatMoney } from '../lib/money';
 import { formatDateLong, formatDateShort, formatMonthKey, monthKey, today } from '../lib/dates';
 import { Card, Empty, Stat } from '../components/ui';
 import { Mascot } from '../components/Mascot';
+import { goalProgress } from '../lib/pricing';
+import { patientColor } from '../lib/palette';
 
 export function DashboardPage({ onGo }: { onGo: (page: 'agenda' | 'finanzas' | 'pacientes') => void }) {
   const { data, dispatch } = useStore();
@@ -18,6 +20,7 @@ export function DashboardPage({ onGo }: { onGo: (page: 'agenda' | 'finanzas' | '
   // Lo facturado del mes que todavía no entró. La etiqueta del encabezado
   // nombra la situación en vez de dejar a la usuaria interpretar el número.
   const porCobrarMes = Math.max(0, stats.monthBilled - stats.monthCollected);
+  const goal = goalProgress(data.settings.monthlyGoal, stats.monthBilled);
   const heroLabel =
     stats.monthBilled === 0
       ? 'Todavía sin movimientos este mes'
@@ -65,7 +68,13 @@ export function DashboardPage({ onGo }: { onGo: (page: 'agenda' | 'finanzas' | '
         <div className="hero-hint">
           cobrado en {formatMonthKey(monthKey(today()))}, de {formatMoney(stats.monthBilled, currency)} facturados
         </div>
-        {porCobrarMes > 0 && (
+        {goal && !goal.done && (
+          <div className="hero-note">
+            Te faltan <strong>{formatMoney(goal.remaining, currency)}</strong> para tu meta del mes.
+          </div>
+        )}
+        {goal?.done && <div className="hero-note">¡Llegaste a tu meta del mes! 🎉</div>}
+        {!goal && porCobrarMes > 0 && (
           <div className="hero-note">
             Te queda {formatMoney(porCobrarMes, currency)} por cobrar de este mes.
           </div>
@@ -170,7 +179,13 @@ export function DashboardPage({ onGo }: { onGo: (page: 'agenda' | 'finanzas' | '
                   <tr key={s.id}>
                     <td className="small"><span className="cap-first">{formatDateLong(s.date)}</span></td>
                     <td className="num small">{s.time}</td>
-                    <td>{patientsById.get(s.patientId)?.name ?? '—'}</td>
+                    <td>
+                      <span
+                        className="dot"
+                        style={{ background: patientColor(patientsById.get(s.patientId)?.colorIndex ?? 0).solid }}
+                      />
+                      {patientsById.get(s.patientId)?.name ?? '—'}
+                    </td>
                     <td className="num">{formatMoney(s.fee, currency)}</td>
                   </tr>
                 ))}

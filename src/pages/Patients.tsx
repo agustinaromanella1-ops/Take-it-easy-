@@ -1,10 +1,12 @@
 import { useMemo, useState } from 'react';
-import type { Patient } from '../types';
+import type { Frequency, Patient } from '../types';
 import { useStore } from '../store/StoreContext';
 import { patientBalances } from '../store/selectors';
 import { centsToInput, formatMoney, parseMoney } from '../lib/money';
 import { formatDateShort } from '../lib/dates';
-import { Card, ConfirmButton, Empty, Field, Modal } from '../components/ui';
+import { ConfirmButton, Empty, Field, Modal } from '../components/ui';
+import { nextFreeColor, PATIENT_COLORS, patientColor } from '../lib/palette';
+import { whatsappLink } from '../lib/contact';
 
 interface FormState {
   name: string;
@@ -12,10 +14,17 @@ interface FormState {
   phone: string;
   fee: string;
   status: Patient['status'];
+  colorIndex: number;
+  frequency: Frequency;
   notes: string;
 }
 
-const emptyForm: FormState = { name: '', email: '', phone: '', fee: '', status: 'activo', notes: '' };
+const FREQUENCY_LABEL: Record<Frequency, string> = {
+  semanal: 'Semanal',
+  quincenal: 'Quincenal',
+  mensual: 'Mensual',
+  puntual: 'Puntual',
+};
 
 function toForm(p: Patient): FormState {
   return {
@@ -24,6 +33,8 @@ function toForm(p: Patient): FormState {
     phone: p.phone,
     fee: centsToInput(p.defaultFee),
     status: p.status,
+    colorIndex: p.colorIndex,
+    frequency: p.frequency,
     notes: p.notes,
   };
 }
@@ -31,7 +42,18 @@ function toForm(p: Patient): FormState {
 export function PatientsPage({ onOpenPatient }: { onOpenPatient: (id: string) => void }) {
   const { data, dispatch } = useStore();
   const [editing, setEditing] = useState<Patient | 'new' | null>(null);
-  const [form, setForm] = useState<FormState>(emptyForm);
+  // El estado inicial no se usa: openNew() y openEdit() siempre lo reemplazan
+  // antes de que el formulario se muestre.
+  const [form, setForm] = useState<FormState>(() => ({
+    name: '',
+    email: '',
+    phone: '',
+    fee: '',
+    status: 'activo',
+    colorIndex: 0,
+    frequency: 'semanal',
+    notes: '',
+  }));
   const [errors, setErrors] = useState<Partial<Record<keyof FormState, string>>>({});
   const [query, setQuery] = useState('');
   const [showInactive, setShowInactive] = useState(true);
@@ -47,7 +69,17 @@ export function PatientsPage({ onOpenPatient }: { onOpenPatient: (id: string) =>
   }, [data.patients, query, showInactive]);
 
   function openNew() {
-    setForm(emptyForm);
+    setForm({
+      name: '',
+      email: '',
+      phone: '',
+      fee: '',
+      status: 'activo',
+      // Se propone un color que todavía no use nadie, para que no se repitan.
+      colorIndex: nextFreeColor(data.patients.map((p) => p.colorIndex)),
+      frequency: 'semanal',
+      notes: '',
+    });
     setErrors({});
     setEditing('new');
   }
@@ -77,6 +109,8 @@ export function PatientsPage({ onOpenPatient }: { onOpenPatient: (id: string) =>
       phone: form.phone.trim(),
       defaultFee: fee ?? 0,
       status: form.status,
+      colorIndex: form.colorIndex,
+      frequency: form.frequency,
       notes: form.notes.trim(),
     };
 
@@ -94,29 +128,21 @@ export function PatientsPage({ onOpenPatient }: { onOpenPatient: (id: string) =>
         </button>
       </div>
 
-      <Card>
-        <div className="field-row" style={{ marginBottom: 14 }}>
-          <div className="field" style={{ marginBottom: 0 }}>
-            <label htmlFor="buscar">Buscar</label>
-            <input
-              id="buscar"
-              value={query}
-              onChange={(e) => setQuery(e.target.value)}
-              placeholder="Nombre o email"
-            />
-          </div>
-          <div className="field" style={{ marginBottom: 0, justifyContent: 'flex-end' }}>
-            <label style={{ display: 'flex', alignItems: 'center', gap: 7, cursor: 'pointer' }}>
-              <input
-                type="checkbox"
-                checked={showInactive}
-                onChange={(e) => setShowInactive(e.target.checked)}
-                style={{ width: 'auto' }}
-              />
-              Mostrar inactivos
-            </label>
-          </div>
+      <div className="filters">
+        <div className="field" style={{ marginBottom: 0 }}>
+          <label htmlFor="buscar">Buscar</label>
+          <input
+            id="buscar"
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
+            placeholder="Nombre o email"
+          />
         </div>
+        <label className="check-inline">
+          <input type="checkbox" checked={showInactive} onChange={(e) => setShowInactive(e.target.checked)} />
+          Mostrar inactivos
+        </label>
+      </div>
 
         {rows.length === 0 ? (
           <Empty>
@@ -125,72 +151,69 @@ export function PatientsPage({ onOpenPatient }: { onOpenPatient: (id: string) =>
               : 'Ningún paciente coincide con la búsqueda.'}
           </Empty>
         ) : (
-          <div className="table-wrap">
-            <table>
-              <thead>
-                <tr>
-                  <th>Paciente</th>
-                  <th>Contacto</th>
-                  <th className="num">Honorario</th>
-                  <th className="num">Sesiones</th>
-                  <th>Última</th>
-                  <th className="num">Saldo</th>
-                  <th />
-                </tr>
-              </thead>
-              <tbody>
-                {rows.map((p) => {
-                  const b = balances.get(p.id);
-                  const balance = b?.balance ?? 0;
-                  return (
-                    <tr key={p.id}>
-                      <td>
-                        <button className="link-cell" onClick={() => onOpenPatient(p.id)}>
-                          {p.name}
-                        </button>
-                        {p.status === 'inactivo' && <span className="tag inactivo" style={{ marginLeft: 8 }}>inactivo</span>}
-                      </td>
-                      <td className="small muted">
-                        {p.email || p.phone ? (
-                          <>
-                            {p.email}
-                            {p.email && p.phone ? ' · ' : ''}
-                            {p.phone}
-                          </>
-                        ) : (
-                          '—'
-                        )}
-                      </td>
-                      <td className="num">{formatMoney(p.defaultFee, data.settings.currency)}</td>
-                      <td className="num">{b?.sessionsHeld ?? 0}</td>
-                      <td className="small">{b?.lastSessionDate ? formatDateShort(b.lastSessionDate) : '—'}</td>
-                      <td className="num">
-                        <span className={`money${balance > 0 ? ' debt' : balance < 0 ? ' credit' : ''}`}>
-                          {formatMoney(balance, data.settings.currency)}
-                        </span>
-                      </td>
-                      <td>
-                        <div className="actions">
-                          <button className="btn small" onClick={() => openEdit(p)}>
-                            Editar
-                          </button>
-                          <ConfirmButton
-                            label="Borrar"
-                            confirmLabel={`¿Borrar a ${p.name}? Se eliminan también sus ${
-                              data.sessions.filter((s) => s.patientId === p.id).length
-                            } sesión(es) y sus pagos. Esta acción no se puede deshacer.`}
-                            onConfirm={() => dispatch({ type: 'patient/remove', payload: { id: p.id } })}
-                          />
-                        </div>
-                      </td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
+          <div className="patient-grid">
+            {rows.map((p) => {
+              const b = balances.get(p.id);
+              const balance = b?.balance ?? 0;
+              const color = patientColor(p.colorIndex);
+              const wapp = whatsappLink(p.phone, `Hola ${p.name.split(' ')[0] ?? ''}, ¿cómo estás?`);
+              return (
+                <article
+                  key={p.id}
+                  className={`patient-card${p.status === 'inactivo' ? ' is-inactive' : ''}`}
+                  style={{ ['--pc' as string]: color.solid }}
+                >
+                  <div className="patient-top">
+                    <button className="patient-name" onClick={() => onOpenPatient(p.id)}>
+                      {p.name}
+                    </button>
+                    <span className="patient-fee">{formatMoney(p.defaultFee, data.settings.currency)}</span>
+                  </div>
+                  <p className="patient-sub">
+                    {FREQUENCY_LABEL[p.frequency]}
+                    {p.status === 'inactivo' ? ' · inactivo' : ''}
+                    {b?.lastSessionDate ? ` · última ${formatDateShort(b.lastSessionDate)}` : ''}
+                  </p>
+
+                  <div className="patient-stats">
+                    <span>
+                      <strong>{b?.sessionsHeld ?? 0}</strong>
+                      sesiones
+                    </span>
+                    <span className={balance > 0 ? 'debt' : balance < 0 ? 'credit' : ''}>
+                      <strong>{formatMoney(balance, data.settings.currency)}</strong>
+                      {balance > 0 ? 'debe' : balance < 0 ? 'a favor' : 'al día'}
+                    </span>
+                  </div>
+
+                  <div className="patient-actions">
+                    {wapp && (
+                      <a
+                        className="btn small wapp"
+                        href={wapp}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        title="Escribir por WhatsApp"
+                      >
+                        Mensaje
+                      </a>
+                    )}
+                    <button className="btn small" onClick={() => openEdit(p)}>
+                      Editar
+                    </button>
+                    <ConfirmButton
+                      label="Borrar"
+                      confirmLabel={`¿Borrar a ${p.name}? Se eliminan también sus ${
+                        data.sessions.filter((s) => s.patientId === p.id).length
+                      } sesión(es) y sus pagos. Esta acción no se puede deshacer.`}
+                      onConfirm={() => dispatch({ type: 'patient/remove', payload: { id: p.id } })}
+                    />
+                  </div>
+                </article>
+              );
+            })}
           </div>
         )}
-      </Card>
 
       <button className="fab" onClick={openNew} aria-label="Nuevo paciente">
         +
@@ -222,6 +245,18 @@ export function PatientsPage({ onOpenPatient }: { onOpenPatient: (id: string) =>
                 placeholder="0,00"
               />
             </Field>
+            <Field label="Frecuencia">
+              <select
+                value={form.frequency}
+                onChange={(e) => setForm({ ...form, frequency: e.target.value as Frequency })}
+              >
+                {(Object.keys(FREQUENCY_LABEL) as Frequency[]).map((f) => (
+                  <option key={f} value={f}>
+                    {FREQUENCY_LABEL[f]}
+                  </option>
+                ))}
+              </select>
+            </Field>
             <Field label="Estado">
               <select
                 value={form.status}
@@ -231,6 +266,25 @@ export function PatientsPage({ onOpenPatient }: { onOpenPatient: (id: string) =>
                 <option value="inactivo">Inactivo</option>
               </select>
             </Field>
+          </div>
+
+          <div className="field">
+            <label id="color-label">Color</label>
+            <div className="swatches" role="radiogroup" aria-labelledby="color-label">
+              {PATIENT_COLORS.map((c, i) => (
+                <button
+                  key={c.name}
+                  type="button"
+                  role="radio"
+                  aria-checked={form.colorIndex === i}
+                  aria-label={c.name}
+                  title={c.name}
+                  className={`swatch${form.colorIndex === i ? ' is-selected' : ''}`}
+                  style={{ background: c.solid }}
+                  onClick={() => setForm({ ...form, colorIndex: i })}
+                />
+              ))}
+            </div>
           </div>
           <Field label="Notas">
             <textarea value={form.notes} onChange={(e) => setForm({ ...form, notes: e.target.value })} />

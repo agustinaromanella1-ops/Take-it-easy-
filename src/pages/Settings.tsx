@@ -72,6 +72,23 @@ export function SettingsPage() {
             />
           </Field>
         </div>
+        <div className="field-row">
+          <Field label="Alarma del recordatorio (min antes)">
+            <input
+              type="number"
+              min={0}
+              max={1440}
+              step={5}
+              value={data.settings.reminderMinutes}
+              onChange={(e) => {
+                const n = Number(e.target.value);
+                if (Number.isFinite(n) && n >= 0 && n <= 1440) {
+                  dispatch({ type: 'settings/update', payload: { reminderMinutes: Math.round(n) } });
+                }
+              }}
+            />
+          </Field>
+        </div>
         <label style={{ display: 'flex', alignItems: 'center', gap: 8, cursor: 'pointer' }}>
           <input
             type="checkbox"

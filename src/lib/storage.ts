@@ -1,4 +1,5 @@
-import type { AppData, Patient, Payment, Session, Settings } from '../types';
+import type { AppData, Frequency, Patient, Payment, Session, Settings } from '../types';
+import { PATIENT_COLORS } from './palette';
 import { isValidISODate, isValidTime } from './dates';
 
 export const STORAGE_KEY = 'psicofinance:data';
@@ -8,6 +9,15 @@ export const DEFAULT_SETTINGS: Settings = {
   currency: '$',
   defaultDurationMin: 50,
   chargeNoShowByDefault: true,
+  monthlyGoal: 0,
+  reminderMinutes: 30,
+  rateInputs: {
+    targetIncome: 0,
+    fixedCosts: 0,
+    sessionsPerWeek: 20,
+    taxPercent: 0,
+    noShowPercent: 10,
+  },
 };
 
 export function emptyData(): AppData {
@@ -38,6 +48,14 @@ function isRecord(v: unknown): v is Record<string, unknown> {
   return typeof v === 'object' && v !== null;
 }
 
+const FREQUENCIES = new Set<Frequency>(['semanal', 'quincenal', 'mensual', 'puntual']);
+
+/** Acota un número al rango dado, devolviendo el valor por defecto si no es finito. */
+function clamp(v: unknown, min: number, max: number, fallback: number): number {
+  const n = int(v, fallback);
+  return Math.min(max, Math.max(min, n));
+}
+
 function parsePatient(raw: unknown): Patient | null {
   if (!isRecord(raw)) return null;
   const id = str(raw.id);
@@ -50,6 +68,8 @@ function parsePatient(raw: unknown): Patient | null {
     phone: str(raw.phone),
     defaultFee: Math.max(0, int(raw.defaultFee, 0)),
     status: raw.status === 'inactivo' ? 'inactivo' : 'activo',
+    colorIndex: clamp(raw.colorIndex, 0, PATIENT_COLORS.length - 1, 0),
+    frequency: FREQUENCIES.has(str(raw.frequency) as Frequency) ? (raw.frequency as Frequency) : 'semanal',
     notes: str(raw.notes),
     createdAt: str(raw.createdAt, new Date().toISOString()),
   };
@@ -122,10 +142,25 @@ export function parseAppData(raw: unknown): AppData {
     patients,
     sessions,
     payments,
-    settings: {
-      currency: str(rawSettings.currency, DEFAULT_SETTINGS.currency) || DEFAULT_SETTINGS.currency,
-      defaultDurationMin: Math.max(5, int(rawSettings.defaultDurationMin, DEFAULT_SETTINGS.defaultDurationMin)),
-      chargeNoShowByDefault: bool(rawSettings.chargeNoShowByDefault, DEFAULT_SETTINGS.chargeNoShowByDefault),
+    settings: parseSettings(rawSettings),
+  };
+}
+
+function parseSettings(raw: Record<string, unknown>): Settings {
+  const rawRate = isRecord(raw.rateInputs) ? raw.rateInputs : {};
+  const d = DEFAULT_SETTINGS;
+  return {
+    currency: str(raw.currency, d.currency) || d.currency,
+    defaultDurationMin: clamp(raw.defaultDurationMin, 5, 480, d.defaultDurationMin),
+    chargeNoShowByDefault: bool(raw.chargeNoShowByDefault, d.chargeNoShowByDefault),
+    monthlyGoal: Math.max(0, int(raw.monthlyGoal, d.monthlyGoal)),
+    reminderMinutes: clamp(raw.reminderMinutes, 0, 1440, d.reminderMinutes),
+    rateInputs: {
+      targetIncome: Math.max(0, int(rawRate.targetIncome, d.rateInputs.targetIncome)),
+      fixedCosts: Math.max(0, int(rawRate.fixedCosts, d.rateInputs.fixedCosts)),
+      sessionsPerWeek: clamp(rawRate.sessionsPerWeek, 1, 100, d.rateInputs.sessionsPerWeek),
+      taxPercent: clamp(rawRate.taxPercent, 0, 99, d.rateInputs.taxPercent),
+      noShowPercent: clamp(rawRate.noShowPercent, 0, 99, d.rateInputs.noShowPercent),
     },
   };
 }

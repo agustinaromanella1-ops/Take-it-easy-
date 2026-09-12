@@ -20,6 +20,8 @@ function patient(id: string, over: Partial<Patient> = {}): Patient {
     phone: '',
     defaultFee: 500000,
     status: 'activo',
+    colorIndex: 0,
+    frequency: 'semanal',
     notes: '',
     createdAt: '2026-01-01T00:00:00.000Z',
     ...over,

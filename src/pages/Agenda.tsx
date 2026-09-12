@@ -15,6 +15,10 @@ import {
   today,
 } from '../lib/dates';
 import { Card, ConfirmButton, Empty, Field, Modal } from '../components/ui';
+import { patientColor } from '../lib/palette';
+import { MAX_OCCURRENCES, occurrences, REPEAT_LABEL, type Repeat } from '../lib/recurrence';
+import { icsFileName, sessionToICS } from '../lib/calendar';
+import { downloadText } from '../lib/download';
 
 const STATUS_LABEL: Record<Session['status'], string> = {
   programada: 'Programada',
@@ -32,6 +36,8 @@ interface FormState {
   status: Session['status'];
   chargeable: boolean;
   notes: string;
+  repeat: Repeat;
+  repeatCount: string;
 }
 
 export function AgendaPage() {
@@ -76,6 +82,9 @@ export function AgendaPage() {
       status: 'programada',
       chargeable: data.settings.chargeNoShowByDefault,
       notes: '',
+      // La frecuencia del paciente propone la repetición, que igual se puede cambiar.
+      repeat: first && first.frequency !== 'puntual' ? (first.frequency as Repeat) : 'ninguna',
+      repeatCount: '4',
     });
     setErrors({});
     setEditing('new');
@@ -91,9 +100,26 @@ export function AgendaPage() {
       status: s.status,
       chargeable: s.chargeable,
       notes: s.notes,
+      // Editar toca una sola sesión: cambiar toda la serie a la vez sería una
+      // sorpresa desagradable si solo se quería mover un turno.
+      repeat: 'ninguna',
+      repeatCount: '1',
     });
     setErrors({});
     setEditing(s);
+  }
+
+  /**
+   * Descarga el turno como archivo .ics. Abrirlo en el teléfono lo agrega al
+   * calendario con alarma, así el aviso llega aunque la app esté cerrada.
+   */
+  function sendToCalendar(session: Session) {
+    const name = patientsById.get(session.patientId)?.name ?? 'Paciente';
+    downloadText(
+      icsFileName(name, session.date),
+      sessionToICS(session, { patientName: name, reminderMinutes: data.settings.reminderMinutes }),
+      'text/calendar;charset=utf-8',
+    );
   }
 
   function submit() {
@@ -107,6 +133,13 @@ export function AgendaPage() {
     const duration = Number(form.durationMin);
     if (!Number.isFinite(duration) || duration < 5 || duration > 480) {
       next.durationMin = 'Entre 5 y 480 minutos.';
+    }
+
+    if (form.repeat !== 'ninguna') {
+      const n = Number(form.repeatCount);
+      if (!Number.isFinite(n) || n < 1 || n > MAX_OCCURRENCES) {
+        next.repeatCount = `Entre 1 y ${MAX_OCCURRENCES} sesiones.`;
+      }
     }
 
     const fee = form.fee.trim() === '' ? 0 : parseMoney(form.fee);
@@ -127,8 +160,13 @@ export function AgendaPage() {
       notes: form.notes.trim(),
     };
 
-    if (editing === 'new') dispatch({ type: 'session/add', payload: fields });
-    else if (editing) dispatch({ type: 'session/update', payload: { ...editing, ...fields } });
+    if (editing === 'new') {
+      const dates = occurrences(fields.date, form.repeat, Number(form.repeatCount) || 1);
+      if (dates.length === 1) dispatch({ type: 'session/add', payload: fields });
+      else dispatch({ type: 'session/addMany', payload: dates.map((date) => ({ ...fields, date })) });
+    } else if (editing) {
+      dispatch({ type: 'session/update', payload: { ...editing, ...fields } });
+    }
     setEditing(null);
     setForm(null);
   }
@@ -146,6 +184,14 @@ export function AgendaPage() {
   }
 
   const todayISO = today();
+
+  // Vista previa de la serie que se va a crear, para que el número de sesiones
+  // y la fecha final se vean antes de confirmar.
+  const series = useMemo(() => {
+    if (!form || editing !== 'new' || form.repeat === 'ninguna') return [];
+    if (!isValidISODate(form.date)) return [];
+    return occurrences(form.date, form.repeat, Number(form.repeatCount) || 1);
+  }, [form, editing]);
 
   return (
     <>
@@ -215,6 +261,9 @@ export function AgendaPage() {
                   className={`slot ${s.status}${conflicts.has(s.id) ? ' conflict' : ''}`}
                   onClick={() => openEdit(s)}
                   title={conflicts.has(s.id) ? 'Se superpone con otro turno' : STATUS_LABEL[s.status]}
+                  style={{
+                    borderLeftColor: patientColor(patientsById.get(s.patientId)?.colorIndex ?? 0).solid,
+                  }}
                 >
                   <span className="slot-time">{s.time}</span>
                   <span className="slot-name">{patientsById.get(s.patientId)?.name ?? '—'}</span>
@@ -271,6 +320,15 @@ export function AgendaPage() {
                     <td className="num">{formatMoney(s.fee, data.settings.currency)}</td>
                     <td>
                       <div className="actions">
+                        {s.status === 'programada' && (
+                          <button
+                            className="btn small"
+                            onClick={() => sendToCalendar(s)}
+                            title="Descargar el turno para agregarlo al calendario del teléfono, con alarma"
+                          >
+                            📅 Recordatorio
+                          </button>
+                        )}
                         <button className="btn small" onClick={() => openEdit(s)}>
                           Editar
                         </button>
@@ -357,6 +415,41 @@ export function AgendaPage() {
               </select>
             </Field>
           </div>
+
+          {editing === 'new' && (
+            <div className="field-row">
+              <Field label="Repetir">
+                <select
+                  value={form.repeat}
+                  onChange={(e) => setForm({ ...form, repeat: e.target.value as Repeat })}
+                >
+                  {(Object.keys(REPEAT_LABEL) as Repeat[]).map((r) => (
+                    <option key={r} value={r}>
+                      {REPEAT_LABEL[r]}
+                    </option>
+                  ))}
+                </select>
+              </Field>
+              {form.repeat !== 'ninguna' && (
+                <Field label="¿Cuántas sesiones?" error={errors.repeatCount}>
+                  <input
+                    type="number"
+                    min={1}
+                    max={MAX_OCCURRENCES}
+                    value={form.repeatCount}
+                    onChange={(e) => setForm({ ...form, repeatCount: e.target.value })}
+                  />
+                </Field>
+              )}
+            </div>
+          )}
+
+          {editing === 'new' && form.repeat !== 'ninguna' && series.length > 1 && (
+            <div className="banner info">
+              Se van a crear <strong>{series.length} sesiones</strong>, de{' '}
+              {formatDateLong(series[0]!)} a {formatDateLong(series[series.length - 1]!)}.
+            </div>
+          )}
 
           {form.status === 'ausente' && (
             <div className="field">

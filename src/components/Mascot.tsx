@@ -1,4 +1,5 @@
-import { useCallback, useMemo, useState } from 'react';
+import { useCallback, useMemo, useRef, useState } from 'react';
+import { Dachshund } from './Dachshund';
 
 /**
  * Recordatorio de que la app mide el trabajo, no a la persona que lo hace.
@@ -23,19 +24,26 @@ const WEEKDAY_MESSAGES: Record<number, string> = {
 export function Mascot() {
   const initial = useMemo(() => WEEKDAY_MESSAGES[new Date().getDay()] ?? MESSAGES[0]!, []);
   const [message, setMessage] = useState(initial);
+  const [wagging, setWagging] = useState(false);
+  const timer = useRef<number | undefined>(undefined);
 
   const next = useCallback(() => {
     setMessage((current) => {
       const options = MESSAGES.filter((m) => m !== current);
       return options[Math.floor(Math.random() * options.length)] ?? current;
     });
+    // Se remonta el SVG para reiniciar la animación de la cola aunque ya
+    // estuviera moviéndose.
+    setWagging(false);
+    window.clearTimeout(timer.current);
+    timer.current = window.setTimeout(() => setWagging(true), 10);
   }, []);
 
   return (
     <div className="mascot">
       <span className="mascot-bubble">{message}</span>
       <button className="mascot-dog" onClick={next} aria-label="Otro mensaje" title="Tocame">
-        🐕
+        <Dachshund wag={wagging} />
       </button>
     </div>
   );

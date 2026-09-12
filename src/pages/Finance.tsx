@@ -5,6 +5,8 @@ import { emptyMonthSummary, monthlySummaries, patientBalances } from '../store/s
 import { formatMoney, parseMoney } from '../lib/money';
 import { addMonths, formatDateShort, formatMonthKey, isValidISODate, monthKey, today } from '../lib/dates';
 import { Card, ConfirmButton, Empty, Field, Modal, Stat } from '../components/ui';
+import { MonthlyGoal } from '../components/MonthlyGoal';
+import { RateCalculator } from '../components/RateCalculator';
 
 const METHODS: Payment['method'][] = ['efectivo', 'transferencia', 'tarjeta', 'otro'];
 
@@ -120,6 +122,8 @@ export function FinancePage() {
         />
       </div>
 
+      <MonthlyGoal billed={summary.billed} />
+
       <Card title="Últimos 6 meses">
         {recentMonths.map((m) => (
           <div key={m.key}>
@@ -184,6 +188,8 @@ export function FinancePage() {
           </div>
         )}
       </Card>
+
+      <RateCalculator />
 
       <Card title={`Pagos de ${formatMonthKey(month)}`}>
         {monthPayments.length === 0 ? (
