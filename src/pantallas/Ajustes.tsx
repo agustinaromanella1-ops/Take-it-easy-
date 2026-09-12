@@ -21,6 +21,7 @@ import {
   type QuePaso,
   type Resultado,
 } from '../agenda/prueba';
+import Perrito from '../componentes/Perrito';
 import { olvidarInstructivo } from '../datos/preferencias';
 import { guardarArchivo } from '../nativo/archivos';
 import './Ajustes.css';
@@ -49,6 +50,10 @@ export default function Ajustes({ verInstructivo }: { verInstructivo: () => void
   // La pregunta que importa hay que hacerla después de cerrar la app, así que
   // se hace al abrir esta pantalla y no al apretar el botón.
   const [quePaso, setQuePaso] = useState<QuePaso>('sin-prueba');
+  // El escondite clásico de Android: tocar la versión varias veces. Nadie lo
+  // encuentra sin querer, y cuando se lo cuentan lo encuentra.
+  const [toques, setToques] = useState(0);
+  const asomado = toques >= 5;
 
   useEffect(() => {
     let vigente = true;
@@ -303,6 +308,16 @@ export default function Ajustes({ verInstructivo }: { verInstructivo: () => void
           Ver el instructivo de nuevo
         </button>
       </section>
+
+      <p className="version" onClick={() => setToques((van) => van + 1)}>
+        Take It Easy {__VERSION__}
+      </p>
+
+      {/* El hueco está siempre, con el alto del perrito: así aparecer no
+          corre nada de lugar. Lo único que cambia es si se ve. */}
+      <div className="escondite" aria-hidden="true">
+        {asomado && <Perrito />}
+      </div>
     </div>
   );
 }

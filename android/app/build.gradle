@@ -1,5 +1,12 @@
 apply plugin: 'com.android.application'
 
+/**
+ * La clave con la que se firma lo que se sube a Play llega por el entorno y
+ * nunca por un archivo del repositorio: el .keystore lo escribe quien compila,
+ * y se borra al terminar.
+ */
+def hayClaveDeSubida = System.getenv('CLAVE_DE_SUBIDA') != null
+
 android {
     namespace = "ar.takeiteasy.agenda"
     compileSdk = rootProject.ext.compileSdkVersion
@@ -7,8 +14,11 @@ android {
         applicationId "ar.takeiteasy.agenda"
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
-        versionCode 1
-        versionName "1.0"
+        // Play exige que este número suba en cada entrega y no deja repetirlo
+        // ni bajarlo nunca. Lo pone quien compila para publicar; para las
+        // pruebas de mano da igual y queda en 1.
+        versionCode System.getenv('VERSION_CODE') ? System.getenv('VERSION_CODE').toInteger() : 1
+        versionName System.getenv('VERSION_NOMBRE') ?: "1.0"
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
         aaptOptions {
              // Files and dirs to omit from the packaged assets dir, modified to accommodate modern web apps.
@@ -29,9 +39,27 @@ android {
             keyAlias 'prueba'
             keyPassword 'apk-de-prueba'
         }
+        release {
+            if (hayClaveDeSubida) {
+                storeFile file(System.getenv('CLAVE_DE_SUBIDA'))
+                storePassword System.getenv('CLAVE_DE_SUBIDA_ALMACEN')
+                keyAlias System.getenv('CLAVE_DE_SUBIDA_ALIAS')
+                keyPassword System.getenv('CLAVE_DE_SUBIDA_CLAVE')
+            }
+        }
     }
     buildTypes {
         release {
+            // La clave de subida a Play llega por el entorno y nunca por un
+            // archivo del repositorio. Si no está, el release sale sin firmar
+            // y Play lo rechaza: es mejor que se caiga ahí, a la vista, que
+            // firmarlo en silencio con la clave de prueba, que es pública.
+            if (hayClaveDeSubida) {
+                signingConfig signingConfigs.release
+            }
+            // Sin R8: Capacitor y sus plugins se buscan por reflexión y
+            // ofuscarlos rompe cosas que sólo se ven en el teléfono. La app
+            // pesa cuatro megas; no hay nada que ahorrar que valga ese riesgo.
             minifyEnabled false
             proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
         }

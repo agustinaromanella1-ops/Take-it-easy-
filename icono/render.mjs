@@ -133,7 +133,6 @@ async function aPng(lado, recortado) {
 
       const anchoDibujo = Math.max(x1 - x0 + 1, y1 - y0 + 1);
       const destino = lado * ocupa;
-      const escala = destino / anchoDibujo;
       const cx = (x0 + x1) / 2;
       const cy = (y0 + y1) / 2;
       g.drawImage(

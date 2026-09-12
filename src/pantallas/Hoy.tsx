@@ -1,5 +1,6 @@
 import { useLiveQuery } from 'dexie-react-hooks';
 
+import Perrito from '../componentes/Perrito';
 import { clasesDelDia, estadoDeClase, laQueSigue } from '../datos/bloques';
 import { db } from '../datos/db';
 import type { Id } from '../datos/tipos';
@@ -46,10 +47,14 @@ export default function Hoy({ tomarAsistencia, irAMaterias }: Props) {
             </>
           ) : (
             <>
-              <p className="invitacion">Hoy no tenés clases cargadas.</p>
+              {/* Un día sin clases no es un día sin cargar: es un sábado, un
+                  feriado, un día que salió libre. La pantalla lo festeja en
+                  vez de pedir que se complete algo. */}
+              <Perrito />
+              <p className="invitacion">Hoy no tenés clases.</p>
               <p className="detalle">
-                Si dictás alguna materia hoy, cargale el horario y va a aparecer
-                acá sola.
+                Si dictás alguna materia hoy y no aparece, puede que le falte el
+                horario.
               </p>
             </>
           )}

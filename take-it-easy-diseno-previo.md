@@ -687,7 +687,43 @@ squircle— y a 48 píxeles, que es donde un ícono se gana o se pierde.
 El perrito salchicha en acuarela que estuvo acá un rato sigue en
 `icono/perro.mjs`: pasa a ser el easter egg.
 
-### 5.7 Lo demás, ya resuelto en su sección
+### 5.7 El perrito
+
+Los dos archivos que dibujó Agustina, usados tal cual: `public/perrito.gif`
+mueve la cola en bucle y `public/perrito.png` es la misma pose quieta. No se
+redibuja ni se reinterpreta en SVG ni en CSS, y no hay ninguna animación de la
+app encima del personaje: el único movimiento es el que ya trae el GIF.
+
+**No hace falta ninguna dependencia ni convertir el formato.** Un `<img>`
+reproduce un GIF animado solo. Viven en `public/`, que Vite copia sin tocar: si
+pasaran por el empaquetador, un GIF de 128 KB terminaría incrustado en el
+JavaScript de toda la app en vez de ser un archivo que se pide aparte.
+
+**El PNG es para quien pidió menos movimiento.** `prefers-reduced-motion` se
+respeta cambiando de archivo, porque un GIF animado no se puede frenar desde
+CSS.
+
+**El `<img>` lleva `width` y `height` como atributos**, además del ancho en
+CSS. De ahí sale la proporción, y con ella el navegador reserva el alto antes
+de bajar la imagen: aparecer no corre nada de lugar. En Ajustes el hueco existe
+desde siempre con el alto del dibujo, por lo mismo.
+
+**Es decorativo**: `alt` vacío, `aria-hidden`, sin foco y sin eventos. Un lector
+de pantalla no lo nombra.
+
+Aparece en dos lados, y los eligió Agustina:
+
+- **En Hoy, cuando no hay clases.** Un día sin clases no es un día sin cargar:
+  es un sábado, un feriado, un día que salió libre. La pantalla lo festeja en
+  vez de pedir que se complete algo. No aparece en el otro estado vacío —el de
+  "todavía no cargaste tus materias"—, que sí es algo por hacer.
+- **En Ajustes, tocando la versión cinco veces.** Es el escondite clásico de
+  Android. De paso, el pie con el nombre y la versión sirve para saber qué
+  versión tiene alguien cuando cuenta que algo no le anda; la versión sale de
+  `package.json` y se inyecta al compilar, así la app y el repositorio no
+  pueden decir cosas distintas.
+
+### 5.8 Lo demás, ya resuelto en su sección
 
 - Formato de la exportación: sección 2.10.
 
