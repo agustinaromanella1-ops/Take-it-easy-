@@ -37,7 +37,8 @@ del teléfono con alarma.
 comparación de facturado contra cobrado mes a mes, saldos pendientes y registro de pagos con un
 botón para saldar la deuda completa de un paciente.
 
-**Ajustes.** Moneda, duración por defecto, política de ausencias, y exportar/importar los datos.
+**Ajustes.** Moneda, duración por defecto, política de ausencias, antelación de la alarma, y
+exportar/importar los datos.
 
 ## Estética
 
@@ -49,8 +50,10 @@ La mascota es un perro salchicha dibujado en SVG con tres poses —estirado, cor
 se alternan al tocarlo. Es dibujo propio en estilo de línea continua, no una copia de ninguna
 ilustración existente. En celular
 la navegación pasa a una barra inferior con un botón flotante para la acción principal de cada
-pantalla. Las fuentes se cargan desde Google Fonts y degradan a Georgia y la tipografía del
-sistema si no hay conexión.
+pantalla. Las fuentes están alojadas en el propio proyecto en lugar de pedirlas a Google: así la app se ve
+igual sin conexión (una PWA que depende de un CDN externo pierde su tipografía apenas se corta
+internet), carga más rápido y no le avisa a un tercero cada visita. Son 144 KB, solo los
+subconjuntos latinos y un archivo por familia, porque son fuentes variables.
 
 ## Decisiones de diseño
 
@@ -98,6 +101,36 @@ fantasma en los reportes, imposibles de rastrear.
 **Al cerrar la pestaña solo se guarda si hay cambios propios sin escribir.** Sin esa condición,
 una pestaña que nunca tocó nada igual escribiría su copia al cerrarse y pisaría lo que guardó
 otra pestaña abierta en paralelo (`src/store/StoreContext.tsx`).
+
+## Publicarla y usarla en el celular
+
+La app es una PWA instalable: se puede poner en la pantalla de inicio del
+teléfono y **funciona sin internet**, incluidas las tipografías.
+
+### Publicar en Netlify
+
+1. Entrá a [app.netlify.com](https://app.netlify.com) → **Add new site** → **Import an existing project**.
+2. Elegí GitHub y el repositorio `Take-it-easy-`.
+3. La rama a publicar: `claude/psicofinance-review-mxf861` (o `main`, si ya la fusionaste).
+4. No hace falta tocar nada más: `netlify.toml` ya trae el comando de compilación,
+   la carpeta a publicar, las redirecciones y las cabeceras de caché.
+5. **Deploy site**.
+
+Cada vez que se suba un commit a esa rama, Netlify vuelve a publicar sola.
+
+### Instalarla en el teléfono
+
+- **Android (Chrome):** abrí el sitio → menú ⋮ → *Instalar aplicación*.
+- **iPhone (Safari):** abrí el sitio → compartir → *Agregar a inicio*.
+
+Queda como una app más: ícono propio, sin barra del navegador, y abre aunque no
+haya señal.
+
+### Actualizaciones
+
+El service worker descarga la versión nueva en segundo plano y la aplica
+**cuando salís de la app**, no mientras la estás usando: interrumpir la carga de
+una sesión para actualizar sería peor que esperar al próximo arranque.
 
 ## Publicar como app de Android
 
