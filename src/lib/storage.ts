@@ -1,4 +1,4 @@
-import type { AppData, Frequency, Patient, Payment, Session, Settings } from '../types';
+import type { AppData, Frequency, Patient, PatientKind, Payment, Session, Settings } from '../types';
 import { PATIENT_COLORS } from './palette';
 import { isValidISODate, isValidTime } from './dates';
 
@@ -49,6 +49,7 @@ function isRecord(v: unknown): v is Record<string, unknown> {
 }
 
 const FREQUENCIES = new Set<Frequency>(['semanal', 'quincenal', 'mensual', 'puntual']);
+const KINDS = new Set<PatientKind>(['particular', 'institucion', 'evaluacion']);
 
 /** Acota un número al rango dado, devolviendo el valor por defecto si no es finito. */
 function clamp(v: unknown, min: number, max: number, fallback: number): number {
@@ -70,6 +71,8 @@ function parsePatient(raw: unknown): Patient | null {
     status: raw.status === 'inactivo' ? 'inactivo' : 'activo',
     colorIndex: clamp(raw.colorIndex, 0, PATIENT_COLORS.length - 1, 0),
     frequency: FREQUENCIES.has(str(raw.frequency) as Frequency) ? (raw.frequency as Frequency) : 'semanal',
+    kind: KINDS.has(str(raw.kind) as PatientKind) ? (raw.kind as PatientKind) : 'particular',
+    lastRaise: isValidISODate(str(raw.lastRaise)) ? str(raw.lastRaise) : null,
     notes: str(raw.notes),
     createdAt: str(raw.createdAt, new Date().toISOString()),
   };

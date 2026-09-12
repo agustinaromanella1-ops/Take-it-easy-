@@ -1,9 +1,9 @@
 import { useMemo, useState } from 'react';
-import type { Frequency, Patient } from '../types';
+import type { Frequency, Patient, PatientKind } from '../types';
 import { useStore } from '../store/StoreContext';
 import { patientBalances } from '../store/selectors';
 import { centsToInput, formatMoney, parseMoney } from '../lib/money';
-import { formatDateShort } from '../lib/dates';
+import { formatDateShort, today } from '../lib/dates';
 import { ConfirmButton, Empty, Field, Modal } from '../components/ui';
 import { nextFreeColor, PATIENT_COLORS, patientColor } from '../lib/palette';
 import { whatsappLink } from '../lib/contact';
@@ -16,8 +16,15 @@ interface FormState {
   status: Patient['status'];
   colorIndex: number;
   frequency: Frequency;
+  kind: PatientKind;
   notes: string;
 }
+
+export const KIND_LABEL: Record<PatientKind, string> = {
+  particular: 'Particular',
+  institucion: 'Institución',
+  evaluacion: 'Evaluación',
+};
 
 const FREQUENCY_LABEL: Record<Frequency, string> = {
   semanal: 'Semanal',
@@ -35,6 +42,7 @@ function toForm(p: Patient): FormState {
     status: p.status,
     colorIndex: p.colorIndex,
     frequency: p.frequency,
+    kind: p.kind,
     notes: p.notes,
   };
 }
@@ -52,13 +60,31 @@ export function PatientsPage({ onOpenPatient }: { onOpenPatient: (id: string) =>
     status: 'activo',
     colorIndex: 0,
     frequency: 'semanal',
+    kind: 'particular',
     notes: '',
   }));
   const [errors, setErrors] = useState<Partial<Record<keyof FormState, string>>>({});
   const [query, setQuery] = useState('');
-  const [showInactive, setShowInactive] = useState(true);
+  const [showInactive, setShowInactive] = useState(false);
 
   const balances = useMemo(() => patientBalances(data), [data]);
+
+  // Porcentaje de sesiones que se caen por paciente: de las que ya pasaron,
+  // cuántas terminaron canceladas o en ausencia. Sirve para ver de un vistazo
+  // con quién conviene hablar de la política de cancelaciones.
+  const cancelRate = useMemo(() => {
+    const counts = new Map<string, { total: number; caidas: number }>();
+    for (const s of data.sessions) {
+      if (s.status === 'programada') continue;
+      const c = counts.get(s.patientId) ?? { total: 0, caidas: 0 };
+      c.total += 1;
+      if (s.status === 'cancelada' || s.status === 'ausente') c.caidas += 1;
+      counts.set(s.patientId, c);
+    }
+    const rates = new Map<string, number>();
+    for (const [id, c] of counts) rates.set(id, Math.round((c.caidas / c.total) * 100));
+    return rates;
+  }, [data.sessions]);
 
   const rows = useMemo(() => {
     const q = query.trim().toLowerCase();
@@ -78,6 +104,7 @@ export function PatientsPage({ onOpenPatient }: { onOpenPatient: (id: string) =>
       // Se propone un color que todavía no use nadie, para que no se repitan.
       colorIndex: nextFreeColor(data.patients.map((p) => p.colorIndex)),
       frequency: 'semanal',
+      kind: 'particular',
       notes: '',
     });
     setErrors({});
@@ -111,10 +138,13 @@ export function PatientsPage({ onOpenPatient }: { onOpenPatient: (id: string) =>
       status: form.status,
       colorIndex: form.colorIndex,
       frequency: form.frequency,
+      kind: form.kind,
       notes: form.notes.trim(),
     };
 
-    if (editing === 'new') dispatch({ type: 'patient/add', payload: fields });
+    if (editing === 'new') {
+      dispatch({ type: 'patient/add', payload: { ...fields, lastRaise: fields.defaultFee > 0 ? today() : null } });
+    }
     else if (editing) dispatch({ type: 'patient/update', payload: { ...editing, ...fields } });
     setEditing(null);
   }
@@ -123,9 +153,6 @@ export function PatientsPage({ onOpenPatient }: { onOpenPatient: (id: string) =>
     <>
       <div className="page-head">
         <h1>Pacientes</h1>
-        <button className="btn primary hide-mobile" onClick={openNew}>
-          + Nuevo paciente
-        </button>
       </div>
 
       <div className="filters">
@@ -144,6 +171,12 @@ export function PatientsPage({ onOpenPatient }: { onOpenPatient: (id: string) =>
         </label>
       </div>
 
+        <div className="section-head">
+          <h2>{showInactive ? 'Todos los pacientes' : 'Pacientes activos'}</h2>
+          <button className="btn primary small hide-mobile" onClick={openNew}>
+            + Nuevo
+          </button>
+        </div>
         {rows.length === 0 ? (
           <Empty>
             {data.patients.length === 0
@@ -170,21 +203,30 @@ export function PatientsPage({ onOpenPatient }: { onOpenPatient: (id: string) =>
                     <span className="patient-fee">{formatMoney(p.defaultFee, data.settings.currency)}</span>
                   </div>
                   <p className="patient-sub">
-                    {FREQUENCY_LABEL[p.frequency]}
+                    {KIND_LABEL[p.kind]} · {FREQUENCY_LABEL[p.frequency].toLowerCase()}
                     {p.status === 'inactivo' ? ' · inactivo' : ''}
-                    {b?.lastSessionDate ? ` · última ${formatDateShort(b.lastSessionDate)}` : ''}
                   </p>
 
                   <div className="patient-stats">
                     <span>
                       <strong>{b?.sessionsHeld ?? 0}</strong>
-                      sesiones
+                      realizadas
+                    </span>
+                    <span>
+                      <strong>{cancelRate.get(p.id) ?? 0}%</strong>
+                      cancelación
                     </span>
                     <span className={balance > 0 ? 'debt' : balance < 0 ? 'credit' : ''}>
                       <strong>{formatMoney(balance, data.settings.currency)}</strong>
                       {balance > 0 ? 'debe' : balance < 0 ? 'a favor' : 'al día'}
                     </span>
                   </div>
+                  <p className="patient-sub" style={{ marginTop: 0 }}>
+                    {p.lastRaise
+                      ? `Último aumento: ${formatDateShort(p.lastRaise)}`
+                      : 'Sin aumentos registrados'}
+                    {b?.lastSessionDate ? ` · última sesión ${formatDateShort(b.lastSessionDate)}` : ''}
+                  </p>
 
                   <div className="patient-actions">
                     {wapp && (
@@ -244,6 +286,18 @@ export function PatientsPage({ onOpenPatient }: { onOpenPatient: (id: string) =>
                 onChange={(e) => setForm({ ...form, fee: e.target.value })}
                 placeholder="0,00"
               />
+            </Field>
+            <Field label="Tipo">
+              <select
+                value={form.kind}
+                onChange={(e) => setForm({ ...form, kind: e.target.value as PatientKind })}
+              >
+                {(Object.keys(KIND_LABEL) as PatientKind[]).map((k) => (
+                  <option key={k} value={k}>
+                    {KIND_LABEL[k]}
+                  </option>
+                ))}
+              </select>
             </Field>
             <Field label="Frecuencia">
               <select

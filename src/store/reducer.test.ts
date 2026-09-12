@@ -6,7 +6,7 @@ import type { AppData } from '../types';
 function seeded(): AppData {
   let state = reducer(emptyData(), {
     type: 'patient/add',
-    payload: { name: 'Ana', email: '', phone: '', defaultFee: 500000, status: 'activo', colorIndex: 0, frequency: 'semanal', notes: '' },
+    payload: { name: 'Ana', email: '', phone: '', defaultFee: 500000, status: 'activo', colorIndex: 0, frequency: 'semanal', kind: 'particular', lastRaise: null, notes: '' },
   });
   const id = state.patients[0]!.id;
   state = reducer(state, {
@@ -33,7 +33,7 @@ describe('pacientes', () => {
   it('asigna un id y una fecha de alta', () => {
     const state = reducer(emptyData(), {
       type: 'patient/add',
-      payload: { name: 'Ana', email: '', phone: '', defaultFee: 0, status: 'activo', colorIndex: 0, frequency: 'semanal', notes: '' },
+      payload: { name: 'Ana', email: '', phone: '', defaultFee: 0, status: 'activo', colorIndex: 0, frequency: 'semanal', kind: 'particular', lastRaise: null, notes: '' },
     });
     expect(state.patients).toHaveLength(1);
     expect(state.patients[0]!.id).toBeTruthy();
@@ -45,7 +45,7 @@ describe('pacientes', () => {
     for (const name of ['Ana', 'Bruno', 'Carla']) {
       state = reducer(state, {
         type: 'patient/add',
-        payload: { name, email: '', phone: '', defaultFee: 0, status: 'activo', colorIndex: 0, frequency: 'semanal', notes: '' },
+        payload: { name, email: '', phone: '', defaultFee: 0, status: 'activo', colorIndex: 0, frequency: 'semanal', kind: 'particular', lastRaise: null, notes: '' },
       });
     }
     expect(new Set(state.patients.map((p) => p.id)).size).toBe(3);
@@ -64,7 +64,7 @@ describe('pacientes', () => {
     let state = seeded();
     state = reducer(state, {
       type: 'patient/add',
-      payload: { name: 'Bruno', email: '', phone: '', defaultFee: 0, status: 'activo', colorIndex: 0, frequency: 'semanal', notes: '' },
+      payload: { name: 'Bruno', email: '', phone: '', defaultFee: 0, status: 'activo', colorIndex: 0, frequency: 'semanal', kind: 'particular', lastRaise: null, notes: '' },
     });
     const bruno = state.patients[1]!.id;
     state = reducer(state, {
@@ -111,7 +111,7 @@ describe('inmutabilidad', () => {
     const countBefore = state.patients.length;
     reducer(state, {
       type: 'patient/add',
-      payload: { name: 'Nuevo', email: '', phone: '', defaultFee: 0, status: 'activo', colorIndex: 0, frequency: 'semanal', notes: '' },
+      payload: { name: 'Nuevo', email: '', phone: '', defaultFee: 0, status: 'activo', colorIndex: 0, frequency: 'semanal', kind: 'particular', lastRaise: null, notes: '' },
     });
     expect(state.patients).toHaveLength(countBefore);
     expect(state.sessions).toBe(sessionsBefore);

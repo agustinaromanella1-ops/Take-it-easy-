@@ -10,11 +10,15 @@ import {
   fromISODate,
   isValidISODate,
   isValidTime,
+  formatDateShort,
+  monthKey,
   startOfWeek,
   timeToMinutes,
   today,
 } from '../lib/dates';
-import { Card, ConfirmButton, Empty, Field, Modal } from '../components/ui';
+import { Card, ConfirmButton, Empty, Field, Modal, Section } from '../components/ui';
+import { MonthCalendar } from '../components/MonthCalendar';
+import { IconBell } from '../components/icons';
 import { patientColor } from '../lib/palette';
 import { MAX_OCCURRENCES, occurrences, REPEAT_LABEL, type Repeat } from '../lib/recurrence';
 import { icsFileName, sessionToICS } from '../lib/calendar';
@@ -42,7 +46,10 @@ interface FormState {
 
 export function AgendaPage() {
   const { data, dispatch } = useStore();
+  const [view, setView] = useState<'dia' | 'semana' | 'mes'>('dia');
   const [weekStart, setWeekStart] = useState(() => startOfWeek(today()));
+  const [selectedDay, setSelectedDay] = useState(() => today());
+  const [month, setMonth] = useState(() => monthKey(today()));
   const [editing, setEditing] = useState<Session | 'new' | null>(null);
   const [form, setForm] = useState<FormState | null>(null);
   const [errors, setErrors] = useState<Partial<Record<keyof FormState, string>>>({});
@@ -63,6 +70,26 @@ export function AgendaPage() {
   );
   const conflicts = useMemo(() => conflictingSessionIds(weekSessions), [weekSessions]);
   const overdue = useMemo(() => pendingReview(data.sessions), [data.sessions]);
+
+  // Sesiones del día elegido, ordenadas por hora: es la vista que se usa a
+  // diario para saber a quién se atiende y en qué orden.
+  const daySessions = useMemo(
+    () => sessionsInRange(data.sessions, selectedDay, selectedDay),
+    [data.sessions, selectedDay],
+  );
+
+  // Pacientes con sesión en el mes visible: la referencia de colores del
+  // calendario solo nombra a quienes efectivamente aparecen ahí.
+  const monthPatients = useMemo(() => {
+    const ids = new Set<string>();
+    for (const s of data.sessions) {
+      if (s.date.startsWith(month) && s.status !== 'cancelada') ids.add(s.patientId);
+    }
+    return [...ids]
+      .map((id) => patientsById.get(id))
+      .filter((p): p is NonNullable<typeof p> => p !== undefined)
+      .sort((a, b) => a.name.localeCompare(b.name, 'es'));
+  }, [data.sessions, month, patientsById]);
 
   const byDay = useMemo(() => {
     const map = new Map<string, Session[]>();
@@ -203,10 +230,10 @@ export function AgendaPage() {
           </button>
           <button
             className="btn primary hide-mobile"
-            onClick={() => openNew(todayISO)}
+            onClick={() => openNew(selectedDay)}
             disabled={data.patients.length === 0}
           >
-            + Nuevo turno
+            + Sesión
           </button>
         </div>
       </div>
@@ -222,84 +249,135 @@ export function AgendaPage() {
         </div>
       )}
 
-      <Card>
-        <div className="week-nav card-title">
-          <div className="actions">
-            <button className="btn small" onClick={() => setWeekStart(addDays(weekStart, -7))} aria-label="Semana anterior">
-              ←
-            </button>
-            <button className="btn small" onClick={() => setWeekStart(addDays(weekStart, 7))} aria-label="Semana siguiente">
-              →
-            </button>
-          </div>
-          <strong className="small">
-            {formatDateLong(weekStart)} — {formatDateLong(weekEnd)}
-          </strong>
-        </div>
+      <div className="tabs" role="tablist" aria-label="Vista de la agenda">
+        {(['dia', 'semana', 'mes'] as const).map((v) => (
+          <button key={v} role="tab" aria-selected={view === v} onClick={() => setView(v)}>
+            {v === 'dia' ? 'Día' : v === 'semana' ? 'Semana' : 'Mes'}
+          </button>
+        ))}
+      </div>
 
-        <div className="week-grid">
-          {[...byDay.entries()].map(([date, sessions]) => (
-            <div key={date} className={`day-col${date === todayISO ? ' is-today' : ''}`}>
-              <div className="day-head">
-                <span>
-                  {DAY_NAMES[fromISODate(date).getDay()]?.slice(0, 3)}{' '}
-                  <span className="dnum">{fromISODate(date).getDate()}</span>
-                </span>
-                <button
-                  className="slot-add"
-                  onClick={() => openNew(date)}
-                  disabled={data.patients.length === 0}
-                  aria-label={`Agregar turno el ${formatDateLong(date)}`}
-                  title="Agregar turno"
-                >
-                  +
-                </button>
+      {view === 'mes' && (
+        <Section title="Calendario">
+          <Card>
+            <MonthCalendar
+              month={month}
+              selected={selectedDay}
+              sessions={data.sessions}
+              patientsById={patientsById}
+              onSelect={(d) => {
+                setSelectedDay(d);
+                setMonth(monthKey(d));
+              }}
+              onMonthChange={setMonth}
+            />
+            {monthPatients.length > 0 && (
+              <div className="legend">
+                {monthPatients.map((p) => (
+                  <span key={p.id}>
+                    <i className="mini-dot" style={{ background: patientColor(p.colorIndex).solid }} />
+                    {p.name}
+                  </span>
+                ))}
               </div>
-              {sessions.map((s) => (
-                <button
-                  key={s.id}
-                  className={`slot ${s.status}${conflicts.has(s.id) ? ' conflict' : ''}`}
-                  onClick={() => openEdit(s)}
-                  title={conflicts.has(s.id) ? 'Se superpone con otro turno' : STATUS_LABEL[s.status]}
-                  style={{
-                    borderLeftColor: patientColor(patientsById.get(s.patientId)?.colorIndex ?? 0).solid,
-                  }}
-                >
-                  <span className="slot-time">{s.time}</span>
-                  <span className="slot-name">{patientsById.get(s.patientId)?.name ?? '—'}</span>
-                </button>
+            )}
+          </Card>
+        </Section>
+      )}
+
+      {view === 'semana' && (
+        <Section
+          title="Semana"
+          action={
+            <div className="actions">
+              <button className="btn small ghost" onClick={() => setWeekStart(addDays(weekStart, -7))} aria-label="Semana anterior">
+                ‹
+              </button>
+              <span className="small muted">
+                {formatDateShort(weekStart)} — {formatDateShort(weekEnd)}
+              </span>
+              <button className="btn small ghost" onClick={() => setWeekStart(addDays(weekStart, 7))} aria-label="Semana siguiente">
+                ›
+              </button>
+            </div>
+          }
+        >
+          <Card>
+            <div className="week-grid">
+              {[...byDay.entries()].map(([date, sessions]) => (
+                <div key={date} className={`day-col${date === todayISO ? ' is-today' : ''}`}>
+                  <div className="day-head">
+                    <span>
+                      {DAY_NAMES[fromISODate(date).getDay()]?.slice(0, 3)}{' '}
+                      <span className="dnum">{fromISODate(date).getDate()}</span>
+                    </span>
+                    <button
+                      className="slot-add"
+                      onClick={() => openNew(date)}
+                      disabled={data.patients.length === 0}
+                      aria-label={`Agregar turno el ${formatDateLong(date)}`}
+                      title="Agregar turno"
+                    >
+                      +
+                    </button>
+                  </div>
+                  {sessions.map((s) => (
+                    <button
+                      key={s.id}
+                      className={`slot ${s.status}${conflicts.has(s.id) ? ' conflict' : ''}`}
+                      onClick={() => openEdit(s)}
+                      title={conflicts.has(s.id) ? 'Se superpone con otro turno' : STATUS_LABEL[s.status]}
+                      style={{ borderLeftColor: patientColor(patientsById.get(s.patientId)?.colorIndex ?? 0).solid }}
+                    >
+                      <span className="slot-time">{s.time}</span>
+                      <span className="slot-name">{patientsById.get(s.patientId)?.name ?? '—'}</span>
+                    </button>
+                  ))}
+                </div>
               ))}
             </div>
-          ))}
-        </div>
-      </Card>
+          </Card>
+        </Section>
+      )}
 
-      <Card title="Sesiones de la semana">
-        {weekSessions.length === 0 ? (
-          <Empty>No hay turnos en esta semana.</Empty>
-        ) : (
-          <div className="table-wrap">
-            <table>
-              <thead>
-                <tr>
-                  <th>Día</th>
-                  <th>Hora</th>
-                  <th>Paciente</th>
-                  <th>Estado</th>
-                  <th className="num">Honorario</th>
-                  <th />
-                </tr>
-              </thead>
-              <tbody>
-                {weekSessions.map((s) => (
-                  <tr key={s.id}>
-                    <td className="small">{formatDateLong(s.date)}</td>
-                    <td className="num small">
-                      {s.time}
-                      {conflicts.has(s.id) && <span className="tag conflict" style={{ marginLeft: 6 }}>se pisa</span>}
-                    </td>
-                    <td>{patientsById.get(s.patientId)?.name ?? '—'}</td>
-                    <td>
+      <Section
+        title={view === 'dia' ? 'Sesiones del día' : `Sesiones del ${formatDateShort(selectedDay)}`}
+        action={
+          view === 'dia' && (
+            <div className="actions">
+              <button className="btn small ghost" onClick={() => setSelectedDay(addDays(selectedDay, -1))} aria-label="Día anterior">
+                ‹
+              </button>
+              <span className="small muted cap-first">{formatDateLong(selectedDay)}</span>
+              <button className="btn small ghost" onClick={() => setSelectedDay(addDays(selectedDay, 1))} aria-label="Día siguiente">
+                ›
+              </button>
+            </div>
+          )
+        }
+      >
+        <Card>
+          {daySessions.length === 0 ? (
+            <Empty>No hay sesiones este día. Tocá “+ Sesión” para agregar una.</Empty>
+          ) : (
+            <div className="day-list">
+              {daySessions.map((s) => {
+                const patient = patientsById.get(s.patientId);
+                return (
+                  <div
+                    key={s.id}
+                    className={`day-item ${s.status}`}
+                    style={{ ['--pc' as string]: patientColor(patient?.colorIndex ?? 0).solid }}
+                  >
+                    <span className="day-time">{s.time}</span>
+                    <span className="day-who">
+                      <strong>{patient?.name ?? '—'}</strong>
+                      <span>
+                        {formatMoney(s.fee, data.settings.currency)} · {s.durationMin} min
+                        {conflicts.has(s.id) ? ' · se pisa con otro turno' : ''}
+                      </span>
+                    </span>
+                    <div className="day-controls">
                       <select
                         value={s.status}
                         onChange={(e) =>
@@ -308,7 +386,7 @@ export function AgendaPage() {
                             payload: { id: s.id, status: e.target.value as Session['status'] },
                           })
                         }
-                        aria-label={`Estado de la sesión de ${patientsById.get(s.patientId)?.name ?? ''}`}
+                        aria-label={`Estado de la sesión de ${patient?.name ?? ''}`}
                       >
                         {(Object.keys(STATUS_LABEL) as Session['status'][]).map((st) => (
                           <option key={st} value={st}>
@@ -316,42 +394,38 @@ export function AgendaPage() {
                           </option>
                         ))}
                       </select>
-                    </td>
-                    <td className="num">{formatMoney(s.fee, data.settings.currency)}</td>
-                    <td>
-                      <div className="actions">
-                        {s.status === 'programada' && (
-                          <button
-                            className="btn small"
-                            onClick={() => sendToCalendar(s)}
-                            title="Descargar el turno para agregarlo al calendario del teléfono, con alarma"
-                          >
-                            📅 Recordatorio
-                          </button>
-                        )}
-                        <button className="btn small" onClick={() => openEdit(s)}>
-                          Editar
+                      {s.status === 'programada' && (
+                        <button
+                          className="btn small"
+                          onClick={() => sendToCalendar(s)}
+                          title="Mandar al calendario del teléfono con alarma"
+                          aria-label="Mandar al calendario con alarma"
+                        >
+                          <IconBell />
                         </button>
-                        <ConfirmButton
-                          label="Borrar"
-                          confirmLabel="¿Borrar esta sesión?"
-                          onConfirm={() => dispatch({ type: 'session/remove', payload: { id: s.id } })}
-                        />
-                      </div>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        )}
-      </Card>
+                      )}
+                      <button className="btn small" onClick={() => openEdit(s)}>
+                        Editar
+                      </button>
+                      <ConfirmButton
+                        label="Borrar"
+                        confirmLabel="¿Borrar esta sesión?"
+                        onConfirm={() => dispatch({ type: 'session/remove', payload: { id: s.id } })}
+                      />
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          )}
+        </Card>
+      </Section>
 
       <button
         className="fab"
-        onClick={() => openNew(todayISO)}
+        onClick={() => openNew(selectedDay)}
         disabled={data.patients.length === 0}
-        aria-label="Nuevo turno"
+        aria-label="Nueva sesión"
       >
         +
       </button>

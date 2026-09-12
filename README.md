@@ -23,13 +23,15 @@ La carpeta `dist/` es HTML estático: no necesita servidor ni base de datos.
 **Inicio.** Facturado y cobrado del mes, deuda pendiente y turnos de la semana. Avisa de las
 sesiones que ya pasaron pero siguen sin cerrar y permite cerrarlas ahí mismo.
 
-**Pacientes.** Alta, edición y baja, con honorario habitual, frecuencia, color identificatorio,
-datos de contacto y notas. Botón para escribir por WhatsApp, y ficha con historial de sesiones,
-pagos y saldo.
+**Pacientes.** Tarjetas con honorario, tipo (particular, institución o evaluación), frecuencia,
+sesiones realizadas, porcentaje de cancelación, saldo y fecha del último aumento. Color
+identificatorio, botón de WhatsApp, y ficha con historial de sesiones, pagos y saldo.
 
-**Agenda.** Vista semanal con navegación entre semanas, cada turno con el color de su paciente.
-Detecta y marca turnos superpuestos. Una serie recurrente (semanal, quincenal o mensual) se carga
-de una sola vez, y cada turno se puede mandar al calendario del teléfono con alarma.
+**Agenda.** Tres vistas en pestañas: **Día** (los pacientes de la jornada, con estado y acciones a
+mano), **Semana** (grilla de siete días) y **Mes** (calendario con un punto del color de cada
+paciente en los días con sesión). Detecta y marca turnos superpuestos. Una serie recurrente
+(semanal, quincenal o mensual) se carga de una sola vez, y cada turno se puede mandar al calendario
+del teléfono con alarma.
 
 **Finanzas.** Meta mensual con barra de avance, calculadora de cuánto cobrar por sesión,
 comparación de facturado contra cobrado mes a mes, saldos pendientes y registro de pagos con un
@@ -40,7 +42,12 @@ botón para saldar la deuda completa de un paciente.
 ## Estética
 
 Serif de display (Playfair Display) para títulos y cifras principales, sans redondeada (Nunito)
-para el cuerpo, fondo en degradado pastel, tarjetas muy redondeadas y acento turquesa. En celular
+para el cuerpo, fondo en degradado pastel, tarjetas muy redondeadas y acento turquesa. Los títulos
+de sección van fuera de la tarjeta, con su acción a la derecha.
+
+La mascota es un perro salchicha dibujado en SVG con tres poses —estirado, corriendo y echado— que
+se alternan al tocarlo. Es dibujo propio en estilo de línea continua, no una copia de ninguna
+ilustración existente. En celular
 la navegación pasa a una barra inferior con un botón flotante para la acción principal de cada
 pantalla. Las fuentes se cargan desde Google Fonts y degradan a Georgia y la tipografía del
 sistema si no hay conexión.
@@ -111,7 +118,7 @@ borra el historial**, así que conviene exportar una copia desde Ajustes cada ta
 ## Desarrollo
 
 ```bash
-npm test          # 126 tests unitarios
+npm test          # 131 tests unitarios
 npm run typecheck # TypeScript en modo strict
 npm run build
 ```

@@ -110,3 +110,30 @@ export function minutesToTime(min: number): TimeHM {
 export function overlaps(startA: number, durA: number, startB: number, durB: number): boolean {
   return startA < startB + durB && startB < startA + durA;
 }
+
+/** Cantidad de días del mes que contiene `iso`. */
+export function daysInMonth(iso: DateISO): number {
+  const d = fromISODate(iso);
+  // Día 0 del mes siguiente = último día de este mes.
+  return new Date(d.getFullYear(), d.getMonth() + 1, 0).getDate();
+}
+
+/** Primer día del mes de `iso`, como "YYYY-MM-DD". */
+export function startOfMonth(iso: DateISO): DateISO {
+  return `${iso.slice(0, 7)}-01`;
+}
+
+/**
+ * Celdas de una grilla mensual con la semana empezando en domingo, como el
+ * calendario de papel. Las posiciones antes del día 1 vienen como `null`.
+ */
+export function monthGrid(iso: DateISO): (DateISO | null)[] {
+  const first = startOfMonth(iso);
+  const offset = fromISODate(first).getDay(); // 0 = domingo
+  const total = daysInMonth(iso);
+  const cells: (DateISO | null)[] = Array(offset).fill(null);
+  for (let day = 1; day <= total; day++) {
+    cells.push(`${iso.slice(0, 7)}-${day.toString().padStart(2, '0')}`);
+  }
+  return cells;
+}

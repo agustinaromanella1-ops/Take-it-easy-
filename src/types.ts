@@ -27,6 +27,9 @@ export type PatientStatus = 'activo' | 'inactivo';
 /** Cada cuánto se ve al paciente. Define la repetición sugerida al agendar. */
 export type Frequency = 'semanal' | 'quincenal' | 'mensual' | 'puntual';
 
+/** De dónde viene el paciente. Cambia cómo se lee la agenda de un vistazo. */
+export type PatientKind = 'particular' | 'institucion' | 'evaluacion';
+
 export interface Patient {
   id: string;
   name: string;
@@ -38,6 +41,10 @@ export interface Patient {
   /** Índice dentro de `PATIENT_COLORS`. Identifica al paciente de un vistazo en la agenda. */
   colorIndex: number;
   frequency: Frequency;
+  kind: PatientKind;
+  /** Fecha del último cambio de honorario. Se actualiza sola al editar la
+   *  tarifa, para saber cuándo toca revisarla sin llevar la cuenta a mano. */
+  lastRaise: DateISO | null;
   notes: string;
   createdAt: string;
 }

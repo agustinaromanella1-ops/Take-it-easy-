@@ -1,5 +1,6 @@
 import type { AppData, Patient, Payment, Session, Settings } from '../types';
 import { newId } from '../lib/id';
+import { today as todayISO } from '../lib/dates';
 
 export type Action =
   | { type: 'patient/add'; payload: Omit<Patient, 'id' | 'createdAt'> }
@@ -26,7 +27,13 @@ export function reducer(state: AppData, action: Action): AppData {
     case 'patient/update':
       return {
         ...state,
-        patients: state.patients.map((p) => (p.id === action.payload.id ? action.payload : p)),
+        patients: state.patients.map((p) => {
+          if (p.id !== action.payload.id) return p;
+          // Si cambió el honorario, se registra la fecha del aumento sola: nadie
+          // se acuerda de cuándo actualizó la tarifa de cada paciente.
+          const changedFee = p.defaultFee !== action.payload.defaultFee;
+          return changedFee ? { ...action.payload, lastRaise: todayISO() } : action.payload;
+        }),
       };
 
     case 'patient/remove': {

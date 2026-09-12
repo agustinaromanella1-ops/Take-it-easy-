@@ -12,6 +12,9 @@ import {
   startOfWeek,
   timeToMinutes,
   toISODate,
+  daysInMonth,
+  startOfMonth,
+  monthGrid,
 } from './dates';
 
 describe('conversión de fechas', () => {
@@ -97,5 +100,41 @@ describe('superposición de turnos', () => {
 
   it('es simétrica', () => {
     expect(overlaps(560, 50, 540, 50)).toBe(overlaps(540, 50, 560, 50));
+  });
+});
+
+describe('grilla mensual', () => {
+  it('cuenta los días de cada mes', () => {
+    expect(daysInMonth('2026-02-10')).toBe(28);
+    expect(daysInMonth('2028-02-10')).toBe(29); // bisiesto
+    expect(daysInMonth('2026-04-10')).toBe(30);
+    expect(daysInMonth('2026-12-10')).toBe(31);
+  });
+
+  it('encuentra el primer día del mes', () => {
+    expect(startOfMonth('2026-09-17')).toBe('2026-09-01');
+  });
+
+  it('rellena con huecos hasta el día 1 y arranca la semana en domingo', () => {
+    // El 1 de septiembre de 2026 cae martes: dos huecos antes (domingo y lunes).
+    const cells = monthGrid('2026-09-15');
+    expect(cells.slice(0, 2)).toEqual([null, null]);
+    expect(cells[2]).toBe('2026-09-01');
+    expect(cells).toHaveLength(2 + 30);
+  });
+
+  it('no deja huecos cuando el mes arranca en domingo', () => {
+    // El 1 de noviembre de 2026 cae domingo.
+    const cells = monthGrid('2026-11-05');
+    expect(cells[0]).toBe('2026-11-01');
+    expect(cells).toHaveLength(30);
+  });
+
+  it('incluye todos los días del mes, sin repetir ni saltear', () => {
+    const cells = monthGrid('2026-02-10').filter((c): c is string => c !== null);
+    expect(cells).toHaveLength(28);
+    expect(cells[0]).toBe('2026-02-01');
+    expect(cells[27]).toBe('2026-02-28');
+    expect(new Set(cells).size).toBe(28);
   });
 });

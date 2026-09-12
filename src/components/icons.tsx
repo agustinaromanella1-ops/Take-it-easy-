@@ -52,3 +52,13 @@ export function IconGear() {
     </svg>
   );
 }
+
+/** Campanita: mandar el turno al calendario del teléfono con alarma. */
+export function IconBell() {
+  return (
+    <svg {...base} width="15" height="15" aria-hidden="true" viewBox="0 0 24 24">
+      <path d="M18 15V10a6 6 0 0 0-12 0v5l-2 3h16Z" />
+      <path d="M10 21a2.2 2.2 0 0 0 4 0" />
+    </svg>
+  );
+}

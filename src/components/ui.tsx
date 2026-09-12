@@ -1,5 +1,22 @@
 import { useEffect, useRef, type ReactNode } from 'react';
 
+/**
+ * Encabezado de sección: el título va afuera de la tarjeta, con su acción a la
+ * derecha. Da la jerarquía de la app original, donde cada bloque se anuncia
+ * antes de mostrarse.
+ */
+export function Section({ title, action, children }: { title: string; action?: ReactNode; children: ReactNode }) {
+  return (
+    <section className="section">
+      <div className="section-head">
+        <h2>{title}</h2>
+        {action}
+      </div>
+      {children}
+    </section>
+  );
+}
+
 export function Card({ title, action, children }: { title?: string; action?: ReactNode; children: ReactNode }) {
   return (
     <section className="card">
