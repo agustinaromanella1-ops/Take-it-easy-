@@ -73,6 +73,23 @@ un toque desde el arranque.
   curso sin alumnos ofrece pegar la lista; un día sin clases ofrece cargar
   el horario.
 
+### 1.3.1 La barra de secciones está siempre
+
+La barra de abajo —Hoy, Materias, Agenda, Ajustes— está pegada al borde de
+la ventana, no al final del documento.
+
+Estuvo un tiempo en el flujo normal, y en una pantalla con una lista larga
+—tomar asistencia de un curso de 28, la materia con todos sus alumnos—
+quedaba a mil cuatrocientos píxeles de scroll. Había que recorrer el curso
+entero para poder pasar a Ajustes, y al llegar abajo ya no se veía la flecha
+de volver: las dos salidas nunca estaban juntas. Una pantalla de la que no se
+ve cómo salir se lee como un camino sin salida, aunque técnicamente no lo
+sea.
+
+El pie de cada pantalla se pega justo encima de la barra, no al borde de la
+ventana, o la taparía. La barra tiene alto fijo (`--alto-nav`) para que ese
+número sea cierto por construcción y no uno adivinado.
+
 ### 1.4 Identidad visual aplicada
 
 - Cada materia toma uno de los seis pastel de la paleta, elegido al

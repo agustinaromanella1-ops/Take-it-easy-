@@ -23,6 +23,10 @@
   --salvia: #8fc4a8;
   --salvia-osc: #3d7a5e;
 
+  /* Lo que mide la barra de secciones. Lo necesita el pie de cada pantalla,
+     que se pega justo encima de ella. */
+  --alto-nav: 44px;
+
   color-scheme: light;
 }
 
