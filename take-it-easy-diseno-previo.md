@@ -484,7 +484,40 @@ y el flujo automático compila sólo la de prueba. La configuración para
 firmarla se agrega junto con la clave, no antes: configuración que no se
 puede probar es configuración que se escribe mal.
 
-### 5.4 Lo demás, ya resuelto en su sección
+### 5.4 Recordatorios
+
+Notificaciones locales del sistema, con `@capacitor/local-notifications`. El
+teléfono las programa y el teléfono las muestra: no hay servidor, no hay
+push, no sale nada.
+
+**Inexactas, y el permiso de alarma exacta se saca del manifiesto.** El
+plugin declara `SCHEDULE_EXACT_ALARM`, así que la app lo quita con
+`tools:node="remove"`. Pedirlo obligaría a mandar a la docente a una
+pantalla de ajustes del sistema a habilitar un permiso especial, y para
+"acordate de llevar los mapas" no vale la pena. A cambio, el aviso puede
+llegar unos minutos más tarde, y por eso ningún texto promete una hora
+(1.5).
+
+**El aviso acompaña al día de su entrada.** Cambiar la fecha de la entrada
+mueve el aviso a ese día, con la misma hora. Sin eso, una entrada para la
+semana que viene quedaba con el aviso fechado hoy, y un aviso de hoy a las
+7:30 leído a las diez de la mañana ya pasó: no suena nunca.
+
+**Un aviso en el pasado se rechaza en la capa de datos.** No sonaría nunca o
+sonaría en el acto, y las dos cosas son un aviso roto. La entrada se guarda
+igual: lo que falló es el aviso, no lo que la docente escribió.
+
+**Al arrancar, los pendientes se vuelven a programar.** Un reinicio del
+teléfono, una reinstalación o un borrado de datos desde los ajustes se
+llevan las notificaciones programadas; la base es la que sabe cuáles eran.
+Reprogramar de más no molesta: el sistema reemplaza la notificación que
+tiene el mismo id.
+
+**El id de notificación es un entero sorteado y guardado.** Android
+identifica una notificación con un entero de 32 bits, así que el uuid de la
+entrada no sirve; y hace falta recordarlo para poder cancelarla.
+
+### 5.5 Lo demás, ya resuelto en su sección
 
 - Formato de la exportación: sección 2.10.
 

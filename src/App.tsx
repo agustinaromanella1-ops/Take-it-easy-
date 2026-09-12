@@ -1,9 +1,11 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 
+import { reprogramarPendientes } from './agenda/recordatorios';
 import { escucharBotonAtras } from './nativo/botonAtras';
 import Intro from './instructivo/Intro';
 import { useIntro } from './instructivo/useInstructivo';
 import type { Id } from './datos/tipos';
+import Agenda from './pantallas/Agenda';
 import Ajustes from './pantallas/Ajustes';
 import Asistencia from './pantallas/Asistencia';
 import Evaluaciones from './pantallas/Evaluaciones';
@@ -21,6 +23,7 @@ type Pantalla =
   | { nombre: 'hoy' }
   | { nombre: 'materias' }
   | { nombre: 'ajustes' }
+  | { nombre: 'agenda' }
   | { nombre: 'materia-nueva' }
   | { nombre: 'materia'; materiaId: Id }
   | { nombre: 'alumnos'; materiaId: Id }
@@ -55,7 +58,14 @@ export default function App() {
   // Vuelve por la pila; sólo cierra la app cuando ya no queda a dónde volver.
   useEffect(() => escucharBotonAtras(volver), [volver]);
 
-  type Seccion = 'hoy' | 'materias' | 'ajustes';
+  // Un reinicio del teléfono, una reinstalación o un borrado de datos desde
+  // los ajustes se llevan las notificaciones programadas. La base es la que
+  // sabe cuáles eran, así que al arrancar se vuelven a poner.
+  useEffect(() => {
+    void reprogramarPendientes();
+  }, []);
+
+  type Seccion = 'hoy' | 'materias' | 'agenda' | 'ajustes';
 
   function seccion(nombre: Seccion) {
     setPila([{ nombre }]);
@@ -64,7 +74,9 @@ export default function App() {
   // Todo lo que cuelga de materias —una materia, sus alumnos, su horario, la
   // asistencia— sigue siendo la sección materias mientras se navega adentro.
   const seccionActual: Seccion =
-    actual.nombre === 'hoy' || actual.nombre === 'ajustes' ? actual.nombre : 'materias';
+    actual.nombre === 'hoy' || actual.nombre === 'agenda' || actual.nombre === 'ajustes'
+      ? actual.nombre
+      : 'materias';
 
   if (mostrarIntro) return <Intro terminar={terminarIntro} />;
 
@@ -94,6 +106,8 @@ export default function App() {
           alCrear={(id, nombre) => setReciencreada({ id, nombre })}
         />
       )}
+
+      {actual.nombre === 'agenda' && <Agenda irAMaterias={() => seccion('materias')} />}
 
       {actual.nombre === 'ajustes' && (
         <Ajustes verInstructivo={volverAMostrar} />
@@ -148,6 +162,7 @@ export default function App() {
           [
             ['hoy', 'Hoy'],
             ['materias', 'Materias'],
+            ['agenda', 'Agenda'],
             ['ajustes', 'Ajustes'],
           ] as const
         ).map(([nombre, etiqueta]) => (

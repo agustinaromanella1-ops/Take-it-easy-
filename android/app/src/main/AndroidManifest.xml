@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
-<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools">
 
     <!-- Sin copia de seguridad automática: los datos de la app incluyen nombres
          de alumnos y no salen del dispositivo. La red de seguridad es la
@@ -41,4 +42,13 @@
     <!-- Permissions -->
 
     <uses-permission android:name="android.permission.INTERNET" />
+
+    <!-- El plugin de notificaciones declara la alarma exacta, y el proyecto
+         decidió no pedirla: los recordatorios son inexactos a propósito. La
+         alarma exacta obliga a mandar a la docente a una pantalla de ajustes
+         del sistema a dar un permiso especial, y para "acordate de llevar los
+         mapas" no vale la pena. Puede llegar unos minutos más tarde. -->
+    <uses-permission
+        android:name="android.permission.SCHEDULE_EXACT_ALARM"
+        tools:node="remove" />
 </manifest>

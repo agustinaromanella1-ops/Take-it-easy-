@@ -38,7 +38,7 @@ no lo que está en `src/`.
 
 Andando: materias y escuelas, carga de alumnos pegando la lista, asistencia,
 Hoy con el horario semanal, evaluaciones y carga de notas, ficha de alumno con
-observaciones, archivar y recuperar una materia, copia de
+observaciones, agenda con recordatorios, archivar y recuperar una materia, copia de
 seguridad a archivo y restaurarla, e instructivo con pistas. Cada push compila
 un APK que se puede instalar desde el teléfono.
 
@@ -46,4 +46,5 @@ Falta: observaciones y ficha de alumno, agenda con
 recordatorios, mensajes y dictado por voz.
 
 La app **no necesita internet**. Todo vive en el teléfono, en IndexedDB, y no
-hay ninguna función que dependa de la red.
+hay ninguna función que dependa de la red: los recordatorios son
+notificaciones que programa y muestra el propio teléfono.
