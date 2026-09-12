@@ -1,117 +1,79 @@
 /**
  * El perro salchicha de la app.
  *
- * Ilustración de color plano al estilo del dibujo de referencia: cuerpo color
- * caramelo, oreja más oscura, cachete rosado y sweater blanco a rayas rosas.
- * Va dibujado en SVG y no como imagen para que escale sin pesar y para poder
- * moverle la cola.
+ * Ilustración plana en SVG, al estilo del dibujo de referencia: silueta de
+ * color terracota, patas más oscuras, oreja con contorno fino y cola levantada.
+ * Va dibujado a mano y no como emoji para que se vea igual en todos los
+ * dispositivos (el emoji de perro cambia mucho entre Android, iOS y Windows).
+ *
+ * `wag` le mueve la cola; se activa al tocarlo.
  */
-interface Props {
-  size?: number;
-  /** Mueve la cola. Se activa al tocarlo. */
-  wag?: boolean;
-}
+export function Dachshund({ size = 56, wag = false }: { size?: number; wag?: boolean }) {
+  const coat = '#b9542c';
+  const paw = '#6e3a22';
+  const line = '#5a2e1b';
 
-const COAT = '#c79a6d';
-const COAT_SHADE = '#b0855a';
-const EAR = '#9d6b45';
-const INK = '#2e2019';
-const BLUSH = '#f2b4c3';
-const KNIT = '#fdfbf8';
-const STRIPE = '#f6d2d6';
-const SEAM = '#d8d4dd';
-
-export function Dachshund({ size = 132, wag = false }: Props) {
   return (
     <svg
       width={size}
-      height={size * 0.5}
-      viewBox="0 0 300 150"
+      height={size * 0.68}
+      viewBox="0 0 130 88"
       fill="none"
       role="img"
-      aria-label="Perro salchicha con sweater a rayas"
+      aria-label="Perro salchicha"
     >
-      <defs>
-        {/* Las rayas se recortan con la silueta del sweater, así siguen su
-            contorno en vez de desbordarlo. */}
-        <clipPath id="pf-knit">
-          <path d="M104 56h76c14 0 22 9 22 22v24c0 13-8 22-22 22h-76c-14 0-22-9-22-22V78c0-13 8-22 22-22Z" />
-        </clipPath>
-      </defs>
-
-      {/* Cola, por detrás del cuerpo. */}
-      <g style={{ transformOrigin: '238px 80px' }}>
+      {/* Cola levantada, del lado opuesto a la cabeza. */}
+      <g style={{ transformOrigin: '30px 44px' }}>
         {wag && (
           <animateTransform
             attributeName="transform"
             type="rotate"
-            values="0 238 80; -13 238 80; 0 238 80; 9 238 80; 0 238 80"
-            dur="0.75s"
+            values="0 30 44; -16 30 44; 0 30 44; 12 30 44; 0 30 44"
+            dur="0.7s"
             repeatCount="3"
           />
         )}
         <path
-          d="M232 76c11-2 24-13 30-28 1-3 4-4 6-2s3 5 2 8c-7 19-22 32-36 36Z"
-          fill={COAT}
+          d="M38 54C29 47 18 32 19 20c.2-2.6 1.6-4 3.4-3.6 1.9.4 2.4 2.2 2.2 4.6-.8 9.4 6 20 14.6 26.4Z"
+          fill={coat}
         />
       </g>
 
-      {/* Patas del lado de atrás, más oscuras para dar profundidad. */}
-      <rect x="100" y="100" width="14" height="40" rx="7" fill={COAT_SHADE} />
-      <rect x="206" y="100" width="14" height="40" rx="7" fill={COAT_SHADE} />
+      {/* Patas traseras: van primero para quedar por detrás del cuerpo. */}
+      <rect x="33" y="56" width="11" height="24" rx="5.5" fill={coat} />
+      <path d="M33 70h11v5.5a5.5 5.5 0 0 1-11 0Z" fill={paw} />
+      <rect x="48" y="57" width="11" height="23" rx="5.5" fill={paw} />
 
-      {/* Cuerpo largo y bajo: la proporción es lo que lo hace salchicha. */}
-      <rect x="66" y="58" width="178" height="54" rx="27" fill={COAT} />
+      {/* Cuerpo largo: lo que lo hace salchicha. */}
+      <rect x="28" y="38" width="66" height="28" rx="14" fill={coat} />
 
-      {/* Patas del lado de adelante. */}
-      <rect x="116" y="102" width="15" height="40" rx="7.5" fill={COAT} />
-      <rect x="222" y="102" width="15" height="40" rx="7.5" fill={COAT} />
-
-      {/* Cabeza, con el hocico afinándose hacia la izquierda. */}
+      {/* Cabeza y hocico en una sola silueta, como en el dibujo. */}
       <path
-        d="M32 62c0-15 12-25 27-25s25 11 25 25c0 14-9 24-22 26h-3c-15 0-24-7-27-17l-8-3c-4-2-3-6 2-7Z"
-        fill={COAT}
+        d="M78 44c0-13 8.5-23 21-23 7 0 12.5 3.4 16 8.4l12 7.2c1.6 1 1.6 3.4 0 4.3l-6 3.4c-1 .6-2.2.6-3.2 0l-4-2.3c-3 6-9 9.8-15.8 9.8C86 51.8 78 52 78 44Z"
+        fill={coat}
       />
 
-      {/* Sweater: el tejido, después las rayas recortadas. Cubre el lomo pero
-          deja el cuarto trasero a la vista, como en el dibujo. */}
+      {/* Nariz en la punta del hocico. */}
+      <ellipse cx="125" cy="38.5" rx="4.2" ry="3.4" fill="#2b1b12" />
+
+      {/* Oreja larga y caída, la marca de la raza: relleno y contorno fino. */}
       <path
-        d="M104 56h76c14 0 22 9 22 22v24c0 13-8 22-22 22h-76c-14 0-22-9-22-22V78c0-13 8-22 22-22Z"
-        fill={KNIT}
-      />
-      <g clipPath="url(#pf-knit)">
-        {/* Bandas inclinadas siguiendo la caída del tejido sobre el lomo. */}
-        <g transform="rotate(14 142 90)">
-          {[58, 80, 102, 124, 146, 168, 190].map((x) => (
-            <rect key={x} x={x} y="20" width="11" height="140" fill={STRIPE} />
-          ))}
-        </g>
-      </g>
-      <path
-        d="M104 56h76c14 0 22 9 22 22v24c0 13-8 22-22 22h-76c-14 0-22-9-22-22V78c0-13 8-22 22-22Z"
-        stroke={SEAM}
-        strokeWidth="1.5"
+        d="M94 24c-6.4 0-10.5 5.4-10.5 15S87 55.5 93.5 55.5 103 49 103 39.5 100.4 24 94 24Z"
+        fill={coat}
+        stroke={line}
+        strokeWidth="1.8"
       />
 
-      {/* Cuello del sweater: una banda al borde del tejido, no un parche
-          flotando en el medio. */}
-      <path
-        d="M91 53c11 0 15 8 15 20v34c0 12-5 20-16 20s-16-8-16-20V73c0-12 6-20 17-20Z"
-        fill={KNIT}
-        stroke={SEAM}
-        strokeWidth="1.5"
-      />
+      {/* Ojo: un punto, nada más. */}
+      <circle cx="111" cy="31" r="2.6" fill="#2b1b12" />
 
-      {/* Oreja larga y angosta, por delante del cuello. */}
-      <path
-        d="M66 40c12-2 20 9 19 24-1 16-8 27-18 26-8-1-11-12-10-24 1-13 3-24 9-26Z"
-        fill={EAR}
-      />
+      {/* Boca: la línea que lo hace sonreír. */}
+      <path d="M117 44.8c1.8 1.6 3.8 1.7 5.8.2" stroke={line} strokeWidth="1.6" strokeLinecap="round" />
 
-      {/* Cara: nariz, ojo y cachete. */}
-      <ellipse cx="26" cy="62" rx="5" ry="4.3" fill={INK} />
-      <circle cx="55" cy="55" r="4.3" fill={INK} />
-      <circle cx="43" cy="69" r="6" fill={BLUSH} />
+      {/* Patas delanteras, por delante del cuerpo. */}
+      <rect x="70" y="57" width="11" height="23" rx="5.5" fill={paw} />
+      <rect x="84" y="56" width="11" height="24" rx="5.5" fill={coat} />
+      <path d="M84 70h11v5.5a5.5 5.5 0 0 1-11 0Z" fill={paw} />
     </svg>
   );
 }
