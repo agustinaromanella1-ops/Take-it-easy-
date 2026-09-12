@@ -184,10 +184,9 @@ export default function Ajustes({ verInstructivo }: { verInstructivo: () => void
             notificaciones. Si no lo borraste vos, no llegó.
             <br />
             <br />
-            Lo más probable en este teléfono: si lo sacaste de las recientes, se
-            cerró del todo y se llevó la alarma. Probá de nuevo dejando la app
-            abierta atrás, sólo bloqueando la pantalla. Si así llega, lo que hay
-            que tocar es el ahorro de batería y el inicio automático.
+            Probá de nuevo sin sacar la app de las recientes: dejala abierta
+            atrás y bloqueá la pantalla, nada más. Si así llega, lo que hay que
+            tocar es el ahorro de batería y el inicio automático del teléfono.
           </p>
         )}
         {quePaso === 'llego' && (
@@ -210,6 +209,15 @@ export default function Ajustes({ verInstructivo }: { verInstructivo: () => void
         >
           Probar ahora
         </button>
+
+        <p className="detalle">
+          <strong>Si tenés un Xiaomi, Redmi, Samsung o Huawei:</strong> deslizar
+          la app fuera de las recientes la cierra del todo y se lleva los avisos
+          programados con ella. En esos teléfonos conviene dejarla abierta atrás,
+          y en sus ajustes poner Take It Easy en batería «sin restricciones» y
+          activarle el inicio automático. Cada vez que abrís la app, los avisos
+          que todavía no pasaron se vuelven a programar solos.
+        </p>
 
         {prueba?.estado === 'mostrado' && (
           <p className="hecho2">

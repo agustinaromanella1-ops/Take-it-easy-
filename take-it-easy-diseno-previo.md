@@ -591,6 +591,19 @@ la hora y no está— y deja la causa como sospecha, con algo concreto para
 probar. Hay un test que falla si el veredicto vuelve a apoyarse en lo que el
 plugin tiene guardado.
 
+**Y la causa, cuando se probó, era el teléfono.** Con la app fuera de las
+recientes el aviso no llegaba; con la pantalla sólo bloqueada, sí. En un Xiaomi
+—y en un Samsung, y en un Huawei— deslizar la app fuera de las recientes la
+cierra del todo, y Android cancela todas las alarmas de una app cerrada así. No
+hay nada que una app pueda hacer para sobrevivir a eso: lo único que queda es
+decirlo, y repararlo después.
+
+Repararlo después ya estaba: `reprogramarPendientes()` corre al arrancar la app
+y vuelve a programar todo lo que todavía no pasó. Así que un aviso perdido se
+recupera la próxima vez que se abre la app. Lo que no se recupera es el que
+tenía que sonar mientras estaba cerrada, y por eso la pantalla de Ajustes dice
+en qué teléfonos pasa y qué dos ajustes lo evitan.
+
 ### 5.5 Dictado por voz
 
 El dictado es local o no existe (1.2). Es la regla que decide qué plugin se
