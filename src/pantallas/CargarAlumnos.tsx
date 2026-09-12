@@ -6,12 +6,10 @@ import {
   sinDatosQueNoSeGuardan,
   type FilaParseada,
 } from '../alumnos/parseo';
-import {
-  agregarAlumnosAMateria,
-  deshacerAltaEnMateria,
-  type AltaEnMateria,
-} from '../datos/altaEnMateria';
+import { agregarAlumnosAMateria, deshacerAltaEnMateria } from '../datos/altaEnMateria';
+import { guardarBorrador } from '../datos/borradores';
 import type { Id } from '../datos/tipos';
+import type { LoGuardado } from '../componentes/Guardado';
 import { hoy } from '../fecha';
 import { useBorrador } from '../hooks/useBorrador';
 import './CargarAlumnos.css';
@@ -40,18 +38,18 @@ const VACIO: Borrador = { paso: 'pegar', textoSeguro: '', filas: [], descartados
 interface Props {
   materiaId: Id;
   volver: () => void;
+  /** Confirma en la materia, que es a donde vuelve sola después de agregar. */
+  alGuardar: (guardado: LoGuardado) => void;
 }
 
-export default function CargarAlumnos({ materiaId, volver }: Props) {
+export default function CargarAlumnos({ materiaId, volver, alGuardar }: Props) {
   const { valor, setValor, limpiar, listo } = useBorrador<Borrador>(
     `alumnos:${materiaId}`,
     VACIO,
   );
-  const [resultado, setResultado] = useState<AltaEnMateria | null>(null);
   const [guardando, setGuardando] = useState(false);
   // Los valores descartados se muestran, pero no sobreviven a la pantalla.
   const [descartados, setDescartados] = useState<string[]>([]);
-  const [listaUsada, setListaUsada] = useState<Borrador | null>(null);
   // Lo que se ve en el cuadro de texto es lo que pegó, con documentos y todo.
   // Sólo vive en memoria: a la base va la versión sin esos datos. Mientras no
   // escribió nada, se muestra lo que volvió del borrador.
@@ -100,67 +98,42 @@ export default function CargarAlumnos({ materiaId, volver }: Props) {
         hoy(),
       );
 
-      setListaUsada(valor);
-      setResultado(alta);
+      const lista = valor;
       limpiar();
+
+      const creados = alta.creados.length;
+      const repetidos = alta.repetidos.length;
+      const partes = [
+        creados === 0
+          ? 'No se agregó nadie nuevo'
+          : `Se ${creados === 1 ? 'agregó 1 alumno' : `agregaron ${creados} alumnos`}`,
+      ];
+      if (repetidos > 0) {
+        partes.push(
+          `${repetidos} ya ${repetidos === 1 ? 'estaba' : 'estaban'} y se ${
+            repetidos === 1 ? 'inscribió' : 'inscribieron'
+          } sin duplicarse`,
+        );
+      }
+
+      alGuardar({
+        texto: `${partes.join('; ')}.`,
+        deshacer:
+          creados > 0 || alta.inscripcion.nuevas.length > 0
+            ? async () => {
+                await deshacerAltaEnMateria(materiaId, alta, hoy());
+                // Vuelve la lista con las correcciones hechas a mano: deshacer
+                // no puede costar rehacer todo el trabajo de revisión. Va al
+                // borrador porque la pantalla que la tenía ya se cerró.
+                await guardarBorrador(`alumnos:${materiaId}`, lista);
+              }
+            : undefined,
+      });
     } finally {
       setGuardando(false);
     }
   }
 
-  async function deshacer() {
-    if (!resultado) return;
-    await deshacerAltaEnMateria(materiaId, resultado, hoy());
-    // Vuelve la lista con las correcciones hechas a mano: deshacer no puede
-    // costar rehacer todo el trabajo de revisión.
-    if (listaUsada) setValor(listaUsada);
-    setTextoEscrito(null);
-    setResultado(null);
-    setListaUsada(null);
-  }
-
-  function salir() {
-    limpiar();
-    setTextoEscrito(null);
-    volver();
-  }
-
-  if (resultado) {
-    const creados = resultado.creados.length;
-    const repetidos = resultado.repetidos.length;
-
-    return (
-      <div className="pantalla alumnos">
-        <header>
-          <h1>Listo</h1>
-          <p className="resumen">
-            {creados === 0 && 'No se agregó nadie nuevo.'}
-            {creados === 1 && 'Se agregó 1 alumno.'}
-            {creados > 1 && `Se agregaron ${creados} alumnos.`}
-          </p>
-          {repetidos > 0 && (
-            <p className="ayuda">
-              {repetidos === 1 ? 'Uno ya estaba' : `${repetidos} ya estaban`} cargado
-              {repetidos === 1 ? '' : 's'} de otra materia, así que se
-              {repetidos === 1 ? ' inscribió' : ' inscribieron'} en esta sin duplicarse:
-              un alumno existe una sola vez.
-            </p>
-          )}
-        </header>
-
-        <div className="pie">
-          <button className="primario" onClick={salir}>
-            Volver a la materia
-          </button>
-          {(creados > 0 || resultado.inscripcion.nuevas.length > 0) && (
-            <button className="secundario" onClick={deshacer}>
-              Deshacer
-            </button>
-          )}
-        </div>
-      </div>
-    );
-  }
 
   if (valor.paso === 'pegar') {
     return (

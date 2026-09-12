@@ -142,3 +142,23 @@
   font-weight: 700;
   color: var(--primario);
 }
+
+/* Las notas se guardan solas al escribirlas; esto lo dice, y se va solo. */
+.notas .guardada {
+  display: inline-block;
+  margin-top: 8px;
+  padding: 4px 10px;
+  border-radius: 999px;
+  background: var(--salvia);
+  color: #fff;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+/* El pie va después de la lista y antes de la distribución: terminar de
+   cargar es la acción de esta pantalla, no leer el resumen. */
+.notas .pie {
+  position: static;
+  margin-top: 20px;
+  padding-top: 0;
+}

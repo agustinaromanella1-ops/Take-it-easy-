@@ -1,4 +1,3 @@
-import { useEffect } from 'react';
 import { useLiveQuery } from 'dexie-react-hooks';
 
 import { db } from '../datos/db';
@@ -12,6 +11,7 @@ import {
 } from '../datos/materias';
 import type { Id } from '../datos/tipos';
 import Pista from '../instructivo/Pista';
+import Guardado from '../componentes/Guardado';
 import { usePista } from '../instructivo/useInstructivo';
 import './Materias.css';
 
@@ -28,14 +28,6 @@ export default function Materias({ abrir, crear, reciencreada, olvidarReciencrea
   const archivadas = useLiveQuery(materiasArchivadas, [], []);
   const inscripciones = useLiveQuery(() => db.inscripciones.toArray(), [], []);
   const { mostrarPista, entendido } = usePista('crear-materia', materias.length === 0);
-
-  // Se va sola, como la barra de deshacer de asistencia: es un aviso, no una
-  // tarea pendiente.
-  useEffect(() => {
-    if (!reciencreada) return;
-    const temporizador = setTimeout(olvidarReciencreada, 6000);
-    return () => clearTimeout(temporizador);
-  }, [reciencreada, olvidarReciencreada]);
 
   async function deshacerAlta() {
     if (reciencreada) await deshacerCreacion(reciencreada.id);
@@ -97,10 +89,11 @@ export default function Materias({ abrir, crear, reciencreada, olvidarReciencrea
 
       <div className="pie">
         {reciencreada && (
-          <div className="guardada">
-            <span>{reciencreada.nombre} quedó guardada.</span>
-            <button onClick={deshacerAlta}>Deshacer</button>
-          </div>
+          <Guardado
+            texto={`${reciencreada.nombre} quedó guardada.`}
+            deshacer={deshacerAlta}
+            alIrse={olvidarReciencreada}
+          />
         )}
         {mostrarPista && (
           <Pista

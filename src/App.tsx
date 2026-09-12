@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 
 import { reprogramarPendientes } from './agenda/recordatorios';
+import type { LoGuardado } from './componentes/Guardado';
 import { escucharBotonAtras } from './nativo/botonAtras';
 import Intro from './instructivo/Intro';
 import { useIntro } from './instructivo/useInstructivo';
@@ -38,6 +39,10 @@ export default function App() {
   const { mostrarIntro, terminarIntro, volverAMostrar } = useIntro();
   const [reciencreada, setReciencreada] = useState<{ id: Id; nombre: string } | undefined>();
   const olvidarReciencreada = useCallback(() => setReciencreada(undefined), []);
+  // Lo último que se guardó, para confirmarlo en la pantalla a la que se
+  // vuelve. Guardar en silencio obliga a revisar si de verdad se guardó.
+  const [guardado, setGuardado] = useState<LoGuardado | undefined>();
+  const olvidarGuardado = useCallback(() => setGuardado(undefined), []);
   const actual = pila[pila.length - 1];
 
   // El listener del botón atrás se registra una sola vez, así que no puede
@@ -48,6 +53,20 @@ export default function App() {
   }, [pila]);
 
   const ir = useCallback((pantalla: Pantalla) => setPila((p) => [...p, pantalla]), []);
+
+  /**
+   * Vuelve hasta la materia, salteando los pasos intermedios. Después de
+   * cargar las notas o de pegar la lista, la pantalla de la que se viene ya no
+   * tiene nada que hacer: lo práctico es aparecer donde se sigue trabajando.
+   */
+  const volverHastaLaMateria = useCallback(() => {
+    setPila((p) => {
+      for (let i = p.length - 1; i >= 0; i -= 1) {
+        if (p[i].nombre === 'materia') return p.slice(0, i + 1);
+      }
+      return p;
+    });
+  }, []);
 
   const volver = useCallback(() => {
     if (pilaRef.current.length <= 1) return false;
@@ -117,6 +136,8 @@ export default function App() {
         <Materia
           materiaId={actual.materiaId}
           volver={volver}
+          guardado={guardado}
+          olvidarGuardado={olvidarGuardado}
           agregarAlumnos={() => ir({ nombre: 'alumnos', materiaId: actual.materiaId })}
           editarHorario={() => ir({ nombre: 'horario', materiaId: actual.materiaId })}
           tomarAsistencia={() => ir({ nombre: 'asistencia', materiaId: actual.materiaId })}
@@ -126,7 +147,14 @@ export default function App() {
       )}
 
       {actual.nombre === 'alumnos' && (
-        <CargarAlumnos materiaId={actual.materiaId} volver={volver} />
+        <CargarAlumnos
+          materiaId={actual.materiaId}
+          volver={volver}
+          alGuardar={(lo) => {
+            setGuardado(lo);
+            volverHastaLaMateria();
+          }}
+        />
       )}
 
       {actual.nombre === 'horario' && (
@@ -138,11 +166,28 @@ export default function App() {
           materiaId={actual.materiaId}
           volver={volver}
           abrir={(evaluacionId) => ir({ nombre: 'notas', evaluacionId })}
+          alCrear={(evaluacionId, nombre) => {
+            setGuardado({
+              texto: `Se creó ${nombre}.`,
+              accion: {
+                texto: 'Cargar las notas',
+                hacer: () => ir({ nombre: 'notas', evaluacionId }),
+              },
+            });
+            volverHastaLaMateria();
+          }}
         />
       )}
 
       {actual.nombre === 'notas' && (
-        <Notas evaluacionId={actual.evaluacionId} volver={volver} />
+        <Notas
+          evaluacionId={actual.evaluacionId}
+          volver={volver}
+          listo={(nombre) => {
+            setGuardado({ texto: `Se guardaron las notas de ${nombre}.` });
+            volverHastaLaMateria();
+          }}
+        />
       )}
 
       {actual.nombre === 'ficha' && (

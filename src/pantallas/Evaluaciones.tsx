@@ -12,11 +12,13 @@ interface Props {
   materiaId: Id;
   volver: () => void;
   abrir: (evaluacionId: Id) => void;
+  /** Confirma en la materia, que es a donde vuelve sola después de crearla. */
+  alCrear: (evaluacionId: Id, nombre: string) => void;
 }
 
 const TIPOS = ['Parcial', 'Trabajo práctico', 'Oral', 'Carpeta'];
 
-export default function Evaluaciones({ materiaId, volver, abrir }: Props) {
+export default function Evaluaciones({ materiaId, volver, abrir, alCrear }: Props) {
   const datos = useLiveQuery(
     async () => ({
       materia: await buscarMateria(materiaId),
@@ -43,10 +45,12 @@ export default function Evaluaciones({ materiaId, volver, abrir }: Props) {
     if (guardando || nombre.trim() === '') return;
     setGuardando(true);
     try {
-      await crearEvaluacion({ materiaId, nombre, fecha, tipo, escala: laEscala });
+      const id = await crearEvaluacion({ materiaId, nombre, fecha, tipo, escala: laEscala });
+      const comoSeLlamo = nombre.trim();
       setNombre('');
       setEscala(null);
       setCreando(false);
+      alCrear(id, comoSeLlamo);
     } finally {
       setGuardando(false);
     }

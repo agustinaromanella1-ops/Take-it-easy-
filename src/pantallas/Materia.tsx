@@ -10,9 +10,19 @@ import {
   nombreDeEscuela,
 } from '../datos/materias';
 import type { Id } from '../datos/tipos';
+import Guardado, { type LoGuardado } from '../componentes/Guardado';
 import Pista from '../instructivo/Pista';
 import { usePista } from '../instructivo/useInstructivo';
 import './Materia.css';
+
+/**
+ * Los días vienen en minúscula, como se escriben en español. Acá arrancan una
+ * frase. Lo hace el texto y no un `text-transform: capitalize`, que además
+ * escribía "Sin Cargar" y "1 Cargada".
+ */
+function conMayuscula(texto: string): string {
+  return texto.charAt(0).toLocaleUpperCase('es-AR') + texto.slice(1);
+}
 
 interface Props {
   materiaId: Id;
@@ -22,6 +32,9 @@ interface Props {
   tomarAsistencia: () => void;
   verEvaluaciones: () => void;
   verFicha: (alumnoId: Id) => void;
+  /** Lo último que se guardó en una pantalla de más adentro. */
+  guardado?: LoGuardado;
+  olvidarGuardado: () => void;
 }
 
 export default function Materia({
@@ -32,6 +45,8 @@ export default function Materia({
   tomarAsistencia,
   verEvaluaciones,
   verFicha,
+  guardado,
+  olvidarGuardado,
 }: Props) {
   const datos = useLiveQuery(async () => {
     const m = await buscarMateria(materiaId);
@@ -67,7 +82,7 @@ export default function Materia({
           {bloques.length === 0
             ? 'Sin cargar'
             : bloques
-                .map((b) => `${DIAS[b.diaSemana - 1].nombre} ${b.horaInicio}`)
+                .map((b) => `${conMayuscula(DIAS[b.diaSemana - 1].nombre)} ${b.horaInicio}`)
                 .join(' · ')}
         </span>
       </button>
@@ -108,6 +123,7 @@ export default function Materia({
       )}
 
       <div className="pie">
+        {guardado && <Guardado {...guardado} alIrse={olvidarGuardado} />}
         {mostrarPista && (
           <Pista
             texto="Pegá acá la lista del curso: se dan de alta y quedan inscriptos en un paso."

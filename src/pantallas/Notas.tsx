@@ -1,5 +1,5 @@
 import { useLiveQuery } from 'dexie-react-hooks';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 
 import { enPalabras } from '../fecha';
 import { borrarCalificacion, calificar } from '../datos/calificaciones';
@@ -16,14 +16,25 @@ import './Notas.css';
 interface Props {
   evaluacionId: Id;
   volver: () => void;
+  /** Terminó de cargar: confirma y vuelve a la materia, sin usar la flecha. */
+  listo: (nombreDeLaEvaluacion: string) => void;
 }
 
-export default function Notas({ evaluacionId, volver }: Props) {
+export default function Notas({ evaluacionId, volver, listo }: Props) {
   const planilla = useLiveQuery(() => planillaDeEvaluacion(evaluacionId), [evaluacionId]);
   // Lo tipeado mientras se tipea. Sale de acá al guardarse, y entonces vuelve a
   // mandar lo que dice la base.
   const [tipeado, setTipeado] = useState<Record<Id, string>>({});
   const [errores, setErrores] = useState<Record<Id, boolean>>({});
+  // Cada nota se guarda sola al escribirla, y guardar en silencio hace dudar.
+  // El cartel se va solo: es un aviso, no una tarea pendiente.
+  const [recienGuardada, setRecienGuardada] = useState(false);
+
+  useEffect(() => {
+    if (!recienGuardada) return;
+    const temporizador = setTimeout(() => setRecienGuardada(false), 2500);
+    return () => clearTimeout(temporizador);
+  }, [recienGuardada]);
 
   if (!planilla) return <div className="pantalla notas" />;
 
@@ -49,6 +60,7 @@ export default function Notas({ evaluacionId, volver }: Props) {
 
     await calificar({ evaluacionId, alumnoId, valor: numero });
     setErrores((e) => ({ ...e, [alumnoId]: false }));
+    setRecienGuardada(true);
     setTipeado((t) => {
       const { [alumnoId]: _, ...resto } = t;
       return resto;
@@ -60,6 +72,7 @@ export default function Notas({ evaluacionId, volver }: Props) {
     // un botón de borrar por fila.
     if (yaPuesta) await borrarCalificacion(evaluacionId, alumnoId);
     else await calificar({ evaluacionId, alumnoId, valor: etiquetaId });
+    setRecienGuardada(true);
   }
 
   return (
@@ -78,6 +91,7 @@ export default function Notas({ evaluacionId, volver }: Props) {
             <span className="promedio"> · promedio {comoSeEscribe(escala, promedio)}</span>
           )}
         </p>
+        {recienGuardada && <p className="guardada">Guardado</p>}
       </header>
 
       {notas.length === 0 ? (
@@ -127,6 +141,12 @@ export default function Notas({ evaluacionId, volver }: Props) {
           {escala.tipo === 'numerica' && `, que va de ${escala.min} a ${escala.max}`}. No se guardó.
         </p>
       )}
+
+      <div className="pie">
+        <button className="primario" onClick={() => listo(evaluacion.nombre)}>
+          Listo
+        </button>
+      </div>
 
       {escalones.length > 0 && cargadas > 0 && (
         <section className="distribucion">
