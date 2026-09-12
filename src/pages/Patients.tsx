@@ -17,6 +17,9 @@ interface FormState {
   colorIndex: number;
   frequency: Frequency;
   kind: PatientKind;
+  document: string;
+  memberNumber: string;
+  insurer: string;
   notes: string;
 }
 
@@ -43,6 +46,9 @@ function toForm(p: Patient): FormState {
     colorIndex: p.colorIndex,
     frequency: p.frequency,
     kind: p.kind,
+    document: p.document,
+    memberNumber: p.memberNumber,
+    insurer: p.insurer,
     notes: p.notes,
   };
 }
@@ -61,6 +67,9 @@ export function PatientsPage({ onOpenPatient }: { onOpenPatient: (id: string) =>
     colorIndex: 0,
     frequency: 'semanal',
     kind: 'particular',
+    document: '',
+    memberNumber: '',
+    insurer: '',
     notes: '',
   }));
   const [errors, setErrors] = useState<Partial<Record<keyof FormState, string>>>({});
@@ -105,6 +114,9 @@ export function PatientsPage({ onOpenPatient }: { onOpenPatient: (id: string) =>
       colorIndex: nextFreeColor(data.patients.map((p) => p.colorIndex)),
       frequency: 'semanal',
       kind: 'particular',
+      document: '',
+      memberNumber: '',
+      insurer: '',
       notes: '',
     });
     setErrors({});
@@ -139,6 +151,9 @@ export function PatientsPage({ onOpenPatient }: { onOpenPatient: (id: string) =>
       colorIndex: form.colorIndex,
       frequency: form.frequency,
       kind: form.kind,
+      document: form.document.trim(),
+      memberNumber: form.memberNumber.trim(),
+      insurer: form.insurer.trim(),
       notes: form.notes.trim(),
     };
 
@@ -340,6 +355,26 @@ export function PatientsPage({ onOpenPatient }: { onOpenPatient: (id: string) =>
               ))}
             </div>
           </div>
+          <div className="field-row">
+            <Field label="DNI">
+              <input
+                inputMode="numeric"
+                value={form.document}
+                onChange={(e) => setForm({ ...form, document: e.target.value })}
+                placeholder="Para la factura"
+              />
+            </Field>
+            <Field label="Obra social / prepaga">
+              <input value={form.insurer} onChange={(e) => setForm({ ...form, insurer: e.target.value })} />
+            </Field>
+            <Field label="N.º de afiliado">
+              <input
+                value={form.memberNumber}
+                onChange={(e) => setForm({ ...form, memberNumber: e.target.value })}
+              />
+            </Field>
+          </div>
+
           <Field label="Notas">
             <textarea value={form.notes} onChange={(e) => setForm({ ...form, notes: e.target.value })} />
           </Field>

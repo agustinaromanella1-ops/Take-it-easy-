@@ -42,6 +42,12 @@ export interface Patient {
   colorIndex: number;
   frequency: Frequency;
   kind: PatientKind;
+  /** DNI del paciente. Va en la factura cuando no hay número de afiliado. */
+  document: string;
+  /** Número de afiliado a la obra social o prepaga. */
+  memberNumber: string;
+  /** Nombre de la obra social o prepaga, si corresponde. */
+  insurer: string;
   /** Fecha del último cambio de honorario. Se actualiza sola al editar la
    *  tarifa, para saber cuándo toca revisarla sin llevar la cuenta a mano. */
   lastRaise: DateISO | null;
@@ -105,6 +111,8 @@ export interface RateInputs {
 }
 
 export interface Settings {
+  /** Profesión que aparece en el texto de la factura: "sesión de {profesión}". */
+  profession: string;
   /** Símbolo de moneda a mostrar. El cálculo es agnóstico a la moneda. */
   currency: string;
   /** Duración por defecto de una sesión nueva, en minutos. */

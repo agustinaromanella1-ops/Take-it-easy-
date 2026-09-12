@@ -10,6 +10,7 @@ import {
   pendingReview,
   sessionsInRange,
   upcomingSessions,
+  patientAttendance,
 } from './selectors';
 
 function patient(id: string, over: Partial<Patient> = {}): Patient {
@@ -23,6 +24,9 @@ function patient(id: string, over: Partial<Patient> = {}): Patient {
     colorIndex: 0,
     frequency: 'semanal',
     kind: 'particular',
+    document: '',
+    memberNumber: '',
+    insurer: '',
     lastRaise: null,
     notes: '',
     createdAt: '2026-01-01T00:00:00.000Z',
@@ -260,5 +264,51 @@ describe('dashboardStats', () => {
     expect(stats.monthBilled).toBe(0);
     expect(stats.outstanding).toBe(0);
     expect(stats.debtors).toEqual([]);
+  });
+});
+
+describe('patientAttendance', () => {
+  it('cuenta cada estado por separado', () => {
+    const data = build({
+      patients: [patient('p1')],
+      sessions: [
+        session('a', { status: 'realizada' }),
+        session('b', { status: 'realizada' }),
+        session('c', { status: 'ausente' }),
+        session('d', { status: 'cancelada' }),
+      ],
+    });
+    const a = patientAttendance(data).get('p1')!;
+    expect(a).toMatchObject({ held: 2, absent: 1, cancelled: 1, closed: 4 });
+  });
+
+  it('no cuenta las sesiones todavía programadas', () => {
+    // Si contaran, alguien con turnos futuros cargados tendría mala asistencia
+    // sin haber faltado a nada.
+    const data = build({
+      patients: [patient('p1')],
+      sessions: [session('a', { status: 'realizada' }), session('b', { status: 'programada' })],
+    });
+    const a = patientAttendance(data).get('p1')!;
+    expect(a.closed).toBe(1);
+    expect(a.rate).toBe(100);
+  });
+
+  it('calcula el porcentaje sobre las cerradas', () => {
+    const data = build({
+      patients: [patient('p1')],
+      sessions: [
+        session('a', { status: 'realizada' }),
+        session('b', { status: 'realizada' }),
+        session('c', { status: 'realizada' }),
+        session('d', { status: 'ausente' }),
+      ],
+    });
+    expect(patientAttendance(data).get('p1')!.rate).toBe(75);
+  });
+
+  it('sin sesiones cerradas no inventa un porcentaje', () => {
+    const data = build({ patients: [patient('p1')] });
+    expect(patientAttendance(data).get('p1')!.rate).toBeNull();
   });
 });

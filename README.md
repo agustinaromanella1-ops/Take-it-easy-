@@ -37,9 +37,10 @@ paciente en los días con sesión). Detecta y marca turnos superpuestos. Una ser
 (semanal, quincenal o mensual) se carga de una sola vez, y cada turno se puede mandar al calendario
 del teléfono con alarma.
 
-**Finanzas.** Meta mensual con barra de avance, calculadora de cuánto cobrar por sesión,
-comparación de facturado contra cobrado mes a mes, saldos pendientes y registro de pagos con un
-botón para saldar la deuda completa de un paciente.
+**Finanzas.** Tres pestañas. **Resumen**: meta mensual, facturado contra cobrado mes a mes, saldos
+pendientes, registro de pagos y calculadora de tarifa. **Monitoreo**: quién pagó y quién debe,
+asistencia por paciente y comparación de honorarios contra la tarifa sugerida. **Facturación**:
+elegís mes y paciente y sale el texto de la factura listo para copiar.
 
 **Ajustes.** Moneda, duración por defecto, política de ausencias, antelación de la alarma, y
 exportar/importar los datos.
@@ -60,6 +61,23 @@ internet), carga más rápido y no le avisa a un tercero cada visita. Son 144 KB
 subconjuntos latinos y un archivo por familia, porque son fuentes variables.
 
 ## Decisiones de diseño
+
+**Los colores de los gráficos se validaron, no se eligieron a ojo.** El primer intento usaba verde
+para "cobrado" y rojo para "pendiente" —el par clásico de los tableros— que resulta indistinguible
+en deuteranopía: ΔE 4,2, cuando el mínimo aceptable es 8. El par azul/ámbar que quedó separa bien en
+todos los tipos de daltonismo (ΔE ≥ 16). El gris de "canceladas" sí queda por debajo del piso de
+saturación, pero es deliberado: representa el estado "no pasó nada" y su separación contra los otros
+dos pasa cómoda (`src/components/charts.tsx`).
+
+**Los valores van escritos sobre las barras, no en un globo al pasar el mouse.** La app se usa sobre
+todo en el celular, donde el hover no existe.
+
+**El texto de la factura omite los datos que faltan en vez de dejar el hueco.** Una factura que dice
+"DNI:" sin número se ve peor que una que no lo menciona. Si el paciente tiene número de afiliado se
+usa ese; si tiene los dos, se informan los dos (`src/lib/billing.ts`).
+
+**Si hubo un aumento dentro del período facturado, no existe "valor de la sesión" como dato único**,
+así que el texto detalla sesión por sesión para que el total cierre.
 
 **El dinero se guarda en centavos, como entero.** Sumar decimales acumula error de redondeo:
 `0.1 + 0.2` no da `0.3` en punto flotante. Todo el cálculo es entero y solo se formatea al
@@ -166,7 +184,7 @@ borra el historial**, así que conviene exportar una copia desde Ajustes cada ta
 ## Desarrollo
 
 ```bash
-npm test          # 158 tests unitarios
+npm test          # 181 tests unitarios
 npm run typecheck # TypeScript en modo strict
 npm run build
 ```
@@ -175,7 +193,7 @@ npm run build
 src/
 ├── types.ts            Modelo de datos
 ├── lib/                money, dates, storage, pricing, recurrence, calendar,
-│                       contact, palette, dayclose — lógica pura, sin React
+│                       contact, palette, dayclose, billing — lógica pura
 ├── store/              reducer, selectores y contexto
 ├── components/ui.tsx   Card, Stat, Modal, Field
 └── pages/              Dashboard, Patients, PatientDetail, Agenda, Finance, Settings

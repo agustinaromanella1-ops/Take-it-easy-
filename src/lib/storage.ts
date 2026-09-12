@@ -23,6 +23,7 @@ export const DEFAULT_SETTINGS: Settings = {
   currency: '$',
   defaultDurationMin: 50,
   chargeNoShowByDefault: true,
+  profession: 'psicología',
   monthlyGoal: 0,
   reminderMinutes: 30,
   rateInputs: {
@@ -86,6 +87,9 @@ function parsePatient(raw: unknown): Patient | null {
     colorIndex: clamp(raw.colorIndex, 0, PATIENT_COLORS.length - 1, 0),
     frequency: FREQUENCIES.has(str(raw.frequency) as Frequency) ? (raw.frequency as Frequency) : 'semanal',
     kind: KINDS.has(str(raw.kind) as PatientKind) ? (raw.kind as PatientKind) : 'particular',
+    document: str(raw.document),
+    memberNumber: str(raw.memberNumber),
+    insurer: str(raw.insurer),
     lastRaise: isValidISODate(str(raw.lastRaise)) ? str(raw.lastRaise) : null,
     notes: str(raw.notes),
     createdAt: str(raw.createdAt, new Date().toISOString()),
@@ -170,6 +174,7 @@ function parseSettings(raw: Record<string, unknown>): Settings {
     currency: str(raw.currency, d.currency) || d.currency,
     defaultDurationMin: clamp(raw.defaultDurationMin, 5, 480, d.defaultDurationMin),
     chargeNoShowByDefault: bool(raw.chargeNoShowByDefault, d.chargeNoShowByDefault),
+    profession: str(raw.profession, d.profession) || d.profession,
     monthlyGoal: Math.max(0, int(raw.monthlyGoal, d.monthlyGoal)),
     reminderMinutes: clamp(raw.reminderMinutes, 0, 1440, d.reminderMinutes),
     rateInputs: {

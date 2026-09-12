@@ -7,12 +7,15 @@ import { addMonths, formatDateShort, formatMonthKey, isValidISODate, monthKey, t
 import { Card, ConfirmButton, Empty, Field, Modal, Stat } from '../components/ui';
 import { MonthlyGoal } from '../components/MonthlyGoal';
 import { RateCalculator } from '../components/RateCalculator';
+import { Monitoring } from '../components/Monitoring';
+import { Billing } from '../components/Billing';
 
 const METHODS: Payment['method'][] = ['efectivo', 'transferencia', 'tarjeta', 'otro'];
 
 export function FinancePage() {
   const { data, dispatch } = useStore();
   const [month, setMonth] = useState(() => monthKey(today()));
+  const [view, setView] = useState<'resumen' | 'monitoreo' | 'facturacion'>('resumen');
   const [adding, setAdding] = useState(false);
   const [form, setForm] = useState({ patientId: '', date: today(), amount: '', method: 'efectivo' as Payment['method'], notes: '' });
   const [errors, setErrors] = useState<Record<string, string>>({});
@@ -85,7 +88,9 @@ export function FinancePage() {
     <>
       <div className="page-head">
         <h1>Finanzas</h1>
-        <div className="actions">
+        {/* El navegador de mes es del resumen; monitoreo y facturación tienen
+            su propio período. */}
+        <div className="actions" hidden={view !== 'resumen'}>
           <button className="btn small" onClick={() => setMonth(addMonths(month, -1))} aria-label="Mes anterior">
             ←
           </button>
@@ -105,6 +110,19 @@ export function FinancePage() {
         </div>
       </div>
 
+      <div className="tabs" role="tablist" aria-label="Vista de finanzas">
+        {(['resumen', 'monitoreo', 'facturacion'] as const).map((v) => (
+          <button key={v} role="tab" aria-selected={view === v} onClick={() => setView(v)}>
+            {v === 'resumen' ? 'Resumen' : v === 'monitoreo' ? 'Monitoreo' : 'Facturación'}
+          </button>
+        ))}
+      </div>
+
+      {view === 'monitoreo' && <Monitoring />}
+      {view === 'facturacion' && <Billing />}
+
+      {view === 'resumen' && (
+      <>
       <div className="stat-grid">
         <Stat label="Facturado del mes" value={formatMoney(summary.billed, currency)} hint={`${summary.sessionsHeld} sesión(es) realizada(s)`} />
         <Stat label="Cobrado del mes" value={formatMoney(summary.collected, currency)} tone="ok" hint={`${monthPayments.length} pago(s)`} />
@@ -230,14 +248,19 @@ export function FinancePage() {
         )}
       </Card>
 
-      <button
-        className="fab"
-        onClick={() => openAdd()}
-        disabled={data.patients.length === 0}
-        aria-label="Registrar pago"
-      >
-        +
-      </button>
+      </>
+      )}
+
+      {view === 'resumen' && (
+        <button
+          className="fab"
+          onClick={() => openAdd()}
+          disabled={data.patients.length === 0}
+          aria-label="Registrar pago"
+        >
+          +
+        </button>
+      )}
 
       {adding && (
         <Modal title="Registrar pago" onClose={() => setAdding(false)}>

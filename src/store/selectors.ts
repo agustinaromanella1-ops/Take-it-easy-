@@ -210,3 +210,40 @@ export function dashboardStats(data: AppData, ref = today()): DashboardStats {
     debtors,
   };
 }
+
+export interface Attendance {
+  patient: Patient;
+  held: number;
+  absent: number;
+  cancelled: number;
+  /** Sesiones que ya ocurrieron, sin contar las todavía programadas. */
+  closed: number;
+  /** Porcentaje de asistencia sobre las cerradas. `null` si no hay ninguna. */
+  rate: number | null;
+}
+
+/**
+ * Asistencia por paciente. Solo cuenta sesiones cerradas: incluir las que
+ * todavía están programadas bajaría el porcentaje de quien tiene turnos futuros
+ * cargados, que no faltó a nada.
+ */
+export function patientAttendance(data: AppData): Map<string, Attendance> {
+  const result = new Map<string, Attendance>();
+  for (const patient of data.patients) {
+    result.set(patient.id, { patient, held: 0, absent: 0, cancelled: 0, closed: 0, rate: null });
+  }
+
+  for (const s of data.sessions) {
+    const entry = result.get(s.patientId);
+    if (!entry || s.status === 'programada') continue;
+    entry.closed += 1;
+    if (s.status === 'realizada') entry.held += 1;
+    if (s.status === 'ausente') entry.absent += 1;
+    if (s.status === 'cancelada') entry.cancelled += 1;
+  }
+
+  for (const entry of result.values()) {
+    entry.rate = entry.closed === 0 ? null : Math.round((entry.held / entry.closed) * 100);
+  }
+  return result;
+}
