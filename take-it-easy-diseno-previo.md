@@ -662,37 +662,30 @@ mirar el código, porque nombran justamente lo que está prohibido.
 
 ### 5.6 El ícono
 
-La cara de un perrito salchicha con los ojos cerrados y una T. arriba, pintada
-como una acuarela. Lo eligió Agustina.
+Lo dibujó Agustina con una IA de imágenes: tres tarjetas apiladas —rosa,
+durazno y azul noche— con un tilde, sobre celeste. El original vive versionado
+en `icono/origen/icono-fuente.png`, porque sin él los PNG no se pueden volver a
+generar, y `icono/render.mjs` saca de ahí los diez archivos de Android y el
+favicon.
 
-**Está dibujado en código**, en `icono/icono.mjs`, y `icono/render.mjs` genera
-los PNG. No se guardan como imágenes sueltas porque son diez archivos en cinco
-densidades: a mano se desincronizan el primer día que alguien toca un color.
+**El fondo se saca por color para el ícono adaptativo.** El celeste es parejo y
+ningún color del dibujo se le parece, así que alcanza con medir distancia al
+color de la esquina. El borde se desvanece en vez de cortarse de golpe: si no,
+queda un filo celeste alrededor del dibujo cuando Android le pone su propio
+fondo detrás.
 
-La acuarela se hace con filtros SVG: `feTurbulence` y `feDisplacementMap`
-deforman el borde de cada mancha, cada mancha se pinta dos veces con semillas
-distintas y poca opacidad —donde se superponen el color queda más cargado, que
-es lo que hace el agua—, y un borde difuminado por fuera imita el pigmento que
-la acuarela empuja al filo al secarse. Encima va un grano de papel en modo
-multiplicar. Lo rasteriza Chromium, porque esos filtros necesitan un motor que
-los soporte de verdad.
+**El dibujo ocupa el 55% del lado del frente, y el número sale de su forma.**
+De los 108dp del frente el teléfono muestra los 72 del centro —el resto es
+margen para el recorte y para el movimiento al arrastrarlo— y sólo garantiza
+los 66 centrales. Como el dibujo es un cuadrado, lo que tiene que entrar en ese
+círculo es su diagonal y no su lado. A 0.55 las puntas quedan justo adentro de
+la máscara redonda, que es la más filosa de las tres.
 
-**La T está dibujada, no tipografiada.** Así la acuarela la toca igual que al
-resto y el ícono no depende de que haya una fuente disponible al generarlo.
+Revisado en las tres máscaras que usan los teléfonos —redonda, cuadrada y
+squircle— y a 48 píxeles, que es donde un ícono se gana o se pierde.
 
-**El morro largo y las orejas largas son la raza**, y son lo único que
-sobrevive entero a 48 píxeles: el resto de la cara a ese tamaño es una mancha.
-Por eso el hocico se dibuja alargado aunque de cerca parezca demasiado.
-
-**El frente del ícono adaptativo va más chico que el cuadrado.** De sus 108dp
-el teléfono muestra los 72 del centro —el resto es margen para el recorte y
-para el movimiento al arrastrarlo— y sólo garantiza los 66 centrales. Al
-revisarlo hay que mirarlo recortado: verlo entero engaña, y la primera versión
-quedó diminuta por eso.
-
-**El favicon de la web va en PNG y no en SVG**, porque los filtros de la
-acuarela son justamente lo que los navegadores no rasterizan igual —o no
-rasterizan— cuando el SVG entra por un `<link rel="icon">`.
+El perrito salchicha en acuarela que estuvo acá un rato sigue en
+`icono/perro.mjs`: pasa a ser el easter egg.
 
 ### 5.7 Lo demás, ya resuelto en su sección
 

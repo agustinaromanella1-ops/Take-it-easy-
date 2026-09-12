@@ -1,10 +1,10 @@
 /**
- * El ícono de la app: la cara de un perrito salchicha con los ojos cerrados y
- * una T. arriba, pintado como una acuarela.
+ * Un perrito salchicha con los ojos cerrados y una T. arriba, pintado como una
+ * acuarela. Fue el ícono de la app un rato; ahora el ícono es el dibujo que
+ * hizo Agustina y esto queda para el easter egg.
  *
  * Está dibujado acá y no guardado como imagen suelta para que se pueda volver
- * a generar: los PNG de Android son diez archivos en cinco tamaños, y a mano
- * eso se desincroniza el primer día que alguien toca un color.
+ * a generar con otro color o a otro tamaño sin repintarlo.
  *
  * La acuarela se hace con tres cosas, y las tres son filtros SVG:
  *
