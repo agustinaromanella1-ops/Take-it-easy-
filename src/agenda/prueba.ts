@@ -1,8 +1,10 @@
 import { textoDelAviso } from './aviso';
+import { guardarPreferencia, leerPreferencia } from '../datos/preferencias';
 import {
   cancelar,
   hayNotificaciones,
   mostrarAhora,
+  paraCuandoLoTiene,
   pedirPermiso,
   programadas,
   programar,
@@ -39,6 +41,7 @@ export async function probarElAviso(ahora = new Date()): Promise<Resultado> {
 
   const cuando = new Date(ahora.getTime() + ESPERA_MINUTOS * 60 * 1000);
   await programar(ID_DE_PRUEBA, { caso: 'sin-materia' }, cuando);
+  await guardarPreferencia(CUANDO_LA_PRUEBA, cuando.getTime());
 
   return { estado: 'programado', hora: aLaHora(cuando) };
 }
@@ -68,11 +71,46 @@ export async function probarAhora(): Promise<Resultado> {
 /** Si ya no lo espera más. */
 export async function cancelarLaPrueba(): Promise<void> {
   await cancelar(ID_DE_PRUEBA);
+  await guardarPreferencia(CUANDO_LA_PRUEBA, undefined);
 }
 
 /** Si el sistema de verdad lo tiene anotado, que es lo que hay que comprobar. */
 export async function elSistemaLoTiene(): Promise<boolean> {
   return (await programadas()).includes(ID_DE_PRUEBA);
+}
+
+/**
+ * Cuándo se programó la última prueba. Se guarda porque la pregunta que
+ * interesa hay que hacerla *después* de cerrar la app, y para entonces el
+ * estado de la pantalla ya no existe.
+ */
+const CUANDO_LA_PRUEBA = 'prueba-de-aviso';
+
+/**
+ * Qué pasó con el aviso de prueba, mirado después. Es la pregunta que separa
+ * las dos causas que quedan cuando el aviso inmediato sí llega:
+ *
+ * - `no-sono`: Android lo sigue teniendo anotado y la hora ya pasó. La alarma
+ *   no se disparó. Eso no lo decide la app: lo decide el ahorro de batería del
+ *   teléfono, que la mató antes.
+ * - `se-disparo`: Android ya no lo tiene, así que lo disparó. Si no se vio, el
+ *   aviso se mostró y se fue.
+ * - `esperando`: todavía no es la hora.
+ * - `sin-prueba`: no hay ninguna programada.
+ */
+export type QuePaso = 'esperando' | 'no-sono' | 'se-disparo' | 'sin-prueba';
+
+export async function quePasoConLaPrueba(ahora = new Date()): Promise<QuePaso> {
+  if (!hayNotificaciones()) return 'sin-prueba';
+
+  // Sin esto, "Android no lo tiene anotado" y "nunca se programó una prueba"
+  // se ven iguales, y la pantalla diría que se disparó un aviso que no existió.
+  const programadaPara = await leerPreferencia<number>(CUANDO_LA_PRUEBA);
+  if (programadaPara === undefined) return 'sin-prueba';
+
+  const cuando = await paraCuandoLoTiene(ID_DE_PRUEBA);
+  if (!cuando) return programadaPara > ahora.getTime() ? 'sin-prueba' : 'se-disparo';
+  return cuando.getTime() > ahora.getTime() ? 'esperando' : 'no-sono';
 }
 
 /** El texto exacto que se va a ver, para poder compararlo con lo que llegue. */

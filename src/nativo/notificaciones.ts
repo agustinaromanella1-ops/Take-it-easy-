@@ -98,3 +98,18 @@ export async function programadas(): Promise<number[]> {
   const { notifications } = await LocalNotifications.getPending();
   return notifications.map((n) => n.id);
 }
+
+/**
+ * Para cuándo dice el sistema que tiene anotado un aviso, o `undefined` si no
+ * lo tiene. Sirve para la pregunta que de verdad importa cuando un aviso no
+ * llega: si Android sigue teniéndolo anotado después de la hora, la alarma no
+ * se disparó.
+ */
+export async function paraCuandoLoTiene(idNotificacion: number): Promise<Date | undefined> {
+  if (!hayNotificaciones()) return undefined;
+  const { notifications } = await LocalNotifications.getPending();
+  const suya = notifications.find((n) => n.id === idNotificacion);
+  const at = suya?.schedule?.at;
+  if (!at) return undefined;
+  return at instanceof Date ? at : new Date(at);
+}

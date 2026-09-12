@@ -1,4 +1,4 @@
-import { useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 
 import {
   CopiaInvalidaError,
@@ -16,7 +16,9 @@ import {
   elSistemaLoTiene,
   probarAhora,
   probarElAviso,
+  quePasoConLaPrueba,
   textoDeLaPrueba,
+  type QuePaso,
   type Resultado,
 } from '../agenda/prueba';
 import { olvidarInstructivo } from '../datos/preferencias';
@@ -44,6 +46,19 @@ export default function Ajustes({ verInstructivo }: { verInstructivo: () => void
   const [error, setError] = useState<string | null>(null);
   const [prueba, setPrueba] = useState<Resultado | null>(null);
   const [anotado, setAnotado] = useState<boolean | null>(null);
+  // La pregunta que importa hay que hacerla después de cerrar la app, así que
+  // se hace al abrir esta pantalla y no al apretar el botón.
+  const [quePaso, setQuePaso] = useState<QuePaso>('sin-prueba');
+
+  useEffect(() => {
+    let vigente = true;
+    void quePasoConLaPrueba().then((r) => {
+      if (vigente) setQuePaso(r);
+    });
+    return () => {
+      vigente = false;
+    };
+  }, [prueba]);
 
   async function exportar() {
     if (exportando) return;
@@ -162,6 +177,26 @@ export default function Ajustes({ verInstructivo }: { verInstructivo: () => void
           está cerrada. Si no llega ninguno de los dos, el problema es otro que
           si llega el primero y no el segundo.
         </p>
+
+        {quePaso === 'no-sono' && (
+          <p className="aviso">
+            El aviso que programaste sigue anotado en Android y la hora ya pasó:
+            la alarma no se disparó. Eso no lo decide la app. Lo frena el ahorro
+            de batería del teléfono, que la cierra del todo y se lleva la alarma
+            con ella.
+          </p>
+        )}
+        {quePaso === 'se-disparo' && (
+          <p className="hecho2">
+            El último aviso de prueba sí se disparó: Android ya no lo tiene
+            anotado.
+          </p>
+        )}
+        {quePaso === 'esperando' && (
+          <p className="detalle">
+            Hay un aviso de prueba esperando. Todavía no es la hora.
+          </p>
+        )}
 
         <button
           className="secundario"

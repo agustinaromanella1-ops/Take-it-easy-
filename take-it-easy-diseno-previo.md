@@ -558,6 +558,24 @@ Las dos están fijadas por tests, porque son invisibles: un `schedule({ at })`
 pelado compila, anda en el navegador, pasa la revisión y en el teléfono no
 llega nunca.
 
+**«No me llega el aviso» son tres problemas distintos con el mismo síntoma**,
+y Ajustes los separa en vez de mandar a tocar ajustes del teléfono al azar:
+
+1. Un aviso **inmediato**, sin alarma de por medio. Si no llega, el teléfono no
+   está mostrando las notificaciones de la app y las alarmas no tienen nada que
+   ver.
+2. Si Android **anotó** el aviso programado, mirado justo después de pedirlo. Si
+   no lo anotó, la app no pudo programarlo, que tampoco es cuestión de batería.
+3. Si Android **todavía lo tiene anotado después de la hora**, mirado al volver
+   a abrir la pantalla. Eso significa que la alarma no se disparó: el teléfono
+   cerró la app del todo y se llevó la alarma. Es lo que hacen los Xiaomi con
+   el ahorro de batería y el inicio automático.
+
+La tercera hay que preguntarla después de cerrar la app, así que se guarda
+cuándo se programó la prueba: sin eso, «Android no lo tiene anotado» y «nunca
+hubo una prueba» se ven iguales, y la pantalla diría que se disparó un aviso
+que no existió. Hay un test que lo fija.
+
 ### 5.5 Dictado por voz
 
 El dictado es local o no existe (1.2). Es la regla que decide qué plugin se
