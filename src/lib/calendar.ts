@@ -60,10 +60,10 @@ export function sessionToICS(session: Session, options: ICSOptions): string {
   const lines = [
     'BEGIN:VCALENDAR',
     'VERSION:2.0',
-    'PRODID:-//Encuadre//ES',
+    'PRODID:-//Pipi Cucu//ES',
     'CALSCALE:GREGORIAN',
     'BEGIN:VEVENT',
-    `UID:${session.id}@encuadre`,
+    `UID:${session.id}@pipicucu`,
     `DTSTAMP:${toICSStamp(now)}`,
     `DTSTART:${toICSStamp(startDate)}`,
     `DTEND:${toICSStamp(endDate)}`,

@@ -757,3 +757,12 @@ a.btn {
 @media (max-width: 780px) {
   .mascot-bubble { max-width: 170px; }
 }
+
+/* Firma al pie de Ajustes. */
+.app-footer {
+  text-align: center;
+  color: var(--muted);
+  font-size: 0.84rem;
+  margin: 26px 0 0;
+  font-family: var(--serif);
+}

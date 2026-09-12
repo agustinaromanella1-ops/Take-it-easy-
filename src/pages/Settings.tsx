@@ -19,7 +19,7 @@ export function SettingsPage() {
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
-    a.download = `encuadre-${today()}.json`;
+    a.download = `pipi-cucu-${today()}.json`;
     a.click();
     URL.revokeObjectURL(url);
   }
@@ -35,7 +35,7 @@ export function SettingsPage() {
       dispatch({ type: 'data/replace', payload: parsed });
       setMessage({ text: 'Datos importados correctamente.', ok: true });
     } catch {
-      setMessage({ text: 'No se pudo leer el archivo. ¿Es una copia de Encuadre?', ok: false });
+      setMessage({ text: 'No se pudo leer el archivo. ¿Es una copia de Pipí Cucú?', ok: false });
     } finally {
       if (fileRef.current) fileRef.current.value = '';
     }
@@ -137,6 +137,10 @@ export function SettingsPage() {
           {data.patients.length} paciente(s) · {data.sessions.length} sesión(es) · {data.payments.length} pago(s)
         </p>
       </Card>
+
+      <p className="app-footer">
+        Pipí Cucú · tu agenda, pipí cucú
+      </p>
     </>
   );
 }

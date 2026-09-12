@@ -66,7 +66,7 @@ export default function App() {
       <div className="app">
         <header className="topbar">
           <span className="brand">
-            Encuadre<em>.</em>
+            Pipí <em>Cucú</em>
           </span>
           <nav className="nav">
             {NAV.map((item) => (

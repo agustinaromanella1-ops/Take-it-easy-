@@ -11,9 +11,9 @@ export default defineConfig({
       registerType: 'autoUpdate',
       includeAssets: ['apple-touch-icon.png', 'favicon-48.png', 'fonts/*.woff2'],
       manifest: {
-        name: 'Encuadre — agenda de pacientes',
-        short_name: 'Encuadre',
-        description: 'Agenda, pacientes y honorarios para consultorio psicológico.',
+        name: 'Pipí Cucú — tu agenda, pipí cucú',
+        short_name: 'Pipí Cucú',
+        description: 'Tu agenda, pipí cucú. Pacientes, sesiones y honorarios para consultorio psicológico.',
         lang: 'es',
         dir: 'ltr',
         start_url: '/',

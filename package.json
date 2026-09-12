@@ -1,9 +1,9 @@
 {
-  "name": "encuadre",
+  "name": "pipi-cucu",
   "private": true,
   "version": "1.0.0",
   "type": "module",
-  "description": "Agenda de pacientes y honorarios para consultorio psicologico",
+  "description": "Tu agenda, pipi cucu. Agenda de pacientes y honorarios para consultorio psicologico",
   "scripts": {
     "dev": "vite",
     "build": "tsc --noEmit && vite build",

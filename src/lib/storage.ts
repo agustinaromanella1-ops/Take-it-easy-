@@ -2,17 +2,21 @@ import type { AppData, Frequency, Patient, PatientKind, Payment, Session, Settin
 import { PATIENT_COLORS } from './palette';
 import { isValidISODate, isValidTime } from './dates';
 
-export const STORAGE_KEY = 'encuadre:data';
+export const STORAGE_KEY = 'pipicucu:data';
 
 /**
- * Claves que usó la app antes de llamarse Encuadre.
+ * Claves que usó la app con sus nombres anteriores, de la más reciente a la más
+ * vieja.
  *
  * Renombrar la app no puede borrarle los datos a quien ya la venía usando: si
- * no aparece nada bajo la clave actual, se lee de las viejas. La clave vieja no
- * se borra —queda como respaldo— porque a partir del primer guardado la app
- * escribe siempre en la nueva.
+ * no aparece nada bajo la clave actual, se leen las anteriores en este orden.
+ * Importa que vaya de nueva a vieja: alguien que pasó por las dos versiones
+ * tiene datos en ambas, y los de la más reciente son los buenos.
+ *
+ * Las claves viejas no se borran —quedan como respaldo— porque a partir del
+ * primer guardado la app escribe siempre en la nueva.
  */
-const LEGACY_KEYS = ['psicofinance:data'] as const;
+const LEGACY_KEYS = ['encuadre:data', 'psicofinance:data'] as const;
 export const SCHEMA_VERSION = 1;
 
 export const DEFAULT_SETTINGS: Settings = {

@@ -1,5 +1,5 @@
 /**
- * Modelo de datos de Encuadre.
+ * Modelo de datos de Pipí Cucú.
  *
  * Dos decisiones de diseño que atraviesan todo el modelo:
  *

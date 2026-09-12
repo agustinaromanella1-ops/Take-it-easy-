@@ -39,7 +39,7 @@ export function DashboardPage({ onGo }: { onGo: (page: 'agenda' | 'finanzas' | '
         </div>
         <Card>
           <Empty>
-            <strong>Bienvenida a Encuadre.</strong>
+            <strong>Tu agenda, pipí cucú.</strong>
             <br />
             Para empezar, cargá tu primer paciente; después vas a poder agendar sesiones y registrar cobros.
             <br />

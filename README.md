@@ -98,9 +98,11 @@ el 0 de larga distancia y el 15 de celular (`src/lib/contact.ts`).
 **Borrar un paciente arrastra sus sesiones y pagos.** Dejarlos sueltos produciría ingresos
 fantasma en los reportes, imposibles de rastrear.
 
-**Renombrar la app no puede borrar datos.** Los datos guardados cuando se llamaba PsicoFinance se
-leen igual: si no hay nada bajo la clave actual, se buscan las anteriores, y la vieja queda sin
-borrar como respaldo (`src/lib/storage.ts`).
+**Renombrar la app no puede borrar datos.** La app tuvo otros nombres antes, y los datos guardados
+bajo esos nombres se leen igual: si no hay nada bajo la clave actual se buscan las anteriores, de la
+más reciente a la más vieja. Ese orden importa — quien pasó por varias versiones tiene datos en
+varias claves, y los buenos son los de la última que usó. Las claves viejas no se borran, quedan
+como respaldo (`src/lib/storage.ts`).
 
 **Al cerrar la pestaña solo se guarda si hay cambios propios sin escribir.** Sin esa condición,
 una pestaña que nunca tocó nada igual escribiría su copia al cerrarse y pisaría lo que guardó
@@ -155,7 +157,7 @@ borra el historial**, así que conviene exportar una copia desde Ajustes cada ta
 ## Desarrollo
 
 ```bash
-npm test          # 137 tests unitarios
+npm test          # 139 tests unitarios
 npm run typecheck # TypeScript en modo strict
 npm run build
 ```
