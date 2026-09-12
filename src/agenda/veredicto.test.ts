@@ -9,6 +9,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
  */
 
 const pendientes: { id: number; schedule?: { at?: Date } }[] = [];
+const enLaBarra: { id: number }[] = [];
 
 vi.mock('../nativo/plataforma', () => ({
   esNativa: () => true,
@@ -18,6 +19,7 @@ vi.mock('../nativo/plataforma', () => ({
 vi.mock('@capacitor/local-notifications', () => ({
   LocalNotifications: {
     getPending: async () => ({ notifications: pendientes }),
+    getDeliveredNotifications: async () => ({ notifications: enLaBarra }),
     schedule: async () => ({ notifications: [] }),
     cancel: async () => {},
     checkPermissions: async () => ({ display: 'granted' }),
@@ -36,6 +38,7 @@ beforeEach(async () => {
   await db.delete();
   await db.open();
   pendientes.length = 0;
+  enLaBarra.length = 0;
 });
 
 describe('qué pasó con el aviso de prueba', () => {
@@ -43,34 +46,38 @@ describe('qué pasó con el aviso de prueba', () => {
     expect(await quePasoConLaPrueba(nueve)).toBe('sin-prueba');
   });
 
-  it('nunca inventa que se disparó un aviso que no existió', async () => {
-    // Android no lo tiene anotado y la app tampoco programó nada: eso es
-    // "no hay prueba", no "se disparó".
-    pendientes.length = 0;
-    expect(await quePasoConLaPrueba(nueve)).not.toBe('se-disparo');
+  it('nunca dice que llegó un aviso que no existió', async () => {
+    expect(await quePasoConLaPrueba(nueve)).toBe('sin-prueba');
   });
 
   it('antes de la hora, está esperando', async () => {
     await probarElAviso(nueve);
-    pendientes.push({ id: ID_DE_PRUEBA, schedule: { at: new Date(2026, 8, 15, 9, 1) } });
     expect(await quePasoConLaPrueba(nueve)).toBe('esperando');
   });
 
-  it('si Android lo sigue teniendo anotado y la hora pasó, no sonó', async () => {
+  it('si está en la barra de notificaciones, llegó', async () => {
+    await probarElAviso(nueve);
+    enLaBarra.push({ id: ID_DE_PRUEBA });
+    expect(await quePasoConLaPrueba(nueveYDos)).toBe('llego');
+  });
+
+  it('pasó la hora y no está en la barra: no aparece', async () => {
+    await probarElAviso(nueve);
+    expect(await quePasoConLaPrueba(nueveYDos)).toBe('no-aparece');
+  });
+
+  it('no se confunde con otro aviso que esté en la barra', async () => {
+    await probarElAviso(nueve);
+    enLaBarra.push({ id: 12345 });
+    expect(await quePasoConLaPrueba(nueveYDos)).toBe('no-aparece');
+  });
+
+  it('lo que el plugin tiene guardado no cuenta como prueba de que sonó', async () => {
+    // El plugin no borra el aviso de su registro cuando se dispara, así que
+    // `getPending` dice lo mismo haya sonado o no. Si el veredicto se apoyara
+    // ahí, diría "llegó" sin que nadie haya visto nada.
     await probarElAviso(nueve);
     pendientes.push({ id: ID_DE_PRUEBA, schedule: { at: new Date(2026, 8, 15, 9, 1) } });
-    expect(await quePasoConLaPrueba(nueveYDos)).toBe('no-sono');
-  });
-
-  it('si Android ya no lo tiene y la hora pasó, se disparó', async () => {
-    await probarElAviso(nueve);
-    pendientes.length = 0;
-    expect(await quePasoConLaPrueba(nueveYDos)).toBe('se-disparo');
-  });
-
-  it('no confunde la prueba con otro aviso que ande dando vueltas', async () => {
-    await probarElAviso(nueve);
-    pendientes.push({ id: 12345, schedule: { at: new Date(2026, 8, 15, 9, 1) } });
-    expect(await quePasoConLaPrueba(nueveYDos)).toBe('se-disparo');
+    expect(await quePasoConLaPrueba(nueveYDos)).toBe('no-aparece');
   });
 });

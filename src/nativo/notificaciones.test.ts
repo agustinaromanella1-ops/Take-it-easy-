@@ -22,7 +22,7 @@ vi.mock('./plataforma', () => ({
   plataforma: () => (esNativaAhora ? 'android' : 'web'),
 }));
 
-const { programar } = await import('./notificaciones');
+const { mostrarAhora, programar } = await import('./notificaciones');
 
 const cuando = new Date(2026, 8, 15, 7, 30);
 
@@ -55,6 +55,30 @@ describe('programar un aviso', () => {
     const n = await loProgramado();
     expect(n.title).toBe('Take It Easy');
     expect(n.body).toBe('Tenés una nota para hoy.');
+  });
+
+  it('el aviso inmediato tampoco pide alarma exacta', async () => {
+    // No lleva alarma, pero el plugin mira la opción igual: sin ella abre la
+    // pantalla «Alarmas y recordatorios» del sistema aunque el aviso sea para
+    // ahora mismo. Es el defecto que apareció en el teléfono.
+    await mostrarAhora(9, { caso: 'sin-materia' });
+    const n = plugin.schedule.mock.calls[0][0].notifications[0];
+    expect(n.isExactNotification).toBe(false);
+  });
+
+  it('el aviso inmediato no lleva hora', async () => {
+    await mostrarAhora(9, { caso: 'sin-materia' });
+    expect(plugin.schedule.mock.calls[0][0].notifications[0].schedule).toBeUndefined();
+  });
+
+  it('los dos caminos mandan exactamente las mismas opciones, salvo la hora', async () => {
+    // Que se armen en un solo lugar es lo que evita que uno se quede atrás
+    // cuando el otro se corrige.
+    await mostrarAhora(9, { caso: 'sin-materia' });
+    await programar(9, { caso: 'sin-materia' }, cuando);
+    const [inmediato, conHora] = plugin.schedule.mock.calls.map((c) => c[0].notifications[0]);
+    const { schedule: _, ...restoDelProgramado } = conHora;
+    expect(inmediato).toEqual(restoDelProgramado);
   });
 
   it('en el navegador no programa nada', async () => {

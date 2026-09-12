@@ -178,18 +178,21 @@ export default function Ajustes({ verInstructivo }: { verInstructivo: () => void
           si llega el primero y no el segundo.
         </p>
 
-        {quePaso === 'no-sono' && (
+        {quePaso === 'no-aparece' && (
           <p className="aviso">
-            El aviso que programaste sigue anotado en Android y la hora ya pasó:
-            la alarma no se disparó. Eso no lo decide la app. Lo frena el ahorro
-            de batería del teléfono, que la cierra del todo y se lleva la alarma
-            con ella.
+            La hora del aviso que programaste ya pasó y no está en la barra de
+            notificaciones. Si no lo borraste vos, no llegó.
+            <br />
+            <br />
+            Lo más probable en este teléfono: si lo sacaste de las recientes, se
+            cerró del todo y se llevó la alarma. Probá de nuevo dejando la app
+            abierta atrás, sólo bloqueando la pantalla. Si así llega, lo que hay
+            que tocar es el ahorro de batería y el inicio automático.
           </p>
         )}
-        {quePaso === 'se-disparo' && (
+        {quePaso === 'llego' && (
           <p className="hecho2">
-            El último aviso de prueba sí se disparó: Android ya no lo tiene
-            anotado.
+            El aviso de prueba llegó: está en la barra de notificaciones.
           </p>
         )}
         {quePaso === 'esperando' && (

@@ -3,8 +3,8 @@ import { guardarPreferencia, leerPreferencia } from '../datos/preferencias';
 import {
   cancelar,
   hayNotificaciones,
+  estaEnLaBarra,
   mostrarAhora,
-  paraCuandoLoTiene,
   pedirPermiso,
   programadas,
   programar,
@@ -87,30 +87,28 @@ export async function elSistemaLoTiene(): Promise<boolean> {
 const CUANDO_LA_PRUEBA = 'prueba-de-aviso';
 
 /**
- * Qué pasó con el aviso de prueba, mirado después. Es la pregunta que separa
- * las dos causas que quedan cuando el aviso inmediato sí llega:
+ * Qué pasó con el aviso de prueba, mirado después de cerrar la app.
  *
- * - `no-sono`: Android lo sigue teniendo anotado y la hora ya pasó. La alarma
- *   no se disparó. Eso no lo decide la app: lo decide el ahorro de batería del
- *   teléfono, que la mató antes.
- * - `se-disparo`: Android ya no lo tiene, así que lo disparó. Si no se vio, el
- *   aviso se mostró y se fue.
- * - `esperando`: todavía no es la hora.
- * - `sin-prueba`: no hay ninguna programada.
+ * Lo único que se puede afirmar es lo positivo: si el aviso está en la barra de
+ * notificaciones, llegó. Lo otro no se puede afirmar, y conviene no inventarlo:
+ * el plugin no borra el aviso de su registro cuando se dispara, y su idea de
+ * «ya se disparó» es sólo comparar la hora con el reloj. Preguntarle eso
+ * devuelve lo mismo haya sonado o no, así que una pantalla que lo usara para
+ * decir «la alarma no se disparó» mentiría la mitad de las veces.
+ *
+ * Por eso `no-aparece` dice lo que se ve y no la causa: pasó la hora y el aviso
+ * no está en la barra. Si no lo borró ella, no llegó.
  */
-export type QuePaso = 'esperando' | 'no-sono' | 'se-disparo' | 'sin-prueba';
+export type QuePaso = 'esperando' | 'llego' | 'no-aparece' | 'sin-prueba';
 
 export async function quePasoConLaPrueba(ahora = new Date()): Promise<QuePaso> {
   if (!hayNotificaciones()) return 'sin-prueba';
 
-  // Sin esto, "Android no lo tiene anotado" y "nunca se programó una prueba"
-  // se ven iguales, y la pantalla diría que se disparó un aviso que no existió.
   const programadaPara = await leerPreferencia<number>(CUANDO_LA_PRUEBA);
   if (programadaPara === undefined) return 'sin-prueba';
 
-  const cuando = await paraCuandoLoTiene(ID_DE_PRUEBA);
-  if (!cuando) return programadaPara > ahora.getTime() ? 'sin-prueba' : 'se-disparo';
-  return cuando.getTime() > ahora.getTime() ? 'esperando' : 'no-sono';
+  if (await estaEnLaBarra(ID_DE_PRUEBA)) return 'llego';
+  return programadaPara > ahora.getTime() ? 'esperando' : 'no-aparece';
 }
 
 /** El texto exacto que se va a ver, para poder compararlo con lo que llegue. */

@@ -59,18 +59,28 @@ export async function programar(
   cuando: Date,
 ): Promise<void> {
   if (!hayNotificaciones()) return;
-  const { titulo, cuerpo } = textoDelAviso(aviso);
   await LocalNotifications.schedule({
-    notifications: [
-      {
-        id: idNotificacion,
-        title: titulo,
-        body: cuerpo,
-        isExactNotification: false,
-        schedule: { at: cuando, allowWhileIdle: true },
-      },
-    ],
+    notifications: [{ ...elAviso(idNotificacion, aviso), schedule: { at: cuando, allowWhileIdle: true } }],
   });
+}
+
+/**
+ * Todo aviso que manda la app se arma acá, tenga hora o no.
+ *
+ * Estuvieron un rato armados en dos lugares, y el de mostrar ahora se quedó sin
+ * `isExactNotification: false`. Resultado: tocar «Probar ahora» —un aviso
+ * inmediato, sin ninguna alarma de por medio— abría igual la pantalla «Alarmas
+ * y recordatorios» del sistema, con el interruptor gris. La opción es la misma
+ * para los dos casos, así que se pone una vez.
+ */
+function elAviso(idNotificacion: number, aviso: Aviso) {
+  const { titulo, cuerpo } = textoDelAviso(aviso);
+  return {
+    id: idNotificacion,
+    title: titulo,
+    body: cuerpo,
+    isExactNotification: false,
+  };
 }
 
 /**
@@ -81,10 +91,7 @@ export async function programar(
  */
 export async function mostrarAhora(idNotificacion: number, aviso: Aviso): Promise<void> {
   if (!hayNotificaciones()) return;
-  const { titulo, cuerpo } = textoDelAviso(aviso);
-  await LocalNotifications.schedule({
-    notifications: [{ id: idNotificacion, title: titulo, body: cuerpo }],
-  });
+  await LocalNotifications.schedule({ notifications: [elAviso(idNotificacion, aviso)] });
 }
 
 export async function cancelar(idNotificacion: number): Promise<void> {
@@ -100,16 +107,15 @@ export async function programadas(): Promise<number[]> {
 }
 
 /**
- * Para cuándo dice el sistema que tiene anotado un aviso, o `undefined` si no
- * lo tiene. Sirve para la pregunta que de verdad importa cuando un aviso no
- * llega: si Android sigue teniéndolo anotado después de la hora, la alarma no
- * se disparó.
+ * Si el aviso está ahora mismo en la barra de notificaciones del teléfono.
+ *
+ * Es lo único que prueba de verdad que un aviso llegó. `getPending()` no sirve
+ * para eso: devuelve lo que el plugin tiene guardado, y el plugin no borra el
+ * registro cuando el aviso se dispara. Su idea de «ya se disparó» es sólo
+ * comparar la hora con el reloj, así que diría lo mismo haya sonado o no.
  */
-export async function paraCuandoLoTiene(idNotificacion: number): Promise<Date | undefined> {
-  if (!hayNotificaciones()) return undefined;
-  const { notifications } = await LocalNotifications.getPending();
-  const suya = notifications.find((n) => n.id === idNotificacion);
-  const at = suya?.schedule?.at;
-  if (!at) return undefined;
-  return at instanceof Date ? at : new Date(at);
+export async function estaEnLaBarra(idNotificacion: number): Promise<boolean> {
+  if (!hayNotificaciones()) return false;
+  const { notifications } = await LocalNotifications.getDeliveredNotifications();
+  return notifications.some((n) => n.id === idNotificacion);
 }
