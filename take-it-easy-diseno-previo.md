@@ -534,6 +534,30 @@ tiene el mismo id.
 identifica una notificación con un entero de 32 bits, así que el uuid de la
 entrada no sirve; y hace falta recordarlo para poder cancelarla.
 
+**Dos opciones sin las que el aviso no suena, y que no se ven en ninguna
+pantalla.** Quitar el permiso del manifiesto no alcanza: hay que pedirle al
+plugin lo mismo que se decidió.
+
+- `isExactNotification: false`. Viene en `true` por defecto, y con eso el
+  plugin, al ver que la app no puede programar alarmas exactas, abre la
+  pantalla «Alarmas y recordatorios» del sistema para que la docente dé el
+  permiso. Como la app lo saca del manifiesto a propósito, esa pantalla
+  aparece con el interruptor gris: un callejón sin salida que abría la app.
+- `allowWhileIdle: true`. Sin esto el plugin programa con `AlarmManager.RTC`,
+  que además de inexacto **no despierta al teléfono**, así que Doze lo
+  posterga sin límite: un aviso para las 7:30 en un teléfono guardado no
+  llega nunca. Con esto usa `setAndAllowWhileIdle(RTC_WAKEUP)`, que despierta
+  y se entrega durante Doze. No hace falta ningún permiso: el permiso
+  especial lo piden las variantes *exactas*, no ésta.
+
+El precio es el que la app ya prometía: Android entrega como mucho uno de
+estos cada nueve minutos por app. Sigue siendo inexacto, y por eso ningún
+texto promete una hora (1.5).
+
+Las dos están fijadas por tests, porque son invisibles: un `schedule({ at })`
+pelado compila, anda en el navegador, pasa la revisión y en el teléfono no
+llega nunca.
+
 ### 5.5 Dictado por voz
 
 El dictado es local o no existe (1.2). Es la regla que decide qué plugin se

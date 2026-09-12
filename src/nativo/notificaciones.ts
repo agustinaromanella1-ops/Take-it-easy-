@@ -32,9 +32,26 @@ export async function pedirPermiso(): Promise<boolean> {
 }
 
 /**
- * Sin `allowWhileIdle` y sin pedir la alarma exacta de Android: el recordatorio
- * puede llegar unos minutos más tarde, y a cambio la docente no tiene que ir a
- * una pantalla de ajustes del sistema a dar un permiso especial.
+ * Inexacto a propósito, pero entregado igual. Las dos opciones de abajo no son
+ * ajustes finos: sin ellas el aviso no suena.
+ *
+ * `isExactNotification: false` — la opción viene en `true` por defecto, y con
+ * eso el plugin, al ver que la app no puede programar alarmas exactas, abre la
+ * pantalla de ajustes «Alarmas y recordatorios» del sistema para que la docente
+ * dé el permiso. Como la app lo saca del manifiesto a propósito, esa pantalla
+ * aparece con el interruptor gris: es un callejón sin salida que abrimos
+ * nosotros. Pidiendo inexacto desde el principio, no hay pantalla que abrir.
+ *
+ * `allowWhileIdle: true` — sin esto el plugin programa con `AlarmManager.RTC`,
+ * que además de inexacto **no despierta al teléfono**, así que Doze lo posterga
+ * sin límite: un aviso para las 7:30 en un teléfono guardado no llega. Con esto
+ * usa `setAndAllowWhileIdle(RTC_WAKEUP)`, que sí despierta y sí se entrega
+ * durante Doze. No hace falta ningún permiso para eso: el permiso especial lo
+ * piden las variantes *exactas*, no ésta.
+ *
+ * El precio es el que la app ya venía prometiendo: Android entrega como mucho
+ * uno de estos cada nueve minutos por app, así que puede llegar unos minutos
+ * más tarde. Por eso ningún texto promete una hora (1.5).
  */
 export async function programar(
   idNotificacion: number,
@@ -45,7 +62,13 @@ export async function programar(
   const { titulo, cuerpo } = textoDelAviso(aviso);
   await LocalNotifications.schedule({
     notifications: [
-      { id: idNotificacion, title: titulo, body: cuerpo, schedule: { at: cuando } },
+      {
+        id: idNotificacion,
+        title: titulo,
+        body: cuerpo,
+        isExactNotification: false,
+        schedule: { at: cuando, allowWhileIdle: true },
+      },
     ],
   });
 }
