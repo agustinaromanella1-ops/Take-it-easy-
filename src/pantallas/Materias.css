@@ -1,0 +1,257 @@
+.materias .volver {
+  background: none;
+  border: none;
+  padding: 0 0 10px;
+  font-family: inherit;
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--primario);
+  cursor: pointer;
+}
+
+.materias .vacio {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 10px;
+}
+
+.materias .invitacion {
+  font-size: 18px;
+  font-weight: 700;
+}
+
+.materias .vacio .detalle {
+  font-size: 15px;
+  line-height: 1.55;
+  color: var(--secundario);
+}
+
+.materias .lista {
+  list-style: none;
+  margin-top: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.materias .materia {
+  flex: 1;
+  min-width: 0;
+  text-align: left;
+  background: none;
+  border: none;
+  padding: 14px 8px 14px 16px;
+  font-family: inherit;
+  cursor: pointer;
+  display: block;
+}
+
+.materias .materia .titulo {
+  display: block;
+  font-size: 17px;
+  font-weight: 700;
+  color: var(--texto);
+}
+
+.materias .materia .detalle {
+  display: block;
+  margin-top: 3px;
+  font-size: 14px;
+  color: var(--secundario);
+}
+
+.materias .formulario {
+  margin-top: 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.materias .formulario label,
+.materias .colores {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.materias .formulario span,
+.materias .colores > span {
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--secundario);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.materias .formulario input {
+  width: 100%;
+  padding: 12px;
+  border: 1px solid var(--borde);
+  border-radius: 12px;
+  background: var(--superficie);
+  color: var(--texto);
+  font-family: inherit;
+  font-size: 16px;
+  font-weight: 600;
+}
+
+.materias .formulario input:focus {
+  outline: 2px solid var(--lila);
+  outline-offset: 1px;
+}
+
+.materias .fila-campos {
+  display: flex;
+  gap: 10px;
+}
+
+.materias .fila-campos label {
+  flex: 1;
+  min-width: 0;
+}
+
+.materias .colores > div {
+  display: flex;
+  gap: 8px;
+}
+
+.materias .color {
+  flex: 1;
+  height: 42px;
+  border: 2px solid transparent;
+  border-radius: 12px;
+  cursor: pointer;
+  font-family: inherit;
+  font-size: 10px;
+  font-weight: 700;
+  color: transparent;
+}
+
+.materias .color.lila { background: var(--lila); }
+.materias .color.rosa { background: var(--rosa); }
+.materias .color.durazno { background: var(--durazno); }
+.materias .color.celeste { background: var(--celeste); }
+.materias .color.noche { background: var(--noche); }
+
+.materias .color.elegido { border-color: var(--texto); }
+.materias .color.elegido.lila { color: var(--lila-osc); }
+.materias .color.elegido.rosa { color: var(--rosa-osc); }
+.materias .color.elegido.durazno { color: var(--durazno-osc); }
+.materias .color.elegido.celeste { color: var(--celeste-osc); }
+.materias .color.elegido.noche { color: var(--noche-osc); }
+
+.materias .archivadas {
+  margin-top: 26px;
+  padding-top: 16px;
+  border-top: 1px solid var(--borde);
+}
+
+.materias .archivadas h2 {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--secundario);
+  text-transform: uppercase;
+  letter-spacing: 0.6px;
+}
+
+.materias .archivadas ul {
+  list-style: none;
+  margin-top: 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+}
+
+.materias .archivadas li {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 11px 14px;
+  border: 1px solid var(--borde);
+  border-radius: 12px;
+  font-size: 15px;
+  color: var(--secundario);
+}
+
+.materias .archivadas span {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.materias .archivadas button {
+  background: none;
+  border: none;
+  padding: 0;
+  font-family: inherit;
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--primario);
+  cursor: pointer;
+  flex: none;
+}
+
+.materias .fila {
+  display: flex;
+  align-items: stretch;
+  gap: 0;
+  background: var(--superficie);
+  border: 1px solid var(--borde);
+  border-left: 5px solid var(--borde);
+  border-radius: 16px;
+  overflow: hidden;
+}
+
+.materias .fila.lila { border-left-color: var(--lila); }
+.materias .fila.rosa { border-left-color: var(--rosa); }
+.materias .fila.durazno { border-left-color: var(--durazno); }
+.materias .fila.celeste { border-left-color: var(--celeste); }
+.materias .fila.noche { border-left-color: var(--noche); }
+
+/* Archivar vive acá y no en la ficha: una materia recién creada no tiene nada
+   que archivar, y verlo ahí hacía dudar de si había quedado guardada. */
+.materias .fila .archivar {
+  flex: none;
+  align-self: center;
+  margin-right: 14px;
+  padding: 8px 4px;
+  background: none;
+  border: none;
+  font-family: inherit;
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--secundario);
+  cursor: pointer;
+}
+
+.materias .guardada {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 10px;
+  padding: 12px 14px;
+  background: var(--texto);
+  color: #fff;
+  border-radius: 12px;
+  font-size: 14px;
+}
+
+.materias .guardada span {
+  flex: 1;
+}
+
+.materias .guardada button {
+  flex: none;
+  background: none;
+  border: none;
+  padding: 0;
+  font-family: inherit;
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--lila);
+  cursor: pointer;
+}

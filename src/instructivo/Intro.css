@@ -1,0 +1,73 @@
+.intro {
+  min-height: 100dvh;
+  max-width: 480px;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  padding: 20px;
+}
+
+.intro .saltear {
+  align-self: flex-end;
+  background: none;
+  border: none;
+  padding: 8px 4px;
+  font-family: inherit;
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--secundario);
+  cursor: pointer;
+}
+
+.intro .contenido {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 14px;
+  padding-bottom: 40px;
+}
+
+/* El perrito de la bienvenida, alineado a la izquierda como el texto que lo
+   sigue, y un poco más grande que el de las otras pantallas. */
+.intro .perrito {
+  width: 150px;
+  margin: 0 0 4px;
+}
+
+.intro h1 {
+  font-size: 30px;
+  font-weight: 700;
+  letter-spacing: -0.4px;
+  line-height: 1.15;
+}
+
+.intro .contenido p {
+  font-size: 17px;
+  line-height: 1.55;
+  color: var(--secundario);
+}
+
+.intro .pie {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+
+.intro .puntos {
+  display: flex;
+  gap: 7px;
+  justify-content: center;
+}
+
+.intro .punto {
+  width: 7px;
+  height: 7px;
+  border-radius: 999px;
+  background: var(--borde);
+}
+
+.intro .punto.actual {
+  background: var(--primario);
+  width: 20px;
+}

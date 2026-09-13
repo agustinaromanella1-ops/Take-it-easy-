@@ -1,0 +1,155 @@
+.notas-alumno .promedio {
+  color: var(--primario);
+  font-weight: 700;
+}
+
+.notas-alumno .lineas {
+  list-style: none;
+  margin-top: 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.notas-alumno .linea {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 14px;
+  border-radius: 14px;
+  background: var(--superficie);
+  border: 1px solid var(--borde);
+}
+
+.notas-alumno .que {
+  flex: 1;
+  min-width: 0;
+}
+
+.notas-alumno .nombre {
+  display: block;
+  font-size: 15px;
+  font-weight: 700;
+}
+
+.notas-alumno .linea .detalle {
+  display: block;
+  margin-top: 2px;
+  font-size: 12px;
+  color: var(--secundario);
+}
+
+.notas-alumno .valor {
+  flex: none;
+  min-width: 52px;
+  padding: 7px 12px;
+  border-radius: 10px;
+  background: var(--lila);
+  color: var(--lila-osc);
+  text-align: center;
+  font-size: 16px;
+  font-weight: 700;
+}
+
+/* Las conceptuales no son un número y no tienen que parecerlo. */
+.notas-alumno .valor.conceptual {
+  background: var(--celeste);
+  color: var(--celeste-osc);
+  font-size: 13px;
+}
+
+/* Una evaluación sin nota es información, no un hueco: es lo que hay que ver
+   al cerrar la materia. */
+.notas-alumno .linea.sin .valor {
+  background: none;
+  border: 1px dashed var(--borde);
+  color: var(--secundario);
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.notas-alumno .ayuda {
+  margin-top: 12px;
+  font-size: 13px;
+  line-height: 1.5;
+  color: var(--secundario);
+}
+
+.notas-alumno h2 {
+  margin-top: 26px;
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 0.6px;
+  text-transform: uppercase;
+  color: var(--secundario);
+}
+
+.notas-alumno .final h2 {
+  margin-bottom: 2px;
+}
+
+.notas-alumno .poner {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-top: 10px;
+}
+
+.notas-alumno .nota {
+  width: 100px;
+  padding: 14px;
+  border: 1px solid var(--borde);
+  border-radius: 12px;
+  background: var(--superficie);
+  color: var(--texto);
+  font-family: inherit;
+  font-size: 22px;
+  font-weight: 700;
+  text-align: center;
+}
+
+.notas-alumno .nota.error {
+  border-color: var(--rosa-osc);
+  background: var(--rosa);
+}
+
+.notas-alumno .de {
+  font-size: 13px;
+  color: var(--secundario);
+}
+
+.notas-alumno .aviso {
+  margin-top: 10px;
+  padding: 12px 14px;
+  border-radius: 12px;
+  background: var(--durazno);
+  color: var(--durazno-osc);
+  font-size: 14px;
+}
+
+.notas-alumno .obs {
+  list-style: none;
+  margin-top: 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.notas-alumno .obs li {
+  padding: 12px 14px;
+  border-radius: 14px;
+  background: var(--superficie);
+  border: 1px solid var(--borde);
+}
+
+.notas-alumno .obs .fecha {
+  font-size: 12px;
+  color: var(--secundario);
+}
+
+.notas-alumno .obs .texto {
+  margin-top: 4px;
+  font-size: 15px;
+  line-height: 1.5;
+  overflow-wrap: anywhere;
+}
