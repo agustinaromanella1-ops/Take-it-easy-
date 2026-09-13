@@ -14,9 +14,13 @@ import { esNativa } from './plataforma';
  * El archivo tiene nombres de alumnos, así que el destino lo elige ella y la
  * app no lo deja en ninguna carpeta fija.
  */
-export async function guardarArchivo(nombre: string, contenido: string): Promise<void> {
+export async function guardarArchivo(
+  nombre: string,
+  contenido: string,
+  tipo = 'application/json',
+): Promise<void> {
   if (!esNativa()) {
-    const url = URL.createObjectURL(new Blob([contenido], { type: 'application/json' }));
+    const url = URL.createObjectURL(new Blob([contenido], { type: tipo }));
     const enlace = document.createElement('a');
     enlace.href = url;
     enlace.download = nombre;
@@ -32,8 +36,5 @@ export async function guardarArchivo(nombre: string, contenido: string): Promise
     encoding: Encoding.UTF8,
   });
 
-  await Share.share({
-    title: 'Copia de seguridad de Take It Easy',
-    files: [escrito.uri],
-  });
+  await Share.share({ title: nombre, files: [escrito.uri] });
 }

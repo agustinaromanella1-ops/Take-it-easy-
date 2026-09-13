@@ -414,6 +414,37 @@ eso la exportación manual no es una comodidad: es la única red que queda.
 
 ---
 
+### 2.10.1 La planilla de notas
+
+Aparte de la copia de seguridad —que es para volver atrás y no para leer—, la
+materia exporta su planilla de notas para abrirla en una hoja de cálculo: una
+fila por alumno, una columna por evaluación en orden de fecha, y al final el
+promedio y la nota final.
+
+**Sale en CSV y no en .xlsx.** Un .xlsx es un zip de archivos XML: armarlo sin
+una biblioteca es escribir un zip a mano, y con una biblioteca es sumarle megas
+a una app que pesa cuatro. El CSV lo abre Excel con doble clic, lo abre Google
+Sheets, y desde ahí se guarda como .xlsx en un toque.
+
+Tres detalles que deciden si el archivo se abre bien o se abre roto, y los tres
+están en los tests:
+
+- **Punto y coma entre columnas, no coma.** Excel en castellano usa la coma
+  como separador decimal, así que espera punto y coma entre celdas. Con comas,
+  un «7,5» se parte en dos celdas y corre la fila entera.
+- **Coma decimal.** Con punto, Excel en castellano lee «7.5» como texto y no
+  como número, y no se puede promediar una columna de textos.
+- **La marca de UTF-8 al principio.** Sin ella, «Benegas, Tobías» se abre como
+  «Benegas, TobÃ­as».
+
+Y las celdas que traen punto y coma o comillas van entrecomilladas: una
+evaluación llamada «Parcial 1; recuperatorio» corre toda la fila una columna.
+
+**No lleva observaciones.** Son privadas, y una planilla se manda por correo.
+
+Sale por el menú de compartir, como la copia: tiene nombres de alumnos, así que
+el destino lo elige la docente y la app no la deja en ninguna carpeta fija.
+
 ## 3. El asistente de IA, retirado
 
 El diseño de este documento incluía un asistente de inteligencia artificial

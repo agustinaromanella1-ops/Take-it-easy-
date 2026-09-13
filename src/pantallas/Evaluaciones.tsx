@@ -5,6 +5,8 @@ import { enPalabras, hoy } from '../fecha';
 import { CONCEPTUAL_COMUN, NUMERICA_1_10, comoSeLlamaLaEscala } from '../datos/escalas';
 import { crearEvaluacion, evaluacionesDeMateria } from '../datos/evaluaciones';
 import { comoSeLlama, materia as buscarMateria } from '../datos/materias';
+import { planillaDeNotas } from '../datos/planilla';
+import { guardarArchivo } from '../nativo/archivos';
 import {
   TIPOS_DE_FABRICA,
   olvidarTipo,
@@ -42,6 +44,8 @@ export default function Evaluaciones({ materiaId, volver, abrir, alCrear }: Prop
   // Los que escribió ella alguna vez. Se leen una sola vez al abrir la
   // pantalla y se actualizan al guardar uno nuevo.
   const [propios, setPropios] = useState<string[]>([]);
+  const [exportando, setExportando] = useState(false);
+  const [sinNada, setSinNada] = useState(false);
   const [escribiendoTipo, setEscribiendoTipo] = useState(false);
   const [tipoNuevo, setTipoNuevo] = useState('');
 
@@ -81,6 +85,26 @@ export default function Evaluaciones({ materiaId, volver, abrir, alCrear }: Prop
       alCrear(id, comoSeLlamo);
     } finally {
       setGuardando(false);
+    }
+  }
+
+  /**
+   * La planilla sale por el menú de compartir: tiene nombres de alumnos, así
+   * que el destino lo elige ella y la app no la deja en ninguna carpeta fija.
+   */
+  async function exportar() {
+    if (exportando) return;
+    setExportando(true);
+    setSinNada(false);
+    try {
+      const planilla = await planillaDeNotas(materiaId);
+      if (planilla.alumnos === 0) {
+        setSinNada(true);
+        return;
+      }
+      await guardarArchivo(planilla.nombreDeArchivo, planilla.contenido, 'text/csv');
+    } finally {
+      setExportando(false);
     }
   }
 
@@ -259,6 +283,13 @@ export default function Evaluaciones({ materiaId, volver, abrir, alCrear }: Prop
         </ul>
       )}
 
+      {sinNada && (
+        <p className="aviso">
+          Esta materia todavía no tiene alumnos, así que la planilla saldría
+          vacía. Cargá la lista del curso primero.
+        </p>
+      )}
+
       <div className="pie">
         {previas.mostrarPista && (
           <Pista
@@ -277,6 +308,11 @@ export default function Evaluaciones({ materiaId, volver, abrir, alCrear }: Prop
         <button className="primario" onClick={() => setCreando(true)}>
           Nueva evaluación
         </button>
+        {evaluaciones.length > 0 && (
+          <button className="secundario" onClick={exportar} disabled={exportando}>
+            {exportando ? 'Armando la planilla…' : 'Exportar las notas'}
+          </button>
+        )}
       </div>
     </div>
   );

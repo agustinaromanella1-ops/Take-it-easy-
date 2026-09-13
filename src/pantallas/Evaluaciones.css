@@ -146,3 +146,13 @@
   font-size: 12px;
   cursor: pointer;
 }
+
+.evaluaciones .aviso {
+  margin-top: 14px;
+  padding: 12px 14px;
+  border-radius: 12px;
+  background: var(--durazno);
+  color: var(--durazno-osc);
+  font-size: 14px;
+  line-height: 1.45;
+}
