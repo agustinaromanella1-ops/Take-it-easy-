@@ -185,3 +185,21 @@
   color: var(--noche-osc);
   cursor: pointer;
 }
+
+/* La tarjeta de notas se toca. Se ve igual que la otra salvo por el pie, que
+   es lo único que anuncia que hay algo detrás. */
+.ficha .tarjeta.abre {
+  display: block;
+  width: 100%;
+  text-align: left;
+  font-family: inherit;
+  cursor: pointer;
+}
+
+.ficha .tarjeta .ver {
+  display: block;
+  margin-top: 8px;
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--primario);
+}

@@ -253,6 +253,30 @@ una app donde compartir ya no existe. Hay un test que guarda observaciones con
 la base vieja, abre con la nueva y comprueba las dos cosas: que el campo no
 está y que no se perdió nada de lo escrito.
 
+### 2.5.1 Las notas de un alumno, y la nota final
+
+Tocar la tarjeta de notas en la ficha abre el año entero de ese alumno en esa
+materia: cada evaluación con su nota, las conceptuales incluidas, las que
+todavía no rindió, y las observaciones. Es la pantalla de cerrar una materia, y
+existe porque hasta ahora eso había que armarlo en la cabeza abriendo
+evaluación por evaluación.
+
+**Van de la más vieja a la más nueva**, al revés que en el resto de la app. En
+las otras pantallas se busca la última para cargarle notas; acá se lee cómo fue
+el año.
+
+**Las evaluaciones sin nota se muestran, no se esconden.** Una que el alumno no
+rindió es justamente lo que hay que ver al cerrar.
+
+**La nota final la pone la docente.** La app no la calcula ni la sugiere: cada
+escuela pondera distinto, y una sugerencia se termina aceptando sin pensarla.
+El promedio que muestra arriba es una referencia y está dicho así. Lo único que
+se comprueba es que entre en la escala.
+
+Vive en la inscripción —el par alumno + materia—, que es exactamente lo que
+cierra. No está indexada, así que agregarla no cambió el esquema. Sacarla es
+distinto de poner un uno: vuelve a «todavía no cerrada».
+
 ### 2.6 Plantillas: el bloqueo del nombre
 
 Una `Plantilla` de ámbito `grupal` no puede contener un nombre de alumno

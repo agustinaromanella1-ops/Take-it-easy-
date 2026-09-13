@@ -35,9 +35,11 @@ interface Props {
   alumnoId: Id;
   materiaId: Id;
   volver: () => void;
+  /** Abre las notas de este alumno en esta materia, para cerrarla. */
+  verNotas: () => void;
 }
 
-export default function FichaAlumno({ alumnoId, materiaId, volver }: Props) {
+export default function FichaAlumno({ alumnoId, materiaId, volver, verNotas }: Props) {
   const datos = useLiveQuery(async () => {
     const [alumno, materia, materias, asistencia, promedio, observaciones] = await Promise.all([
       db.alumnos.get(alumnoId),
@@ -165,8 +167,10 @@ export default function FichaAlumno({ alumnoId, materiaId, volver }: Props) {
           </p>
         </div>
 
-        <div className="tarjeta">
-          <p className="rotulo">Promedio</p>
+        {/* La de promedio se toca: abre el año entero, evaluación por
+            evaluación, que es lo que hace falta para cerrar la materia. */}
+        <button className="tarjeta abre" onClick={verNotas}>
+          <p className="rotulo">Notas</p>
           <p className="valor">
             {promedio.valor === null ? '—' : comoSeEscribe(NUMERICA_1_10, promedio.valor)}
           </p>
@@ -174,14 +178,15 @@ export default function FichaAlumno({ alumnoId, materiaId, volver }: Props) {
             {promedio.numericas === 0 && promedio.conceptuales === 0
               ? 'Sin notas todavía'
               : [
-                  `${promedio.numericas} ${promedio.numericas === 1 ? 'numérica' : 'numéricas'}`,
+                  `promedio de ${promedio.numericas}`,
                   promedio.conceptuales > 0 &&
                     `${promedio.conceptuales} conceptual${promedio.conceptuales === 1 ? '' : 'es'} afuera`,
                 ]
                   .filter(Boolean)
                   .join(' · ')}
           </p>
-        </div>
+          <span className="ver">Ver todas →</span>
+        </button>
       </div>
 
       <h2>Observaciones</h2>

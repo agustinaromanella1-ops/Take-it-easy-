@@ -58,6 +58,12 @@ export interface Inscripcion {
   estado: 'activa' | 'baja';
   desde: FechaLocal;
   hasta?: FechaLocal;
+  /**
+   * La nota final de la materia, la que cierra. La pone la docente: es
+   * ponderada según su criterio y la app no la calcula ni la sugiere. No está
+   * indexada, así que agregarla no cambió el esquema.
+   */
+  notaFinal?: number;
 }
 
 export interface ClaseSesion {
