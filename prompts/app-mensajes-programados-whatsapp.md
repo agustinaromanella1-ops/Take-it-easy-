@@ -7,16 +7,16 @@
 
 ## CONTEXTO
 
-Quiero que construyas una app que me permita **escribir mensajes ahora y programar su envío
-por WhatsApp para un día y horario elegidos**.
+Quiero que construyas una **app de celular** (iOS y Android) que me permita **escribir mensajes
+ahora y programar su envío por WhatsApp para un día y horario elegidos**.
 
 El problema que resuelve: muchas veces quiero responder algo en el momento en que lo pienso,
 pero no es el día ni la hora conveniente para que le llegue a la otra persona (es tarde, es
 fin de semana, es un mensaje de trabajo un domingo, es un saludo que corresponde mañana).
 Hoy la alternativa es acordarse después — y uno se olvida.
 
-La idea es poder dejar **todos los mensajes armados y programados**, y que salgan solos
-en el día y hora que elegí.
+La idea es poder dejar **todos los mensajes armados y programados**, y que aparezcan solos
+en el día y hora que elegí, listos para salir.
 
 ## USUARIA Y CONTEXTO DE USO
 
@@ -25,30 +25,30 @@ en el día y hora que elegí.
 - Mobile-first. La mayor parte del uso es desde el celular, en momentos sueltos.
 - Idioma de la interfaz: español rioplatense, tono cercano y directo.
 
-## RESTRICCIÓN TÉCNICA IMPORTANTE — LEELA ANTES DE DISEÑAR
+## CÓMO FUNCIONA EL ENVÍO — LEELO ANTES DE DISEÑAR
 
-WhatsApp **no permite** que una app de terceros envíe mensajes automáticamente desde una
-cuenta personal. Las librerías no oficiales que automatizan WhatsApp Web violan los términos
-de servicio y llevan a que te baneen el número. **No uses ese camino.**
+La app funciona con el modelo **"listo para enviar"**:
 
-Implementá el **Modo A** como base del producto, y dejá el **Modo B** preparado como opción:
+1. Guardo el mensaje y el momento elegido.
+2. Llegada la hora, la app dispara una **notificación push local**, incluso con la app cerrada.
+3. Al tocar la notificación, se abre **WhatsApp directo en el chat de esa persona, con el texto
+   ya cargado en el campo de escritura** (vía deep link `whatsapp://send?phone=<e164>&text=<texto>`,
+   con fallback a `https://wa.me/<numero>?text=<texto>`).
+4. Solo toco "enviar". Un toque.
 
-**Modo A — "Listo para enviar" (recomendado, es el MVP):**
-La app guarda el mensaje y el momento elegido. Llegada la hora, dispara una notificación
-push. Al tocarla, se abre WhatsApp directo en el chat de esa persona **con el texto ya
-cargado en el campo de escritura** (vía deep link `https://wa.me/<numero>?text=<texto>`
-o el esquema `whatsapp://send?phone=...&text=...`). La usuaria solo toca "enviar".
-Es un solo toque, es 100% legítimo, y funciona con cualquier número de WhatsApp personal.
+Este es el único camino que tenés que implementar.
 
-**Modo B — Envío realmente automático (opcional, para cuentas de negocio):**
-Usa la **WhatsApp Cloud API** oficial de Meta. Requiere un número registrado como WhatsApp
-Business y, si pasaron más de 24 horas desde el último mensaje del contacto, solo se pueden
-enviar **plantillas previamente aprobadas** por Meta. Dejá la arquitectura lista para
-enchufar esto (una interfaz `MessageSender` con dos implementaciones), pero **no lo pongas
-como camino por defecto** ni prometas en la UI un envío automático que no se puede cumplir.
+**Por qué, para que no te desvíes:** WhatsApp no permite que una app de terceros envíe mensajes
+automáticamente desde una cuenta personal. Las librerías no oficiales que automatizan WhatsApp Web
+(`whatsapp-web.js`, `Baileys` y similares) violan los términos de servicio y llevan a que baneen
+el número. La única alternativa con envío realmente automático es la **WhatsApp Cloud API** oficial
+de Meta, que exige un número registrado como WhatsApp Business y, pasadas 24 h desde el último
+mensaje del contacto, solo admite plantillas aprobadas por Meta — no sirve para uso personal.
+Así que: deep link con confirmación en un toque, y nada más.
 
-Sé honesto en la interfaz: en ningún momento le digas a la usuaria que el mensaje "se envió
-solo" si en realidad quedó esperando su confirmación.
+Sé honesto en la interfaz: en ningún momento le digas a la usuaria que el mensaje "se envió solo".
+Lo que la app promete es "te lo dejo listo en el momento justo", y eso es exactamente lo que hace.
+Que el copy de toda la app refleje esa promesa.
 
 ## FUNCIONALIDADES — MVP
 
@@ -74,10 +74,12 @@ solo" si en realidad quedó esperando su confirmación.
    - Cancelar (borrar) con confirmación y opción de deshacer por unos segundos.
 
 4. **Disparo a la hora elegida**
-   - Notificación push local a la hora exacta, incluso con la app cerrada.
+   - Notificación push local a la hora exacta, con la app cerrada o el celular bloqueado.
    - La notificación muestra a quién va dirigido y el principio del texto.
-   - Acción principal de la notificación: abrir WhatsApp con el mensaje precargado.
+   - Acción principal: abrir WhatsApp con el mensaje precargado.
    - Acción secundaria: "Posponer 1 hora".
+   - Al volver a la app después de abrir WhatsApp, preguntar "¿Lo enviaste?" para marcar el
+     estado. Una sola vez, sin insistir.
 
 5. **Historial**
    - Mensajes ya enviados (o marcados como enviados), con fecha real de envío.
@@ -92,11 +94,11 @@ solo" si en realidad quedó esperando su confirmación.
 
 - Mensajes recurrentes (todos los lunes, todos los meses, cada cumpleaños).
 - Plantillas reutilizables con variables tipo `{nombre}`.
-- Envío al mismo texto a varios destinatarios (cada uno como mensaje individual, nunca como difusión masiva).
+- Mismo texto a varios destinatarios (cada uno como mensaje individual, nunca como difusión masiva).
 - Ventana de "horario permitido": nunca programar fuera de, por ejemplo, 9 a 21 h, y si elegís
   una hora fuera de esa franja que te sugiera la siguiente hora válida.
-- Adjuntar una imagen (tené en cuenta que el deep link de WhatsApp no soporta adjuntos: en Modo A
-  habría que copiar la imagen al portapapeles o usar el share sheet del sistema).
+- Adjuntar una imagen (ojo: el deep link de WhatsApp no soporta adjuntos, habría que resolverlo
+  con el share sheet del sistema).
 - Backup y sincronización entre dispositivos.
 
 ## MODELO DE DATOS
@@ -109,7 +111,7 @@ ScheduledMessage
   body            text
   scheduledAt     datetime       // guardado en UTC
   timezone        string         // IANA, ej "America/Argentina/Buenos_Aires"
-  status          enum: draft | scheduled | fired | sent | skipped | failed
+  status          enum: draft | scheduled | fired | sent | skipped
   createdAt       datetime
   firedAt         datetime?      // cuándo sonó la notificación
   sentAt          datetime?      // cuándo se confirmó el envío
@@ -119,8 +121,8 @@ ScheduledMessage
 
 **Estados y transiciones:**
 `draft` → (se le asigna fecha) → `scheduled` → (llegó la hora, sonó la notificación) → `fired`
-→ (la usuaria abrió WhatsApp y volvió confirmando) → `sent`.
-Desde `fired`, si la usuaria descarta, puede ir a `skipped` o volver a `scheduled` al posponer.
+→ (abrió WhatsApp y confirmó) → `sent`.
+Desde `fired`, si descarta puede ir a `skipped`, o volver a `scheduled` al posponer.
 
 ## PANTALLAS
 
@@ -130,7 +132,7 @@ Desde `fired`, si la usuaria descarta, puede ir a `skipped` o volver a `schedule
 3. **Detalle del mensaje** — texto completo, cuándo sale, y acciones: enviar ahora, reprogramar,
    duplicar, cancelar.
 4. **Historial** — enviados y omitidos.
-5. **Ajustes** — zona horaria, horario permitido, permisos de notificaciones, formato de fecha.
+5. **Ajustes** — zona horaria, permisos de notificaciones, formato de fecha.
 
 ## DETALLES DE UX QUE IMPORTAN
 
@@ -164,8 +166,8 @@ Si preferís proponer otro stack, justificá el cambio en una línea antes de ar
 
 ## PRIVACIDAD
 
-El contenido de los mensajes y los contactos **no salen del dispositivo** en el MVP. Sin
-analytics de terceros. Sin telemetría sobre el texto. Dejalo escrito en la pantalla de Ajustes.
+El contenido de los mensajes y los contactos **no salen del dispositivo**. Sin backend, sin
+analytics de terceros, sin telemetría sobre el texto. Dejalo escrito en la pantalla de Ajustes.
 
 ## CRITERIOS DE ACEPTACIÓN
 
@@ -176,7 +178,7 @@ analytics de terceros. Sin telemetría sobre el texto. Dejalo escrito en la pant
 - [ ] Puedo reprogramar un mensaje y la notificación vieja se cancela (no llegan dos).
 - [ ] Puedo cancelar un mensaje y deshacer la cancelación.
 - [ ] Puedo guardar un mensaje sin fecha y ponerle fecha después.
-- [ ] La lista muestra los pendientes agrupados por día, ordenados de más próximo a más lejano.
+- [ ] La lista muestra los pendientes agrupados por día, del más próximo al más lejano.
 - [ ] Si el teléfono estuvo apagado, al abrir la app veo los atrasados marcados como tales.
 - [ ] Todo funciona sin conexión a internet.
 
@@ -184,9 +186,10 @@ analytics de terceros. Sin telemetría sobre el texto. Dejalo escrito en la pant
 
 - No automatices WhatsApp Web ni uses librerías no oficiales (`whatsapp-web.js`, `Baileys`
   y similares): es camino directo al baneo del número.
-- No prometas envío automático en la UI si estás usando el Modo A.
+- No implementes la Cloud API de Meta: no es para este caso de uso.
+- No prometas envío automático en la UI.
 - No armes funciones de envío masivo ni de difusión a listas grandes.
-- No pidas login ni creación de cuenta para el MVP.
+- No pidas login ni creación de cuenta.
 - No subas el contenido de los mensajes a ningún servidor.
 
 ## ENTREGABLE
