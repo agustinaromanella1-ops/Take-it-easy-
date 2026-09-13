@@ -1,10 +1,18 @@
 import { useLiveQuery } from 'dexie-react-hooks';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 
 import { enPalabras, hoy } from '../fecha';
 import { CONCEPTUAL_COMUN, NUMERICA_1_10, comoSeLlamaLaEscala } from '../datos/escalas';
 import { crearEvaluacion, evaluacionesDeMateria } from '../datos/evaluaciones';
 import { comoSeLlama, materia as buscarMateria } from '../datos/materias';
+import {
+  TIPOS_DE_FABRICA,
+  olvidarTipo,
+  recordarTipo,
+  seLlamanIgual,
+  tiposPropios,
+  todosLosTipos,
+} from '../datos/tiposDeEvaluacion';
 import Pista from '../instructivo/Pista';
 import { usePista } from '../instructivo/useInstructivo';
 import type { Escala, Id } from '../datos/tipos';
@@ -18,8 +26,6 @@ interface Props {
   alCrear: (evaluacionId: Id, nombre: string) => void;
 }
 
-const TIPOS = ['Parcial', 'Trabajo práctico', 'Oral', 'Carpeta'];
-
 export default function Evaluaciones({ materiaId, volver, abrir, alCrear }: Props) {
   const datos = useLiveQuery(
     async () => ({
@@ -32,7 +38,22 @@ export default function Evaluaciones({ materiaId, volver, abrir, alCrear }: Prop
   const [creando, setCreando] = useState(false);
   const [nombre, setNombre] = useState('');
   const [fecha, setFecha] = useState(hoy());
-  const [tipo, setTipo] = useState(TIPOS[0]);
+  const [tipo, setTipo] = useState(TIPOS_DE_FABRICA[0]);
+  // Los que escribió ella alguna vez. Se leen una sola vez al abrir la
+  // pantalla y se actualizan al guardar uno nuevo.
+  const [propios, setPropios] = useState<string[]>([]);
+  const [escribiendoTipo, setEscribiendoTipo] = useState(false);
+  const [tipoNuevo, setTipoNuevo] = useState('');
+
+  useEffect(() => {
+    let vigente = true;
+    void tiposPropios().then((guardados) => {
+      if (vigente) setPropios(guardados);
+    });
+    return () => {
+      vigente = false;
+    };
+  }, []);
   const [escala, setEscala] = useState<Escala | null>(null);
   const [guardando, setGuardando] = useState(false);
   const previas = usePista('notas-de-antes', datos !== undefined);
@@ -46,13 +67,16 @@ export default function Evaluaciones({ materiaId, volver, abrir, alCrear }: Prop
 
   async function crear() {
     // Sin esta guarda, el segundo toque crea una evaluación repetida.
-    if (guardando || nombre.trim() === '') return;
+    if (guardando || nombre.trim() === '' || tipo.trim() === '') return;
     setGuardando(true);
     try {
       const id = await crearEvaluacion({ materiaId, nombre, fecha, tipo, escala: laEscala });
+      setPropios(await recordarTipo(tipo));
       const comoSeLlamo = nombre.trim();
       setNombre('');
       setEscala(null);
+      setEscribiendoTipo(false);
+      setTipoNuevo('');
       setCreando(false);
       alCrear(id, comoSeLlamo);
     } finally {
@@ -88,16 +112,67 @@ export default function Evaluaciones({ materiaId, volver, abrir, alCrear }: Prop
         <fieldset>
           <legend>Tipo</legend>
           <div className="opciones">
-            {TIPOS.map((t) => (
+            {todosLosTipos(propios).map((t) => (
               <button
                 key={t}
-                className={t === tipo ? 'elegida' : undefined}
-                onClick={() => setTipo(t)}
+                className={seLlamanIgual(t, tipo) && !escribiendoTipo ? 'elegida' : undefined}
+                onClick={() => {
+                  setTipo(t);
+                  setEscribiendoTipo(false);
+                }}
               >
                 {t}
               </button>
             ))}
+            <button
+              className={escribiendoTipo ? 'elegida' : undefined}
+              onClick={() => {
+                setEscribiendoTipo(true);
+                setTipo(tipoNuevo);
+              }}
+            >
+              Otro…
+            </button>
           </div>
+
+          {escribiendoTipo && (
+            <>
+              <input
+                className="tipo-propio"
+                value={tipoNuevo}
+                onChange={(e) => {
+                  setTipoNuevo(e.target.value);
+                  setTipo(e.target.value);
+                }}
+                placeholder="Coloquio"
+                aria-label="Cómo se llama este tipo"
+                autoFocus
+              />
+              <p className="detalle">
+                Queda guardado y la próxima vez lo vas a tener entre los de
+                arriba.
+              </p>
+            </>
+          )}
+
+          {propios.length > 0 && !escribiendoTipo && (
+            <p className="detalle">
+              Los que agregaste vos se pueden sacar:{' '}
+              {propios.map((t) => (
+                <button
+                  key={t}
+                  className="sacar-tipo"
+                  onClick={async () => {
+                    const quedan = await olvidarTipo(t);
+                    setPropios(quedan);
+                    if (seLlamanIgual(tipo, t)) setTipo(TIPOS_DE_FABRICA[0]);
+                  }}
+                >
+                  {t} ✕
+                </button>
+              ))}
+            </p>
+          )}
         </fieldset>
 
         {escalas.mostrarPista && (
@@ -143,7 +218,7 @@ export default function Evaluaciones({ materiaId, volver, abrir, alCrear }: Prop
           <button
             className="primario"
             onClick={crear}
-            disabled={nombre.trim() === '' || guardando}
+            disabled={nombre.trim() === '' || tipo.trim() === '' || guardando}
           >
             Crear evaluación
           </button>

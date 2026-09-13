@@ -119,3 +119,30 @@
   color: var(--lila-osc);
   font-weight: 700;
 }
+
+/* El tipo escrito a mano. Va debajo de las opciones, no en lugar de ellas. */
+.evaluaciones .tipo-propio {
+  width: 100%;
+  margin-top: 10px;
+  padding: 13px 14px;
+  border: 1px solid var(--borde);
+  border-radius: 12px;
+  background: var(--superficie);
+  color: var(--texto);
+  font-family: inherit;
+  font-size: 16px;
+}
+
+/* Sacar uno de los propios. Es una acción chica y reversible —se vuelve a
+   escribir—, así que no pide confirmación ni se ve como un botón. */
+.evaluaciones .sacar-tipo {
+  margin: 3px 6px 0 0;
+  padding: 3px 8px;
+  border: 1px solid var(--borde);
+  border-radius: 999px;
+  background: none;
+  color: var(--secundario);
+  font-family: inherit;
+  font-size: 12px;
+  cursor: pointer;
+}
