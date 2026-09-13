@@ -9,7 +9,7 @@ export default defineConfig({
       // La app se actualiza sola cuando se publica una versión nueva: nadie
       // tiene que acordarse de vaciar la caché del navegador.
       registerType: 'autoUpdate',
-      includeAssets: ['apple-touch-icon.png', 'favicon-48.png', 'fonts/*.woff2'],
+      includeAssets: ['apple-touch-icon.png', 'favicon-48.png', 'fonts/*.woff2', 'logo.webp'],
       manifest: {
         name: 'Pipí Cucú — tu agenda, pipí cucú',
         short_name: 'Pipí Cucú',

@@ -48,6 +48,16 @@ el texto de la factura listo para pegar.
 **Ajustes.** Moneda, duración por defecto, política de ausencias, antelación de la alarma, y
 exportar/importar los datos.
 
+## Pantalla de bienvenida
+
+Al abrir, la app muestra el logo por 1,6 segundos y se puede saltear tocándolo. Usa el archivo real
+del logo, optimizado de 1,1 MB a 15 KB, y entra en la precarga del service worker, así aparece
+también sin conexión. El fondo de la pantalla es el color muestreado del propio archivo: si no
+coincidiera, se vería el borde de la imagen.
+
+Dura poco a propósito. Una animación que se interpone entre la persona y lo que vino a hacer deja de
+ser encanto y pasa a ser una demora, y esta app se abre varias veces por día.
+
 ## Estética
 
 Serif de display (Playfair Display) para títulos y cifras principales, sans redondeada (Nunito)

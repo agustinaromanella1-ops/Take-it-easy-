@@ -7,6 +7,7 @@ import { AgendaPage } from './pages/Agenda';
 import { FinancePage } from './pages/Finance';
 import { SettingsPage } from './pages/Settings';
 import { IconCalendar, IconChart, IconGear, IconHome, IconPeople } from './components/icons';
+import { Splash } from './components/Splash';
 
 type Page = 'inicio' | 'pacientes' | 'agenda' | 'finanzas' | 'ajustes';
 
@@ -63,6 +64,7 @@ export default function App() {
 
   return (
     <StoreProvider>
+      <Splash />
       <div className="app">
         <header className="topbar">
           <span className="brand">

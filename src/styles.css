@@ -1030,3 +1030,27 @@ a.btn {
     scroll-behavior: auto !important;
   }
 }
+
+/* ---------- Pantalla de bienvenida ---------- */
+.splash {
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  /* El mismo color que tiene el fondo del logo, muestreado del archivo: si no
+     coincide se ve el borde de la imagen. */
+  background: #f9eaf6;
+  display: grid;
+  place-items: center;
+  padding: 24px;
+  cursor: pointer;
+}
+.splash.is-leaving { animation: splash-out 0.45s ease-in forwards; }
+@keyframes splash-out {
+  to { opacity: 0; visibility: hidden; }
+}
+.splash-logo {
+  width: min(100%, 460px);
+  height: auto;
+  /* El logo ya trae su fondo: sin esto se recortaría en pantallas angostas. */
+  object-fit: contain;
+}

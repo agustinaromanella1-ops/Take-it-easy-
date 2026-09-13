@@ -40,12 +40,22 @@ const page = await ctx.newPage();
 page.on('pageerror', (e) => errs.push(`pageerror: ${e.message}`));
 page.on('console', (m) => { if (m.type() === 'error' && !m.text().includes('favicon')) errs.push(m.text()); });
 
+/** La bienvenida tapa la pantalla al abrir: hay que sacarla antes de tocar nada. */
+async function saltarBienvenida() {
+  const splash = page.locator('.splash');
+  if (await splash.count()) {
+    await splash.click({ timeout: 3000 }).catch(() => {});
+    await splash.waitFor({ state: 'detached', timeout: 5000 }).catch(() => {});
+  }
+}
+
 const campo = (etiqueta) => page.locator('.modal .field').filter({ hasText: etiqueta }).locator('input, select, textarea').first();
 
 await page.goto(process.env.URL ?? 'http://localhost:4173/', { waitUntil: 'networkidle' });
 await page.evaluate(() => localStorage.clear());
 await page.reload({ waitUntil: 'networkidle' });
-await page.waitForTimeout(700);
+await page.waitForTimeout(400);
+await saltarBienvenida();
 
 titulo('1. Arranque limpio');
 check('la app abre vacía', await page.getByText('Tu agenda, pipí cucú').isVisible());
@@ -141,7 +151,9 @@ check('el cobro usa el honorario con centavos', trasCierre.importe === 4250050, 
 
 titulo('5. Persistencia tras recargar');
 await page.reload({ waitUntil: 'networkidle' });
-await page.waitForTimeout(900);
+await page.waitForTimeout(400);
+await saltarBienvenida();
+await page.waitForTimeout(400);
 await page.locator('.tabbar button', { hasText: 'Pacientes' }).click();
 await page.waitForTimeout(500);
 await page.locator('.patient-card').filter({ has: page.locator('.patient-name', { hasText: 'Ana Gómez' }) })
@@ -182,7 +194,8 @@ check('descarga el archivo de respaldo', archivo.suggestedFilename().startsWith(
 
 await page.evaluate(() => localStorage.clear());
 await page.reload({ waitUntil: 'networkidle' });
-await page.waitForTimeout(800);
+await page.waitForTimeout(400);
+await saltarBienvenida();
 check('tras borrar, la app queda vacía', await page.getByText('Tu agenda, pipí cucú').isVisible());
 
 await page.locator('.tabbar button', { hasText: 'Ajustes' }).click();
@@ -224,7 +237,8 @@ check('el texto de factura usa el afiliado', texto.includes('SM-99/04'));
 titulo('8. Sin conexión');
 await ctx.setOffline(true);
 await page.reload({ waitUntil: 'load' });
-await page.waitForTimeout(1500);
+await page.waitForTimeout(1200);
+await saltarBienvenida();
 check('la app carga sin internet', (await page.locator('.brand').count()) === 1);
 const patsOffline = await page.evaluate(() => JSON.parse(localStorage.getItem('pipicucu:data')).patients.length);
 check('los datos siguen ahí sin internet', patsOffline === 2);
