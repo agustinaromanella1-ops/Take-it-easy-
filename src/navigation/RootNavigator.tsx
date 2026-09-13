@@ -7,6 +7,7 @@ import { HistoryScreen } from '../screens/HistoryScreen';
 import { SettingsScreen } from '../screens/SettingsScreen';
 import { ComposeScreen } from '../screens/ComposeScreen';
 import { MessageDetailScreen } from '../screens/MessageDetailScreen';
+import { TemplatesScreen } from '../screens/TemplatesScreen';
 import { usePalette } from '../theme';
 import type { RootStackParamList, TabsParamList } from './types';
 
@@ -74,6 +75,11 @@ export function RootNavigator(): React.ReactElement {
         name="Detail"
         component={MessageDetailScreen}
         options={{ title: 'Mensaje' }}
+      />
+      <Stack.Screen
+        name="Templates"
+        component={TemplatesScreen}
+        options={{ title: 'Plantillas' }}
       />
     </Stack.Navigator>
   );

@@ -26,6 +26,19 @@ const MIGRATIONS: string[] = [
   CREATE INDEX IF NOT EXISTS idx_messages_status_scheduled
     ON messages(status, scheduledAt);
   `,
+  // v2 — plantillas reutilizables y preferencias
+  `
+  CREATE TABLE IF NOT EXISTS templates (
+    id        TEXT PRIMARY KEY NOT NULL,
+    name      TEXT NOT NULL,
+    body      TEXT NOT NULL,
+    createdAt TEXT NOT NULL
+  );
+  CREATE TABLE IF NOT EXISTS settings (
+    key   TEXT PRIMARY KEY NOT NULL,
+    value TEXT NOT NULL
+  );
+  `,
 ];
 
 async function migrate(db: SQLite.SQLiteDatabase): Promise<void> {

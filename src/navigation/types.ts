@@ -10,4 +10,5 @@ export type RootStackParamList = {
   Tabs: NavigatorScreenParams<TabsParamList>;
   Compose: { id?: string } | undefined;
   Detail: { id: string };
+  Templates: undefined;
 };

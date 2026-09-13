@@ -4,6 +4,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { dayLabel, timeLabel } from '../domain/grouping';
 import { displayName } from '../domain/phone';
+import { describeRule } from '../domain/recurrence';
 import { SHIFT_LABELS, shiftWall, type ShiftKind } from '../domain/schedule';
 import { isPast } from '../domain/time';
 import { useMessages } from '../state/MessagesContext';
@@ -38,6 +39,7 @@ export function MessageDetailScreen({
   if (!message) return null;
 
   const who = displayName(message.contactName, message.phoneE164);
+  const recurrence = describeRule(message.recurrenceRule, message.localAt);
   const overdue =
     message.localAt !== null && isPast(message.localAt, message.timezone);
 
@@ -92,6 +94,18 @@ export function MessageDetailScreen({
               ).toLowerCase()} a las ${timeLabel(message.localAt)}`
             : 'Sin fecha: guardado como borrador'}
         </Text>
+        {recurrence ? (
+          <Text
+            style={{
+              color: p.accent,
+              fontSize: 14,
+              fontWeight: '700',
+              marginTop: spacing(0.5),
+            }}
+          >
+            🔁 {recurrence}
+          </Text>
+        ) : null}
       </View>
 
       <ChatBubblePreview

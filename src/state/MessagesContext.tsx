@@ -9,10 +9,19 @@ import React, {
 } from 'react';
 import { AppState, Linking } from 'react-native';
 import * as Notifications from 'expo-notifications';
+import * as FileSystem from 'expo-file-system';
+import * as Sharing from 'expo-sharing';
+import * as DocumentPicker from 'expo-document-picker';
 import * as repo from '../db/messages';
+import * as templatesRepo from '../db/templates';
+import * as settingsRepo from '../db/settings';
 import * as notify from '../notifications';
 import { deviceTimezone, wallToUtc } from '../domain/time';
 import { snoozeOneHour } from '../domain/schedule';
+import { nextOccurrence } from '../domain/recurrence';
+import { DEFAULT_QUIET_HOURS, type QuietHours } from '../domain/quietHours';
+import { parseBackup, serializeBackup } from '../domain/backup';
+import type { Template } from '../domain/templates';
 import { whatsappSchemeUrl, whatsappWebUrl } from '../domain/whatsapp';
 import type { NewMessageInput, ScheduledMessage } from '../domain/types';
 import { isDone, isPending } from '../domain/types';
@@ -30,11 +39,18 @@ interface MessagesValue {
   history: ScheduledMessage[];
   timezone: string;
   permission: notify.PermissionState;
+  templates: Template[];
+  quietHours: QuietHours;
   /** Mensaje que se abrió en WhatsApp y todavía no confirmamos si salió. */
   awaitingConfirmation: ScheduledMessage | null;
   undo: PendingUndo | null;
 
   createMessage: (input: NewMessageInput) => Promise<ScheduledMessage>;
+  /** Un mensaje individual por destinatario: nunca una difusión. */
+  createForMany: (
+    recipients: { name: string | null; e164: string }[],
+    input: Omit<NewMessageInput, 'phoneE164' | 'contactName'>,
+  ) => Promise<number>;
   editMessage: (
     id: string,
     patch: { body?: string; phoneE164?: string; contactName?: string | null },
@@ -50,6 +66,18 @@ interface MessagesValue {
   dismissConfirmation: () => void;
   ensurePermission: () => Promise<notify.PermissionState>;
   refresh: () => Promise<void>;
+
+  saveTemplate: (name: string, body: string) => Promise<void>;
+  editTemplate: (
+    id: string,
+    patch: { name?: string; body?: string },
+  ) => Promise<void>;
+  deleteTemplate: (id: string) => Promise<void>;
+
+  updateQuietHours: (hours: QuietHours) => Promise<void>;
+
+  exportBackup: () => Promise<void>;
+  importBackup: () => Promise<{ messages: number; templates: number } | null>;
 }
 
 const MessagesContext = createContext<MessagesValue | null>(null);
@@ -68,6 +96,8 @@ export function MessagesProvider({
   const [awaitingConfirmation, setAwaitingConfirmation] =
     useState<ScheduledMessage | null>(null);
   const [undo, setUndo] = useState<PendingUndo | null>(null);
+  const [templates, setTemplates] = useState<Template[]>([]);
+  const [quietHours, setQuietHours] = useState<QuietHours>(DEFAULT_QUIET_HOURS);
 
   const timezone = useMemo(() => deviceTimezone(), []);
   const undoTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -75,7 +105,12 @@ export function MessagesProvider({
   const openedId = useRef<string | null>(null);
 
   const refresh = useCallback(async () => {
-    setMessages(await repo.listAll());
+    const [allMessages, allTemplates] = await Promise.all([
+      repo.listAll(),
+      templatesRepo.listTemplates(),
+    ]);
+    setMessages(allMessages);
+    setTemplates(allTemplates);
   }, []);
 
   /**
@@ -111,9 +146,11 @@ export function MessagesProvider({
     (async () => {
       await notify.configure();
       const perm = await notify.getPermission();
+      const hours = await settingsRepo.loadQuietHours();
       await reconcile();
       if (cancelled) return;
       setPermission(perm);
+      setQuietHours(hours);
       await refresh();
       setReady(true);
     })();
@@ -169,6 +206,27 @@ export function MessagesProvider({
       return message;
     },
     [ensurePermission, refresh, timezone],
+  );
+
+  /**
+   * Un mensaje por persona, cada uno con su propia notificación. No es una
+   * difusión: si después editás o cancelás uno, los demás no se tocan.
+   */
+  const createForMany = useCallback(
+    async (
+      recipients: { name: string | null; e164: string }[],
+      input: Omit<NewMessageInput, 'phoneE164' | 'contactName'>,
+    ) => {
+      for (const recipient of recipients) {
+        await createMessage({
+          ...input,
+          phoneE164: recipient.e164,
+          contactName: recipient.name,
+        });
+      }
+      return recipients.length;
+    },
+    [createMessage],
   );
 
   const editMessage = useCallback(
@@ -270,28 +328,149 @@ export function MessagesProvider({
 
   const confirmSent = useCallback(
     async (id: string) => {
-      await repo.setStatus(id, 'sent');
+      const message = await repo.getById(id);
+      if (!message) return;
+
+      const next = message.localAt
+        ? nextOccurrence(message.localAt, message.recurrenceRule, timezone)
+        : null;
+
+      if (next) {
+        // Recurrente: guardamos esta salida en el historial y adelantamos el
+        // mensaje vivo a la próxima repetición.
+        await repo.archiveOccurrence(message);
+        await notify.cancel(message.notificationId);
+        await repo.reschedule(id, next, message.timezone);
+
+        const updated = await repo.getById(id);
+        if (updated) {
+          const notificationId = await notify.scheduleFor(updated);
+          await repo.update(id, { notificationId });
+        }
+      } else {
+        await repo.setStatus(id, 'sent');
+      }
+
       setAwaitingConfirmation(null);
       await refresh();
     },
-    [refresh],
+    [refresh, timezone],
   );
 
   const markSkipped = useCallback(
     async (id: string) => {
       const message = await repo.getById(id);
-      await notify.cancel(message?.notificationId ?? null);
-      await repo.setStatus(id, 'skipped');
+      if (!message) return;
+
+      await notify.cancel(message.notificationId);
+
+      const next = message.localAt
+        ? nextOccurrence(message.localAt, message.recurrenceRule, timezone)
+        : null;
+
+      if (next) {
+        // En un recurrente, saltear es saltear *esta* vez: la serie sigue.
+        // Para cortarla del todo está "Cancelar mensaje" en el detalle.
+        await repo.archiveOccurrence({ ...message, status: 'skipped' });
+        await repo.reschedule(id, next, message.timezone);
+
+        const updated = await repo.getById(id);
+        if (updated) {
+          const notificationId = await notify.scheduleFor(updated);
+          await repo.update(id, { notificationId });
+        }
+      } else {
+        await repo.setStatus(id, 'skipped');
+      }
+
       setAwaitingConfirmation(null);
       await refresh();
     },
-    [refresh],
+    [refresh, timezone],
   );
 
   const dismissConfirmation = useCallback(() => {
     setAwaitingConfirmation(null);
     openedId.current = null;
   }, []);
+
+  const saveTemplate = useCallback(
+    async (name: string, body: string) => {
+      await templatesRepo.createTemplate(name.trim(), body);
+      await refresh();
+    },
+    [refresh],
+  );
+
+  const editTemplate = useCallback(
+    async (id: string, patch: { name?: string; body?: string }) => {
+      await templatesRepo.updateTemplate(id, patch);
+      await refresh();
+    },
+    [refresh],
+  );
+
+  const deleteTemplate = useCallback(
+    async (id: string) => {
+      await templatesRepo.removeTemplate(id);
+      await refresh();
+    },
+    [refresh],
+  );
+
+  const updateQuietHours = useCallback(async (hours: QuietHours) => {
+    await settingsRepo.saveQuietHours(hours);
+    setQuietHours(hours);
+  }, []);
+
+  /**
+   * El backup es un archivo que sale por el share sheet del sistema: la usuaria
+   * elige dónde guardarlo. No hay servidor de por medio, igual que el resto.
+   */
+  const exportBackup = useCallback(async () => {
+    const [allMessages, allTemplates] = await Promise.all([
+      repo.listAll(),
+      templatesRepo.listTemplates(),
+    ]);
+    const json = serializeBackup(allMessages, allTemplates);
+    const stamp = new Date().toISOString().slice(0, 10);
+    const uri = `${FileSystem.cacheDirectory}listo-para-enviar-${stamp}.json`;
+
+    await FileSystem.writeAsStringAsync(uri, json);
+
+    if (await Sharing.isAvailableAsync()) {
+      await Sharing.shareAsync(uri, {
+        mimeType: 'application/json',
+        dialogTitle: 'Guardar backup',
+      });
+    }
+  }, []);
+
+  const importBackup = useCallback(async () => {
+    const picked = await DocumentPicker.getDocumentAsync({
+      type: 'application/json',
+      copyToCacheDirectory: true,
+    });
+    const file = picked.assets?.[0];
+    if (picked.canceled || !file) return null;
+
+    const raw = await FileSystem.readAsStringAsync(file.uri);
+    // parseBackup valida la forma antes de tocar la base: si el archivo está
+    // roto, tira un error entendible y no se importa nada a medias.
+    const backup = parseBackup(raw);
+
+    await repo.replaceAllMessages(backup.messages);
+    await templatesRepo.replaceAllTemplates(backup.templates);
+    // Los mensajes importados llegan sin notificación agendada; reconcile les
+    // vuelve a poner una a los que siguen siendo futuros.
+    await reconcile();
+    await refresh();
+
+    return {
+      messages: backup.messages.length,
+      templates: backup.templates.length,
+    };
+  }, [reconcile, refresh]);
 
   /**
    * Al volver de WhatsApp preguntamos una sola vez si el mensaje salió.
@@ -366,9 +545,12 @@ export function MessagesProvider({
       history: messages.filter(isDone),
       timezone,
       permission,
+      templates,
+      quietHours,
       awaitingConfirmation,
       undo,
       createMessage,
+      createForMany,
       editMessage,
       rescheduleMessage,
       duplicateMessage,
@@ -381,27 +563,42 @@ export function MessagesProvider({
       dismissConfirmation,
       ensurePermission,
       refresh,
+      saveTemplate,
+      editTemplate,
+      deleteTemplate,
+      updateQuietHours,
+      exportBackup,
+      importBackup,
     };
   }, [
     awaitingConfirmation,
     confirmSent,
+    createForMany,
     createMessage,
     deleteMessage,
+    deleteTemplate,
     dismissConfirmation,
     dismissUndo,
     duplicateMessage,
     editMessage,
+    editTemplate,
     ensurePermission,
+    exportBackup,
+    importBackup,
     markSkipped,
     messages,
     openInWhatsApp,
     permission,
+    quietHours,
     ready,
     refresh,
     rescheduleMessage,
+    saveTemplate,
+    templates,
     timezone,
     undo,
     undoDelete,
+    updateQuietHours,
   ]);
 
   return (

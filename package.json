@@ -18,10 +18,14 @@
     "date-fns": "^4.1.0",
     "date-fns-tz": "^3.2.0",
     "expo": "~53.0.0",
-    "expo-contacts": "~14.2.2",
+    "expo-contacts": "~14.2.6",
+    "expo-dev-client": "~5.2.4",
+    "expo-document-picker": "~13.1.6",
+    "expo-file-system": "~18.1.11",
     "expo-linking": "~7.1.4",
-    "expo-notifications": "~0.31.2",
-    "expo-sqlite": "~15.2.9",
+    "expo-notifications": "^0.31.5",
+    "expo-sharing": "~13.1.5",
+    "expo-sqlite": "~15.2.14",
     "expo-status-bar": "~2.2.3",
     "libphonenumber-js": "^1.11.17",
     "react": "19.0.0",
@@ -38,6 +42,9 @@
   },
   "jest": {
     "preset": "jest-expo",
-    "testPathIgnorePatterns": ["/node_modules/", "/.expo/"]
+    "testPathIgnorePatterns": [
+      "/node_modules/",
+      "/.expo/"
+    ]
   }
 }

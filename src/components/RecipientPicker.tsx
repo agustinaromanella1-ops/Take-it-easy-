@@ -18,11 +18,15 @@ export interface Recipient {
 }
 
 export function RecipientPicker({
-  value,
-  onChange,
+  selected,
+  onAdd,
+  onRemove,
+  allowMultiple = false,
 }: {
-  value: Recipient | null;
-  onChange: (recipient: Recipient | null) => void;
+  selected: Recipient[];
+  onAdd: (recipient: Recipient) => void;
+  onRemove: (e164: string) => void;
+  allowMultiple?: boolean;
 }): React.ReactElement {
   const p = usePalette();
   const [country, setCountry] = useState<CountryCode>(DEFAULT_COUNTRY);
@@ -30,6 +34,11 @@ export function RecipientPicker({
   const [showCountries, setShowCountries] = useState(false);
 
   const parsed = parsePhone(raw, country);
+
+  const commit = (recipient: Recipient) => {
+    onAdd(recipient);
+    if (allowMultiple) setRaw('');
+  };
 
   const pickFromContacts = async () => {
     const { status } = await Contacts.requestPermissionsAsync();
@@ -57,46 +66,57 @@ export function RecipientPicker({
       return;
     }
 
-    setRaw(number);
-    onChange({ name: contact.name ?? null, e164: fromContact.e164 });
+    setRaw(allowMultiple ? '' : number);
+    commit({ name: contact.name ?? null, e164: fromContact.e164 });
   };
 
   const onChangeRaw = (text: string) => {
     setRaw(formatAsYouType(text, country));
     const next = parsePhone(text, country);
-    onChange(next.ok && next.e164 ? { name: null, e164: next.e164 } : null);
+    if (next.ok && next.e164) {
+      // En modo simple el número tipeado es el destinatario; en modo múltiple
+      // hace falta confirmarlo con "Agregar" para poder cargar varios.
+      if (!allowMultiple) commit({ name: null, e164: next.e164 });
+    } else if (!allowMultiple && selected.length > 0) {
+      onRemove(selected[0]?.e164 ?? '');
+    }
   };
 
   return (
     <View>
       <Label>¿A quién?</Label>
 
-      {value?.name ? (
+      {selected.length > 0 ? (
         <View
           style={{
             flexDirection: 'row',
-            alignItems: 'center',
-            justifyContent: 'space-between',
-            backgroundColor: p.accentSoft,
-            borderRadius: radius.md,
-            padding: spacing(1.5),
-            marginBottom: spacing(1),
+            flexWrap: 'wrap',
+            gap: spacing(1),
+            marginBottom: spacing(1.5),
           }}
         >
-          <Text style={{ color: p.text, fontSize: 16, fontWeight: '700' }}>
-            {value.name}
-          </Text>
-          <Pressable
-            accessibilityRole="button"
-            accessibilityLabel="Quitar contacto"
-            hitSlop={12}
-            onPress={() => {
-              onChange(null);
-              setRaw('');
-            }}
-          >
-            <Text style={{ color: p.accent, fontWeight: '700' }}>Cambiar</Text>
-          </Pressable>
+          {selected.map((r) => (
+            <Pressable
+              key={r.e164}
+              accessibilityRole="button"
+              accessibilityLabel={`Quitar ${r.name ?? r.e164}`}
+              onPress={() => onRemove(r.e164)}
+              style={{
+                flexDirection: 'row',
+                alignItems: 'center',
+                gap: spacing(0.75),
+                backgroundColor: p.accentSoft,
+                borderRadius: radius.pill,
+                paddingVertical: spacing(0.75),
+                paddingHorizontal: spacing(1.5),
+              }}
+            >
+              <Text style={{ color: p.text, fontSize: 15, fontWeight: '600' }}>
+                {r.name ?? r.e164}
+              </Text>
+              <Text style={{ color: p.textMuted, fontSize: 15 }}>✕</Text>
+            </Pressable>
+          ))}
         </View>
       ) : null}
 
@@ -161,15 +181,37 @@ export function RecipientPicker({
         </ScrollView>
       ) : null}
 
-      <Pressable
-        accessibilityRole="button"
-        onPress={() => void pickFromContacts()}
-        style={{ marginTop: spacing(1) }}
+      <View
+        style={{
+          flexDirection: 'row',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          marginTop: spacing(1),
+          gap: spacing(2),
+        }}
       >
-        <Text style={{ color: p.accent, fontSize: 15, fontWeight: '700' }}>
-          Elegir de mis contactos
-        </Text>
-      </Pressable>
+        <Pressable
+          accessibilityRole="button"
+          onPress={() => void pickFromContacts()}
+        >
+          <Text style={{ color: p.accent, fontSize: 15, fontWeight: '700' }}>
+            Elegir de mis contactos
+          </Text>
+        </Pressable>
+
+        {allowMultiple && parsed.ok && parsed.e164 ? (
+          <Pressable
+            accessibilityRole="button"
+            onPress={() => {
+              if (parsed.e164) commit({ name: null, e164: parsed.e164 });
+            }}
+          >
+            <Text style={{ color: p.accent, fontSize: 15, fontWeight: '700' }}>
+              ＋ Agregar
+            </Text>
+          </Pressable>
+        ) : null}
+      </View>
 
       {raw && !parsed.ok ? (
         <Text style={{ color: p.danger, fontSize: 13, marginTop: spacing(1) }}>

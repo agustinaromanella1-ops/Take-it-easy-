@@ -1,9 +1,27 @@
-import React from 'react';
-import { Linking, ScrollView, Text, View } from 'react-native';
+import React, { useState } from 'react';
+import {
+  Alert,
+  Linking,
+  Pressable,
+  ScrollView,
+  Switch,
+  Text,
+  View,
+} from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useNavigation } from '@react-navigation/native';
+import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
+import { BackupError } from '../domain/backup';
+import { describeQuietHours } from '../domain/quietHours';
 import { useMessages } from '../state/MessagesContext';
 import { spacing, usePalette } from '../theme';
-import { Button, Card, Label } from '../components/ui';
+import { Button, Card, Chip, Label } from '../components/ui';
+import type { RootStackParamList } from '../navigation/types';
+
+type Nav = NativeStackNavigationProp<RootStackParamList>;
+
+const HOUR_CHOICES = [6, 7, 8, 9, 10, 11, 12];
+const END_HOUR_CHOICES = [18, 19, 20, 21, 22, 23];
 
 function Row({
   title,
@@ -42,8 +60,53 @@ const PERMISSION_LABEL = {
 export function SettingsScreen(): React.ReactElement {
   const p = usePalette();
   const insets = useSafeAreaInsets();
-  const { timezone, permission, ensurePermission, pending, drafts, history } =
-    useMessages();
+  const navigation = useNavigation<Nav>();
+  const {
+    timezone,
+    permission,
+    ensurePermission,
+    pending,
+    drafts,
+    history,
+    templates,
+    quietHours,
+    updateQuietHours,
+    exportBackup,
+    importBackup,
+  } = useMessages();
+  const [busy, setBusy] = useState(false);
+
+  const runImport = async () => {
+    setBusy(true);
+    try {
+      const result = await importBackup();
+      if (!result) return;
+      Alert.alert(
+        'Backup importado',
+        `Se agregaron ${result.messages} mensajes y ${result.templates} plantillas.`,
+      );
+    } catch (error) {
+      Alert.alert(
+        'No pudimos importar',
+        error instanceof BackupError
+          ? error.message
+          : 'El archivo no se pudo leer.',
+      );
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  const runExport = async () => {
+    setBusy(true);
+    try {
+      await exportBackup();
+    } catch {
+      Alert.alert('No pudimos exportar', 'Probá de nuevo en un momento.');
+    } finally {
+      setBusy(false);
+    }
+  };
 
   return (
     <ScrollView
@@ -109,6 +172,126 @@ export function SettingsScreen(): React.ReactElement {
             cambia el horario de verano, tu mensaje de las 9 sigue saliendo a las
             9.
           </Text>
+        </Card>
+      </View>
+
+      <View>
+        <Label>Horario permitido</Label>
+        <Card>
+          <View
+            style={{
+              flexDirection: 'row',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              gap: spacing(2),
+            }}
+          >
+            <Text style={{ color: p.text, fontSize: 15, flex: 1 }}>
+              {describeQuietHours(quietHours)}
+            </Text>
+            <Switch
+              value={quietHours.enabled}
+              onValueChange={(enabled) =>
+                void updateQuietHours({ ...quietHours, enabled })
+              }
+              accessibilityLabel="Activar horario permitido"
+            />
+          </View>
+
+          {quietHours.enabled ? (
+            <View style={{ marginTop: spacing(1.5), gap: spacing(1) }}>
+              <Text style={{ color: p.textMuted, fontSize: 13 }}>Desde</Text>
+              <View
+                style={{ flexDirection: 'row', flexWrap: 'wrap', gap: spacing(1) }}
+              >
+                {HOUR_CHOICES.map((hour) => (
+                  <Chip
+                    key={hour}
+                    label={`${hour}:00`}
+                    selected={quietHours.startHour === hour}
+                    onPress={() =>
+                      void updateQuietHours({ ...quietHours, startHour: hour })
+                    }
+                  />
+                ))}
+              </View>
+              <Text style={{ color: p.textMuted, fontSize: 13 }}>Hasta</Text>
+              <View
+                style={{ flexDirection: 'row', flexWrap: 'wrap', gap: spacing(1) }}
+              >
+                {END_HOUR_CHOICES.map((hour) => (
+                  <Chip
+                    key={hour}
+                    label={`${hour}:00`}
+                    selected={quietHours.endHour === hour}
+                    onPress={() =>
+                      void updateQuietHours({ ...quietHours, endHour: hour })
+                    }
+                  />
+                ))}
+              </View>
+            </View>
+          ) : null}
+
+          <Text
+            style={{
+              color: p.textMuted,
+              fontSize: 14,
+              lineHeight: 20,
+              marginTop: spacing(1.5),
+            }}
+          >
+            No bloquea nada: si elegís una hora fuera de la franja, te propone la
+            siguiente válida y vos decidís.
+          </Text>
+        </Card>
+      </View>
+
+      <View>
+        <Label>Plantillas</Label>
+        <Card>
+          <Pressable
+            accessibilityRole="button"
+            onPress={() => navigation.navigate('Templates')}
+            style={{
+              flexDirection: 'row',
+              justifyContent: 'space-between',
+              alignItems: 'center',
+            }}
+          >
+            <Text style={{ color: p.text, fontSize: 15 }}>
+              {templates.length === 1
+                ? '1 plantilla guardada'
+                : `${templates.length} plantillas guardadas`}
+            </Text>
+            <Text style={{ color: p.accent, fontSize: 15, fontWeight: '700' }}>
+              Ver
+            </Text>
+          </Pressable>
+        </Card>
+      </View>
+
+      <View>
+        <Label>Backup</Label>
+        <Card>
+          <Text style={{ color: p.textMuted, fontSize: 14, lineHeight: 20 }}>
+            Un archivo con tus mensajes y plantillas. Elegís vos dónde guardarlo:
+            no se sube a ningún lado.
+          </Text>
+          <Button
+            label="Exportar backup"
+            variant="secondary"
+            disabled={busy}
+            onPress={() => void runExport()}
+            style={{ marginTop: spacing(1.5) }}
+          />
+          <Button
+            label="Importar backup"
+            variant="secondary"
+            disabled={busy}
+            onPress={() => void runImport()}
+            style={{ marginTop: spacing(1) }}
+          />
         </Card>
       </View>
 

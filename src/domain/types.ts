@@ -44,6 +44,8 @@ export interface NewMessageInput {
   localAt?: string | null;
   timezone?: string;
   notes?: string | null;
+  /** Regla de repetición, ej "FREQ=WEEKLY". Null para un mensaje único. */
+  recurrenceRule?: string | null;
 }
 
 export const isPending = (m: ScheduledMessage): boolean =>

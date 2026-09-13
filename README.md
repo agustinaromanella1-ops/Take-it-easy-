@@ -23,28 +23,48 @@ El modelo es **"listo para enviar"**:
 La app nunca dice que el mensaje "se envió solo": lo que promete es dejártelo listo en el
 momento justo, y eso es exactamente lo que hace.
 
-## Correr el proyecto
+## Development build
+
+Las notificaciones locales programadas no son confiables en Expo Go, así que para probar
+el flujo real hace falta un *development build*: una app tuya, instalada en el teléfono,
+que después levanta el código desde tu máquina. Se compila una sola vez.
+
+**Camino recomendado — EAS Build (en la nube, no necesitás Android Studio ni Xcode):**
 
 ```bash
 npm install
-npx expo start
+npm install -g eas-cli
+eas login                              # cuenta gratuita de Expo
+eas build --profile development --platform android
 ```
 
-> **Importante:** las notificaciones locales programadas no son confiables en Expo Go.
-> Para probar el flujo completo hace falta un *development build*:
->
-> ```bash
-> npx expo run:android    # o npx expo run:ios
-> ```
->
-> En Android 13+ el permiso de notificaciones se pide en tiempo de ejecución (lo hace la
-> app cuando programás tu primer mensaje).
+Cuando termina te da un link y un QR: lo abrís desde el celular, instalás el APK y listo.
+Después, cada vez que quieras trabajar:
+
+```bash
+npx expo start --dev-client
+```
+
+Para **iOS** el mismo comando con `--platform ios`, pero ahí sí hace falta una cuenta de
+Apple Developer (100 USD al año) para instalar en un teléfono físico. Si tenés una Mac,
+`npx expo run:ios` con el simulador sale gratis.
+
+**Camino local (si ya tenés Android Studio instalado):**
+
+```bash
+npx expo run:android
+```
+
+El perfil `development` ya está configurado en [`eas.json`](eas.json).
+
+> En Android 13+ el permiso de notificaciones se pide en tiempo de ejecución: lo hace la
+> app cuando programás tu primer mensaje.
 
 Verificaciones:
 
 ```bash
 npm run typecheck   # tsc --noEmit
-npm test            # 38 tests sobre la lógica de dominio
+npm test            # 71 tests sobre la lógica de dominio
 ```
 
 ## Estructura
@@ -57,12 +77,16 @@ src/
     time.ts      hora de pared ↔ instante UTC
     schedule.ts  atajos ("Mañana 9:00") y corrimientos ("+1 día")
     grouping.ts  agrupación por día, etiquetas "Hoy"/"Mañana"/"Viernes 18"
+    recurrence.ts  repeticiones (FREQ=WEEKLY) y cálculo de la próxima
+    quietHours.ts  franja horaria permitida
+    templates.ts   variables {nombre} y su reemplazo
+    backup.ts      exportar e importar, con validación del archivo
     whatsapp.ts  armado de los deep links
   db/          SQLite local con migraciones versionadas
   notifications/  agendado y cancelación de avisos locales
   state/       MessagesContext: une base, notificaciones y ciclo de vida
   components/  UI reutilizable
-  screens/     Programados, Nuevo/Editar, Detalle, Historial, Ajustes
+  screens/     Programados, Nuevo/Editar, Detalle, Historial, Plantillas, Ajustes
 ```
 
 ## Estados de un mensaje
@@ -102,13 +126,31 @@ persistente, porque sin ellos la app no cumple su función.
 Todo vive en el dispositivo: SQLite local, sin backend, sin cuenta, sin analytics. Ni el
 texto de los mensajes ni los contactos salen del teléfono. Funciona sin internet.
 
-## Qué falta (v2)
+## Funciones de v2 ya implementadas
 
-El modelo de datos ya tiene lugar para esto, pero no está implementado:
+- **Mensajes recurrentes** — diarios, semanales, mensuales o anuales. Cada salida queda
+  archivada en el historial y el mensaje vivo avanza a la próxima fecha. Si el teléfono
+  estuvo apagado varias semanas no se arrastra una cola de repeticiones vencidas: se
+  retoma en la siguiente que corresponde. Saltear una repetición no corta la serie.
+- **Plantillas con variables** `{nombre}` — se guardan desde la pantalla de mensaje nuevo y
+  se administran en Ajustes → Plantillas. Una variable sin completar queda visible en el
+  texto en vez de dejar un hueco silencioso, y avisamos antes de programar.
+- **Mismo texto a varios destinatarios** — crea un mensaje individual por persona, con su
+  propia notificación. No es una difusión: editar o cancelar uno no toca a los demás.
+- **Ventana de horario permitido** — configurable en Ajustes. No bloquea: si elegís una hora
+  fuera de la franja, propone la siguiente válida y vos decidís.
+- **Backup** — exporta un archivo JSON con mensajes y plantillas por el share sheet del
+  sistema, y lo vuelve a importar. El archivo se valida entero antes de tocar la base, así
+  un backup corrupto falla con un mensaje claro en vez de dejar datos a medio importar.
 
-- Mensajes recurrentes (`recurrenceRule` está en la tabla, siempre en `null`).
-- Plantillas con variables tipo `{nombre}`.
-- Mismo texto a varios destinatarios, cada uno como mensaje individual.
-- Ventana de horario permitido (no programar fuera de 9–21 h).
-- Adjuntar imágenes (el deep link de WhatsApp no las soporta: habría que ir por el share sheet).
-- Backup y sincronización entre dispositivos.
+## Qué sigue sin estar (y por qué)
+
+- **Adjuntar imágenes.** El deep link de WhatsApp solo acepta texto: no hay forma de abrir
+  un chat con una imagen precargada. Lo más cerca que se puede llegar es el share sheet del
+  sistema (`expo-sharing`), que deja elegir el chat pero no permite adjuntar la imagen y el
+  texto juntos ni volver a la app para confirmar. Sería una experiencia distinta a la del
+  resto, así que preferimos no simularla.
+- **Sincronización entre dispositivos.** Necesita un servidor donde guardar los mensajes, y
+  eso choca de frente con la decisión de que el contenido no salga del teléfono. El backup
+  manual cubre el caso de cambiar de celular sin romper esa promesa. Si en algún momento la
+  sincronización vale la pena, habría que hablar de cifrado de punta a punta primero.

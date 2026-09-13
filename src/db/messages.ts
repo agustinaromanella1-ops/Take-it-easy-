@@ -47,7 +47,7 @@ export async function create(
     createdAt: new Date().toISOString(),
     firedAt: null,
     sentAt: null,
-    recurrenceRule: null,
+    recurrenceRule: input.recurrenceRule ?? null,
     notes: input.notes ?? null,
     notificationId: null,
   };
@@ -90,6 +90,7 @@ type Patch = Partial<
     | 'sentAt'
     | 'notes'
     | 'notificationId'
+    | 'recurrenceRule'
   >
 >;
 
@@ -163,4 +164,32 @@ export async function restore(message: ScheduledMessage): Promise<void> {
       message.notificationId,
     ],
   );
+}
+
+/**
+ * Deja constancia de una repetición que ya se resolvió (salió o se salteó). El
+ * mensaje recurrente sigue vivo con su próxima fecha, así que guardamos una
+ * copia cerrada para que el historial muestre cada vez en lugar de una sola
+ * fila que se sobrescribe.
+ */
+export async function archiveOccurrence(
+  message: ScheduledMessage,
+): Promise<void> {
+  const status = message.status === 'skipped' ? 'skipped' : 'sent';
+  await restore({
+    ...message,
+    id: newId(),
+    status,
+    sentAt: status === 'sent' ? new Date().toISOString() : null,
+    recurrenceRule: null,
+    notificationId: null,
+  });
+}
+
+export async function replaceAllMessages(
+  messages: ScheduledMessage[],
+): Promise<void> {
+  for (const message of messages) {
+    await restore({ ...message, notificationId: null });
+  }
 }
