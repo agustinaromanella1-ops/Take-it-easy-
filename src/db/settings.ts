@@ -1,7 +1,10 @@
 import { getDb } from './index';
 import { DEFAULT_QUIET_HOURS, type QuietHours } from '../domain/quietHours';
+import type { DeliverySample } from '../domain/reliability';
 
 const QUIET_HOURS_KEY = 'quietHours';
+const ONBOARDING_KEY = 'onboardingCompleted';
+const DELIVERY_SAMPLES_KEY = 'deliverySamples';
 
 async function read(key: string): Promise<string | null> {
   const db = await getDb();
@@ -38,4 +41,29 @@ export async function loadQuietHours(): Promise<QuietHours> {
 
 export async function saveQuietHours(hours: QuietHours): Promise<void> {
   await write(QUIET_HOURS_KEY, JSON.stringify(hours));
+}
+
+export async function loadOnboardingCompleted(): Promise<boolean> {
+  return (await read(ONBOARDING_KEY)) === 'true';
+}
+
+export async function saveOnboardingCompleted(done: boolean): Promise<void> {
+  await write(ONBOARDING_KEY, String(done));
+}
+
+export async function loadDeliverySamples(): Promise<DeliverySample[]> {
+  const raw = await read(DELIVERY_SAMPLES_KEY);
+  if (!raw) return [];
+  try {
+    const parsed: unknown = JSON.parse(raw);
+    return Array.isArray(parsed) ? (parsed as DeliverySample[]) : [];
+  } catch {
+    return [];
+  }
+}
+
+export async function saveDeliverySamples(
+  samples: DeliverySample[],
+): Promise<void> {
+  await write(DELIVERY_SAMPLES_KEY, JSON.stringify(samples));
 }

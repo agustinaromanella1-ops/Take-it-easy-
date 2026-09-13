@@ -64,7 +64,7 @@ Verificaciones:
 
 ```bash
 npm run typecheck   # tsc --noEmit
-npm test            # 71 tests sobre la lógica de dominio
+npm test            # 83 tests sobre la lógica de dominio
 ```
 
 ## Estructura
@@ -81,12 +81,14 @@ src/
     quietHours.ts  franja horaria permitida
     templates.ts   variables {nombre} y su reemplazo
     backup.ts      exportar e importar, con validación del archivo
+    reliability.ts puntualidad medida de los avisos
     whatsapp.ts  armado de los deep links
   db/          SQLite local con migraciones versionadas
   notifications/  agendado y cancelación de avisos locales
   state/       MessagesContext: une base, notificaciones y ciclo de vida
   components/  UI reutilizable
-  screens/     Programados, Nuevo/Editar, Detalle, Historial, Plantillas, Ajustes
+  screens/     Primer uso, Programados, Nuevo/Editar, Detalle, Historial,
+               Plantillas, Privacidad, Ajustes
 ```
 
 ## Estados de un mensaje
@@ -117,14 +119,53 @@ pantalla para que se pueda corregir.
 **Una sola notificación por mensaje.** Guardamos el `notificationId` en la fila. Reprogramar
 cancela la vieja antes de agendar la nueva; sin eso llegarían dos avisos.
 
-**Permisos.** Se piden recién cuando programás tu primer mensaje, no en el arranque: en ese
-momento el pedido tiene un porqué evidente. Si están denegados, la lista muestra un aviso
-persistente, porque sin ellos la app no cumple su función.
+**Permisos.** Se piden al final de la explicación del primer uso, cuando ya se entiende para
+qué sirven, y si se saltea esa pantalla, al programar el primer mensaje. Si están denegados,
+la lista muestra un aviso persistente, porque sin ellos la app no cumple su función.
+
+**Puntualidad en Android.** Este es el riesgo más serio de la app y merece explicación.
+Android puede demorar las notificaciones programadas para ahorrar batería, y encima Xiaomi,
+Samsung, Huawei y Oppo tienen gestores propios que matan apps en segundo plano con criterios
+no documentados. El resultado: el aviso de las 9:00 llega 9:40, o no llega. En un Pixel
+enchufado no se nota nunca.
+
+Desde JavaScript no se puede consultar si el sistema va a respetar una alarma exacta. Así
+que en vez de preguntar, **medimos**: cada vez que un aviso suena, `reliability.ts` compara
+la hora real con la que correspondía. Si los retrasos se repiten (o hay uno grave), la app lo
+dice en la lista y ofrece los dos ajustes del sistema que lo arreglan — alarmas exactas y
+optimización de batería — con `expo-intent-launcher`, que lleva directo a la pantalla
+correcta.
+
+Para la exención de batería abrimos la **lista general** del sistema en vez de pedir la
+exención directa: el pedido directo necesita un permiso que Google Play restringe, y esta
+pantalla no requiere ninguno.
 
 ## Privacidad
 
 Todo vive en el dispositivo: SQLite local, sin backend, sin cuenta, sin analytics. Ni el
 texto de los mensajes ni los contactos salen del teléfono. Funciona sin internet.
+
+El texto completo está en [`PRIVACY.md`](PRIVACY.md) y también dentro de la app, en
+Ajustes → Privacidad. Las tiendas piden una **URL pública**: publicar ese archivo con GitHub
+Pages alcanza.
+
+## Checklist para publicar
+
+Lo que todavía falta antes de que la app llegue a gente que no seas vos:
+
+- [x] Política de privacidad (`PRIVACY.md`, falta publicarla como URL)
+- [x] Pantalla de primer uso que aclara que el envío lo confirma la usuaria
+- [x] Manejo de la puntualidad de los avisos en Android
+- [ ] **Icono y splash screen** — hoy no hay ninguno; ambas tiendas los exigen
+- [ ] **Probar en un teléfono que no sea Pixel** — Xiaomi o Samsung, donde aparecen los
+      problemas de puntualidad reales
+- [ ] **Verificar la política de Google Play sobre alarmas exactas** antes de publicar:
+      `SCHEDULE_EXACT_ALARM` requiere justificación y conviene confirmar que una app de
+      recordatorios califica
+- [ ] **Testing cerrado** — Google exige a las cuentas personales nuevas 12 testers durante
+      14 días corridos antes de poder publicar
+- [ ] Listado de tienda: capturas, descripción y una línea explícita de "no afiliada a
+      WhatsApp ni a Meta" 
 
 ## Funciones de v2 ya implementadas
 

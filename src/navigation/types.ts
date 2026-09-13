@@ -11,4 +11,5 @@ export type RootStackParamList = {
   Compose: { id?: string } | undefined;
   Detail: { id: string };
   Templates: undefined;
+  Privacy: undefined;
 };

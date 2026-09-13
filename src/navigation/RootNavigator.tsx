@@ -8,6 +8,9 @@ import { SettingsScreen } from '../screens/SettingsScreen';
 import { ComposeScreen } from '../screens/ComposeScreen';
 import { MessageDetailScreen } from '../screens/MessageDetailScreen';
 import { TemplatesScreen } from '../screens/TemplatesScreen';
+import { OnboardingScreen } from '../screens/OnboardingScreen';
+import { PrivacyScreen } from '../screens/PrivacyScreen';
+import { useMessages } from '../state/MessagesContext';
 import { usePalette } from '../theme';
 import type { RootStackParamList, TabsParamList } from './types';
 
@@ -50,8 +53,15 @@ function Tabs(): React.ReactElement {
   );
 }
 
-export function RootNavigator(): React.ReactElement {
+export function RootNavigator(): React.ReactElement | null {
   const p = usePalette();
+  const { ready, onboardingCompleted } = useMessages();
+
+  // Esperamos a leer la preferencia antes de decidir qué mostrar: si no,
+  // la explicación aparecería un instante en cada arranque.
+  if (!ready) return null;
+  if (!onboardingCompleted) return <OnboardingScreen />;
+
   return (
     <Stack.Navigator
       screenOptions={{
@@ -80,6 +90,11 @@ export function RootNavigator(): React.ReactElement {
         name="Templates"
         component={TemplatesScreen}
         options={{ title: 'Plantillas' }}
+      />
+      <Stack.Screen
+        name="Privacy"
+        component={PrivacyScreen}
+        options={{ title: 'Privacidad' }}
       />
     </Stack.Navigator>
   );

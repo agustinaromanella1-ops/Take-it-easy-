@@ -9,6 +9,7 @@ import { useMessages } from '../state/MessagesContext';
 import { radius, spacing, usePalette } from '../theme';
 import { MessageCard } from '../components/MessageCard';
 import { ConfirmSentSheet, PermissionBanner, UndoToast } from '../components/Banners';
+import { ReliabilityBanner } from '../components/Reliability';
 import { EmptyState } from '../components/ui';
 import type { RootStackParamList } from '../navigation/types';
 
@@ -31,6 +32,7 @@ export function ScheduledListScreen(): React.ReactElement {
     markSkipped,
     dismissConfirmation,
     ensurePermission,
+    reliability,
   } = useMessages();
 
   const sections = useMemo<DaySection[]>(() => {
@@ -83,7 +85,9 @@ export function ScheduledListScreen(): React.ReactElement {
                   onRequest={() => void ensurePermission()}
                 />
               </View>
-            ) : null}
+            ) : (
+              <ReliabilityBanner reliability={reliability} />
+            )}
           </View>
         }
         renderSectionHeader={({ section }) => (

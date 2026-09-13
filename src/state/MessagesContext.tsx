@@ -20,6 +20,12 @@ import { deviceTimezone, wallToUtc } from '../domain/time';
 import { snoozeOneHour } from '../domain/schedule';
 import { nextOccurrence } from '../domain/recurrence';
 import { DEFAULT_QUIET_HOURS, type QuietHours } from '../domain/quietHours';
+import {
+  assessReliability,
+  recordSample,
+  type DeliverySample,
+  type Reliability,
+} from '../domain/reliability';
 import { parseBackup, serializeBackup } from '../domain/backup';
 import type { Template } from '../domain/templates';
 import { whatsappSchemeUrl, whatsappWebUrl } from '../domain/whatsapp';
@@ -41,6 +47,9 @@ interface MessagesValue {
   permission: notify.PermissionState;
   templates: Template[];
   quietHours: QuietHours;
+  /** Qué tan a horario vienen llegando los avisos en este teléfono. */
+  reliability: Reliability;
+  onboardingCompleted: boolean;
   /** Mensaje que se abrió en WhatsApp y todavía no confirmamos si salió. */
   awaitingConfirmation: ScheduledMessage | null;
   undo: PendingUndo | null;
@@ -78,6 +87,8 @@ interface MessagesValue {
 
   exportBackup: () => Promise<void>;
   importBackup: () => Promise<{ messages: number; templates: number } | null>;
+
+  completeOnboarding: () => Promise<void>;
 }
 
 const MessagesContext = createContext<MessagesValue | null>(null);
@@ -98,6 +109,8 @@ export function MessagesProvider({
   const [undo, setUndo] = useState<PendingUndo | null>(null);
   const [templates, setTemplates] = useState<Template[]>([]);
   const [quietHours, setQuietHours] = useState<QuietHours>(DEFAULT_QUIET_HOURS);
+  const [deliverySamples, setDeliverySamples] = useState<DeliverySample[]>([]);
+  const [onboardingCompleted, setOnboardingCompleted] = useState(true);
 
   const timezone = useMemo(() => deviceTimezone(), []);
   const undoTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -146,11 +159,17 @@ export function MessagesProvider({
     (async () => {
       await notify.configure();
       const perm = await notify.getPermission();
-      const hours = await settingsRepo.loadQuietHours();
+      const [hours, samples, onboarded] = await Promise.all([
+        settingsRepo.loadQuietHours(),
+        settingsRepo.loadDeliverySamples(),
+        settingsRepo.loadOnboardingCompleted(),
+      ]);
       await reconcile();
       if (cancelled) return;
       setPermission(perm);
       setQuietHours(hours);
+      setDeliverySamples(samples);
+      setOnboardingCompleted(onboarded);
       await refresh();
       setReady(true);
     })();
@@ -418,6 +437,40 @@ export function MessagesProvider({
     [refresh],
   );
 
+  const completeOnboarding = useCallback(async () => {
+    await settingsRepo.saveOnboardingCompleted(true);
+    setOnboardingCompleted(true);
+  }, []);
+
+  /**
+   * Guarda cuánto tardó en llegar un aviso respecto de su hora. Las dos vías
+   * (el aviso que suena con la app viva y el toque sobre la notificación)
+   * reportan la misma marca de tiempo del sistema, así que descartamos la
+   * repetida en vez de contar dos veces la misma entrega.
+   */
+  const recordDelivery = useCallback(
+    async (expectedAt: string | null, deliveredAtMs: number) => {
+      if (!expectedAt) return;
+      const sample: DeliverySample = {
+        expectedAt,
+        deliveredAt: new Date(deliveredAtMs).toISOString(),
+      };
+
+      const stored = await settingsRepo.loadDeliverySamples();
+      const alreadySeen = stored.some(
+        (s) =>
+          s.expectedAt === sample.expectedAt &&
+          s.deliveredAt === sample.deliveredAt,
+      );
+      if (alreadySeen) return;
+
+      const next = recordSample(stored, sample);
+      await settingsRepo.saveDeliverySamples(next);
+      setDeliverySamples(next);
+    },
+    [],
+  );
+
   const updateQuietHours = useCallback(async (hours: QuietHours) => {
     await settingsRepo.saveQuietHours(hours);
     setQuietHours(hours);
@@ -504,6 +557,12 @@ export function MessagesProvider({
         if (!id) return;
 
         void (async () => {
+          const message = await repo.getById(id);
+          await recordDelivery(
+            message?.scheduledAt ?? null,
+            response.notification.date,
+          );
+
           if (response.actionIdentifier === notify.ACTION_SNOOZE) {
             await rescheduleMessage(id, snoozeOneHour(timezone));
             return;
@@ -513,7 +572,7 @@ export function MessagesProvider({
       },
     );
     return () => sub.remove();
-  }, [openInWhatsApp, rescheduleMessage, timezone]);
+  }, [openInWhatsApp, recordDelivery, rescheduleMessage, timezone]);
 
   /** Cuando el aviso suena con la app abierta, dejamos el mensaje como disparado. */
   useEffect(() => {
@@ -521,12 +580,14 @@ export function MessagesProvider({
       const id = notify.extractMessageId(notification);
       if (!id) return;
       void (async () => {
+        const message = await repo.getById(id);
+        await recordDelivery(message?.scheduledAt ?? null, notification.date);
         await repo.setStatus(id, 'fired');
         await refresh();
       })();
     });
     return () => sub.remove();
-  }, [refresh]);
+  }, [recordDelivery, refresh]);
 
   useEffect(
     () => () => {
@@ -547,6 +608,8 @@ export function MessagesProvider({
       permission,
       templates,
       quietHours,
+      reliability: assessReliability(deliverySamples),
+      onboardingCompleted,
       awaitingConfirmation,
       undo,
       createMessage,
@@ -569,11 +632,14 @@ export function MessagesProvider({
       updateQuietHours,
       exportBackup,
       importBackup,
+      completeOnboarding,
     };
   }, [
     awaitingConfirmation,
+    completeOnboarding,
     confirmSent,
     createForMany,
+    deliverySamples,
     createMessage,
     deleteMessage,
     deleteTemplate,
@@ -587,6 +653,7 @@ export function MessagesProvider({
     importBackup,
     markSkipped,
     messages,
+    onboardingCompleted,
     openInWhatsApp,
     permission,
     quietHours,

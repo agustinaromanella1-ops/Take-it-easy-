@@ -13,9 +13,12 @@ import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { BackupError } from '../domain/backup';
 import { describeQuietHours } from '../domain/quietHours';
+import { describeReliability } from '../domain/reliability';
+import { AndroidReliabilityActions } from '../components/Reliability';
 import { useMessages } from '../state/MessagesContext';
 import { spacing, usePalette } from '../theme';
 import { Button, Card, Chip, Label } from '../components/ui';
+import { Platform } from 'react-native';
 import type { RootStackParamList } from '../navigation/types';
 
 type Nav = NativeStackNavigationProp<RootStackParamList>;
@@ -73,6 +76,7 @@ export function SettingsScreen(): React.ReactElement {
     updateQuietHours,
     exportBackup,
     importBackup,
+    reliability,
   } = useMessages();
   const [busy, setBusy] = useState(false);
 
@@ -172,6 +176,34 @@ export function SettingsScreen(): React.ReactElement {
             cambia el horario de verano, tu mensaje de las 9 sigue saliendo a las
             9.
           </Text>
+        </Card>
+      </View>
+
+      <View>
+        <Label>Puntualidad de los avisos</Label>
+        <Card>
+          <Text style={{ color: p.text, fontSize: 15, lineHeight: 21 }}>
+            {describeReliability(reliability)}
+          </Text>
+          {Platform.OS === 'android' ? (
+            <>
+              <Text
+                style={{
+                  color: p.textMuted,
+                  fontSize: 14,
+                  lineHeight: 20,
+                  marginTop: spacing(1),
+                }}
+              >
+                Android puede demorar los avisos para ahorrar batería, sobre todo
+                en Xiaomi, Samsung, Huawei y Oppo. Estos dos ajustes son los que
+                hacen la diferencia.
+              </Text>
+              <View style={{ marginTop: spacing(1.5) }}>
+                <AndroidReliabilityActions />
+              </View>
+            </>
+          ) : null}
         </Card>
       </View>
 
@@ -313,6 +345,15 @@ export function SettingsScreen(): React.ReactElement {
             analytics: ni el texto de los mensajes ni tus contactos salen del
             dispositivo. La app funciona sin internet.
           </Text>
+          <Pressable
+            accessibilityRole="button"
+            onPress={() => navigation.navigate('Privacy')}
+            style={{ marginTop: spacing(1.5) }}
+          >
+            <Text style={{ color: p.accent, fontSize: 15, fontWeight: '700' }}>
+              Leer la política de privacidad
+            </Text>
+          </Pressable>
         </Card>
       </View>
 
