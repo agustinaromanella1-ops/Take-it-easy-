@@ -273,7 +273,9 @@ describe('observaciones', () => {
       texto: 'No entregó el trabajo. Pidió una semana más.',
     });
 
-    expect((await db.observaciones.get(id))?.capa).toBe('privada');
+    // No hay capas: una observación no puede llevar nada que la marque como
+    // compartible, ni siquiera un campo suelto.
+    expect(await db.observaciones.get(id)).not.toHaveProperty('capa');
   });
 });
 

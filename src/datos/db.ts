@@ -66,12 +66,29 @@ export class BaseTakeItEasy extends Dexie {
 
     // Qué instructivo ya vio, y cualquier preferencia que venga después.
     this.version(3).stores({ preferencias: 'clave' });
+
+    /**
+     * Se van las capas: toda observación es privada y no hay forma de que deje
+     * de serlo. Además de sacar el índice, se saca el campo de las que ya
+     * estaban guardadas: dejarlo sería dejar escrito en el teléfono que alguna
+     * vez se marcó como compartible algo que ahora no puede compartirse.
+     */
+    this.version(4)
+      .stores({ observaciones: 'id, alumnoId, materiaId, fecha' })
+      .upgrade((tx) =>
+        tx
+          .table('observaciones')
+          .toCollection()
+          .modify((o: Record<string, unknown>) => {
+            delete o.capa;
+          }),
+      );
   }
 }
 
 /** La versión del esquema que entiende esta app. La copia de seguridad la
  *  guarda para poder rechazar un archivo de una versión más nueva. */
-export const VERSION_ESQUEMA = 3;
+export const VERSION_ESQUEMA = 4;
 
 export const db = new BaseTakeItEasy();
 

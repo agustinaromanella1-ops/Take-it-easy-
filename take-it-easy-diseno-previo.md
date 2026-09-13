@@ -235,22 +235,23 @@ Como es reversible, no se pregunta antes: las archivadas quedan listadas
 aparte con su botón de recuperar, que es el deshacer, disponible siempre y
 no durante unos segundos.
 
-### 2.5 Capas de la observación
+### 2.5 La observación es privada, y no hay otra cosa
 
-`Observacion.capa` tiene dos valores: `privada` y `compartible`.
+Toda observación es privada y **no existe la forma de compartirla**. No es el
+valor por defecto de una opción: la opción no está.
 
-**Toda observación nueva nace en `privada`** (regla innegociable 4). La
-capa de datos no acepta una escritura sin capa y no toma otro valor por
-defecto; el formulario no preselecciona `compartible` en ningún caso.
-Cambiar de capa es una acción explícita y posterior del docente: un toque
-sobre la etiqueta de la observación, que la devuelve a privada con otro
-toque. Ese segundo toque es el deshacer, y por eso no hace falta un diálogo
-de confirmación.
+Hubo dos capas —privada y compartible— y las sacó Agustina. La razón es la
+misma por la que la capa privada era el default: lo que se anota de un alumno
+es una impresión escrita al paso, en dos minutos entre timbres, y un botón que
+la vuelve compartible convierte esa impresión en algo que puede circular. El
+default protegía contra el olvido; sacar el botón protege contra el arrepentido.
 
-Borrar una observación tampoco lo lleva: se borra y queda una barra para
-deshacer, como en el resto de la app. Deshacer la devuelve con su id, su
-fecha y su capa, no como una observación nueva. Si volviera con la fecha de
-hoy, deshacer sería perder el dato en vez de recuperarlo.
+**La versión 4 del esquema saca el campo, no sólo la opción.** A las
+observaciones ya guardadas se les borra `capa` al actualizar. Dejarlo sería
+dejar escrito en el teléfono que algo se marcó alguna vez como compartible, en
+una app donde compartir ya no existe. Hay un test que guarda observaciones con
+la base vieja, abre con la nueva y comprueba las dos cosas: que el campo no
+está y que no se perdió nada de lo escrito.
 
 ### 2.6 Plantillas: el bloqueo del nombre
 
@@ -716,6 +717,16 @@ squircle— y a 48 píxeles, que es donde un ícono se gana o se pierde.
 El perrito salchicha en acuarela que estuvo acá un rato sigue en
 `icono/perro.mjs`: pasa a ser el easter egg.
 
+### 5.6.1 El nombre de la app
+
+El nombre largo —**Take it easy: agenda docente**— es el de la bienvenida, el
+del pie de Ajustes y el de la ficha de Play Store. Vive en `src/nombre.ts` y no
+repetido por las pantallas.
+
+El corto —**Take It Easy**— es el que va debajo del ícono en el teléfono.
+Android corta las etiquetas largas a dos líneas y «Take it easy: agenda…» se
+lee peor que el corto entero.
+
 ### 5.7 El perrito
 
 Los dos archivos que dibujó Agustina, usados tal cual: `public/perrito.gif`
@@ -740,8 +751,11 @@ desde siempre con el alto del dibujo, por lo mismo.
 **Es decorativo**: `alt` vacío, `aria-hidden`, sin foco y sin eventos. Un lector
 de pantalla no lo nombra.
 
-Aparece en dos lados, y los eligió Agustina:
+Aparece en tres lados, y los eligió Agustina:
 
+- **En la bienvenida**, arriba del nombre de la app. Es lo primero que se ve al
+  abrirla por primera vez, y sólo en ese paso: en los otros tres sería una
+  viñeta repetida en vez de una presentación.
 - **En Hoy, cuando no hay clases.** Un día sin clases no es un día sin cargar:
   es un sábado, un feriado, un día que salió libre. La pantalla lo festeja en
   vez de pedir que se complete algo. No aparece en el otro estado vacío —el de

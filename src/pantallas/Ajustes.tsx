@@ -22,6 +22,7 @@ import {
   type Resultado,
 } from '../agenda/prueba';
 import Perrito from '../componentes/Perrito';
+import { NOMBRE } from '../nombre';
 import { olvidarInstructivo } from '../datos/preferencias';
 import { guardarArchivo } from '../nativo/archivos';
 import './Ajustes.css';
@@ -310,7 +311,7 @@ export default function Ajustes({ verInstructivo }: { verInstructivo: () => void
       </section>
 
       <p className="version" onClick={() => setToques((van) => van + 1)}>
-        Take It Easy {__VERSION__}
+        {NOMBRE} · {__VERSION__}
       </p>
 
       {/* El hueco está siempre, con el alto del perrito: así aparecer no

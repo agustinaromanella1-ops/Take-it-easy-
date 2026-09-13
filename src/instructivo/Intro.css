@@ -28,6 +28,13 @@
   padding-bottom: 40px;
 }
 
+/* El perrito de la bienvenida, alineado a la izquierda como el texto que lo
+   sigue, y un poco más grande que el de las otras pantallas. */
+.intro .perrito {
+  width: 150px;
+  margin: 0 0 4px;
+}
+
 .intro h1 {
   font-size: 30px;
   font-weight: 700;

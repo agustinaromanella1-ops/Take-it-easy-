@@ -1,10 +1,12 @@
 import { useState } from 'react';
 
+import Perrito from '../componentes/Perrito';
+import { NOMBRE } from '../nombre';
 import './Intro.css';
 
 const PASOS = [
   {
-    titulo: 'Take It Easy',
+    titulo: NOMBRE,
     texto:
       'Tu agenda de bolsillo para las clases. Asistencia, notas y observaciones, en el teléfono y entre dos timbres.',
   },
@@ -36,6 +38,9 @@ export default function Intro({ terminar }: { terminar: () => void }) {
       </button>
 
       <div className="contenido">
+        {/* Sólo en el primero: es la presentación de la app, no una viñeta
+            que acompañe a cada paso. */}
+        {paso === 0 && <Perrito />}
         <h1>{PASOS[paso].titulo}</h1>
         <p>{PASOS[paso].texto}</p>
       </div>

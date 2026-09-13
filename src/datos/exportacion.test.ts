@@ -120,7 +120,7 @@ describe('restaurar', () => {
     expect(await db.alumnos.count()).toBe(2);
     expect(await db.materias.count()).toBe(1);
     expect(await db.registrosAsistencia.count()).toBe(1);
-    expect((await db.observaciones.toCollection().first())?.capa).toBe('privada');
+    expect(await db.observaciones.toCollection().first()).not.toHaveProperty('capa');
   });
 
   it('reemplaza lo que había, no lo suma', async () => {

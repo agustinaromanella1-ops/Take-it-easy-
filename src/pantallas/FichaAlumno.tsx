@@ -16,7 +16,6 @@ import {
 import { comoSeLlama, materia as buscarMateria } from '../datos/materias';
 import {
   borrarObservacion,
-  cambiarCapa,
   crearObservacion,
   observacionesDeAlumno,
   restaurarObservacion,
@@ -122,8 +121,8 @@ export default function FichaAlumno({ alumnoId, materiaId, volver }: Props) {
         {dictado.problema && <p className="dictado-problema">{dictado.problema}</p>}
 
         <p className="privada">
-          Queda en la <strong>capa privada</strong>: sólo la ves vos. Cambiarla
-          es un toque aparte, después.
+          <strong>Sólo la ves vos.</strong> Las observaciones no se comparten ni
+          se envían a ningún lado: quedan en este teléfono.
         </p>
 
         <div className="pie">
@@ -198,12 +197,6 @@ export default function FichaAlumno({ alumnoId, materiaId, volver }: Props) {
             <li key={o.id} className="observacion">
               <div className="cabecera">
                 <span className="fecha">{enPalabras(o.fecha)}</span>
-                <button
-                  className={o.capa === 'privada' ? 'capa' : 'capa compartible'}
-                  onClick={() => cambiarCapa(o.id, o.capa === 'privada' ? 'compartible' : 'privada')}
-                >
-                  {o.capa === 'privada' ? 'Privada' : 'Compartible'}
-                </button>
               </div>
               <p className="texto">{o.texto}</p>
               <button
@@ -218,13 +211,6 @@ export default function FichaAlumno({ alumnoId, materiaId, volver }: Props) {
             </li>
           ))}
         </ul>
-      )}
-
-      {observaciones.length > 0 && (
-        <p className="ayuda capas">
-          Tocá <strong>Privada</strong> para pasarla a compartible, y de vuelta
-          para que sea privada otra vez. Privada la ves sólo vos.
-        </p>
       )}
 
       <div className="pie">

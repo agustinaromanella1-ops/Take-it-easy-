@@ -15,7 +15,6 @@ export type ColorPastel = 'lila' | 'rosa' | 'durazno' | 'celeste' | 'noche';
 
 export type EstadoAsistencia = 'presente' | 'ausente' | 'tarde';
 
-export type Capa = 'privada' | 'compartible';
 
 export interface Escuela {
   id: Id;
@@ -103,7 +102,6 @@ export interface Observacion {
   materiaId?: Id;
   fecha: FechaLocal;
   texto: string;
-  capa: Capa;
   creadoEn: Instante;
 }
 

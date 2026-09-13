@@ -1,5 +1,5 @@
 import { db, nuevoId } from './db';
-import type { Capa, Id, Observacion } from './tipos';
+import type { Id, Observacion } from './tipos';
 import type { FechaLocal } from '../fecha';
 
 export interface ObservacionNueva {
@@ -11,8 +11,8 @@ export interface ObservacionNueva {
 }
 
 /**
- * No recibe capa, y no hay forma de pedir otra: toda observación nueva nace
- * privada. Cambiarla de capa es una acción explícita y posterior de la docente.
+ * Toda observación es privada, y no hay forma de que deje de serlo: no existe
+ * la opción de compartirla, ni al crearla ni después.
  */
 export async function crearObservacion(nueva: ObservacionNueva): Promise<Id> {
   const observacion: Observacion = {
@@ -22,15 +22,10 @@ export async function crearObservacion(nueva: ObservacionNueva): Promise<Id> {
     materiaId: nueva.materiaId,
     fecha: nueva.fecha,
     texto: nueva.texto,
-    capa: 'privada',
     creadoEn: Date.now(),
   };
   await db.observaciones.add(observacion);
   return observacion.id;
-}
-
-export async function cambiarCapa(id: Id, capa: Capa): Promise<void> {
-  await db.observaciones.update(id, { capa });
 }
 
 /**
@@ -48,7 +43,7 @@ export async function borrarObservacion(id: Id): Promise<void> {
 }
 
 /**
- * Vuelve a poner una observación borrada, con su id, su fecha y su capa. No es
+ * Vuelve a poner una observación borrada, con su id y su fecha. No es
  * una observación nueva: si lo fuera, una privada que se borró por error
  * volvería con la fecha de hoy, y eso es perder el dato en vez de recuperarlo.
  */
