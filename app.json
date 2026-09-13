@@ -1,0 +1,29 @@
+{
+  "expo": {
+    "name": "Listo para enviar",
+    "slug": "listo-para-enviar",
+    "version": "0.1.0",
+    "orientation": "portrait",
+    "scheme": "listoparaenviar",
+    "userInterfaceStyle": "automatic",
+    "newArchEnabled": true,
+    "ios": {
+      "supportsTablet": false,
+      "bundleIdentifier": "com.takeiteasy.listoparaenviar",
+      "infoPlist": {
+        "LSApplicationQueriesSchemes": ["whatsapp"],
+        "NSContactsUsageDescription": "Para elegir a quién mandarle el mensaje desde tu agenda. Los contactos no salen del teléfono."
+      }
+    },
+    "android": {
+      "package": "com.takeiteasy.listoparaenviar",
+      "edgeToEdgeEnabled": true,
+      "permissions": ["READ_CONTACTS", "POST_NOTIFICATIONS", "SCHEDULE_EXACT_ALARM"]
+    },
+    "plugins": [
+      ["expo-contacts", { "contactsPermission": "Para elegir a quién mandarle el mensaje desde tu agenda." }],
+      "expo-sqlite",
+      "expo-notifications"
+    ]
+  }
+}
