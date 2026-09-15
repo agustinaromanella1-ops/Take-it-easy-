@@ -1,0 +1,192 @@
+.agenda .volver {
+  background: none;
+  border: none;
+  padding: 0 0 10px;
+  font-family: inherit;
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--primario);
+  cursor: pointer;
+}
+
+.agenda .ayuda,
+.agenda .detalle {
+  font-size: 14px;
+  line-height: 1.55;
+  color: var(--secundario);
+  margin-top: 8px;
+}
+
+.agenda .vacio {
+  margin-top: 24px;
+}
+
+.agenda .invitacion {
+  font-size: 16px;
+  font-weight: 700;
+}
+
+.agenda .entradas {
+  list-style: none;
+  margin-top: 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.agenda .entradas li {
+  background: var(--superficie);
+  border: 1px solid var(--borde);
+  border-radius: 14px;
+  padding: 14px;
+}
+
+.agenda .cabecera {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  flex-wrap: wrap;
+  margin-bottom: 6px;
+}
+
+.agenda .fecha {
+  font-size: 13px;
+  color: var(--secundario);
+  flex: 1;
+}
+
+.agenda .materia {
+  font-size: 11px;
+  font-weight: 700;
+  padding: 3px 9px;
+  border-radius: 999px;
+  background: var(--celeste);
+  color: var(--celeste-osc);
+}
+
+.agenda .titulo {
+  font-size: 16px;
+  font-weight: 700;
+  overflow-wrap: anywhere;
+}
+
+.agenda .entradas .detalle {
+  margin-top: 4px;
+  font-size: 14px;
+}
+
+.agenda .recordatorio {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-top: 10px;
+  padding: 9px 12px;
+  border-radius: 11px;
+  background: var(--noche);
+  color: var(--noche-osc);
+  font-size: 13px;
+}
+
+.agenda .recordatorio span {
+  flex: 1;
+}
+
+.agenda .recordatorio button,
+.agenda .borrar {
+  border: none;
+  background: none;
+  padding: 0;
+  font-family: inherit;
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.agenda .recordatorio button {
+  color: var(--noche-osc);
+}
+
+.agenda .borrar {
+  margin-top: 10px;
+  color: var(--secundario);
+  font-weight: 600;
+}
+
+.agenda label {
+  display: block;
+  margin-top: 16px;
+}
+
+.agenda label span {
+  display: block;
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--secundario);
+  margin-bottom: 6px;
+}
+
+.agenda input,
+.agenda select,
+.agenda textarea {
+  width: 100%;
+  padding: 13px 14px;
+  border: 1px solid var(--borde);
+  border-radius: 12px;
+  background: var(--superficie);
+  color: var(--texto);
+  font-family: inherit;
+  font-size: 16px;
+}
+
+.agenda textarea {
+  line-height: 1.6;
+  resize: none;
+}
+
+.agenda .aviso {
+  margin-top: 22px;
+  padding: 14px;
+  border: 1px solid var(--borde);
+  border-radius: 14px;
+  background: var(--superficie);
+}
+
+.agenda .interruptor {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin: 0;
+}
+
+.agenda .interruptor input {
+  width: 22px;
+  height: 22px;
+  flex: none;
+  padding: 0;
+  accent-color: var(--primario);
+}
+
+.agenda .interruptor span {
+  margin: 0;
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--texto);
+}
+
+.agenda .aviso input[type='datetime-local'] {
+  margin-top: 12px;
+}
+
+.agenda .aviso .detalle {
+  font-size: 13px;
+}
+
+.agenda .bloqueo {
+  margin-top: 12px;
+  padding: 12px 14px;
+  border-radius: 12px;
+  background: var(--rosa);
+  color: var(--rosa-osc);
+  font-size: 13px;
+  line-height: 1.5;
+}

@@ -1,0 +1,121 @@
+.app {
+  max-width: 480px;
+  margin: 0 auto;
+  min-height: 100dvh;
+  display: flex;
+  flex-direction: column;
+}
+
+.pantalla {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  padding: 28px 20px 16px;
+}
+
+.pantalla h1 {
+  font-size: 28px;
+  font-weight: 700;
+  letter-spacing: -0.4px;
+}
+
+/* Pegado al borde de abajo, pero por encima de la barra de secciones: si se
+   pegara al borde de la ventana quedaría tapándola. */
+.pie {
+  position: sticky;
+  bottom: var(--alto-nav);
+  z-index: 2;
+  margin-top: auto;
+  padding-top: 14px;
+  background: var(--fondo);
+}
+
+.primario {
+  display: block;
+  width: 100%;
+  padding: 15px;
+  border: none;
+  border-radius: 12px;
+  background: var(--primario);
+  color: #fff;
+  font-family: inherit;
+  font-size: 16px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.primario:disabled {
+  background: var(--borde);
+  color: var(--secundario);
+  cursor: default;
+}
+
+.secundario {
+  display: block;
+  width: 100%;
+  margin-top: 8px;
+  padding: 13px;
+  border: none;
+  border-radius: 12px;
+  background: none;
+  color: var(--primario);
+  font-family: inherit;
+  font-size: 15px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+/* Pegada al borde de abajo de la ventana, no al final del documento.
+
+   Estaba en el flujo normal, así que en una pantalla con una lista larga
+   —tomar asistencia de un curso de 28, la materia con todos sus alumnos— la
+   barra quedaba a mil cuatrocientos píxeles de scroll. Había que recorrer el
+   curso entero para poder pasar a Ajustes, y al llegar abajo ya no se veía la
+   flecha de volver: las dos salidas nunca estaban juntas. */
+nav {
+  position: sticky;
+  bottom: 0;
+  z-index: 3;
+  display: flex;
+  /* Alto fijo para que --alto-nav sea cierto por construcción y no un número
+     adivinado que el pie usa para pegarse encima. */
+  height: var(--alto-nav);
+  box-sizing: border-box;
+  border-top: 1px solid var(--borde);
+  background: var(--superficie);
+}
+
+nav button {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  border: none;
+  background: none;
+  font-family: inherit;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--secundario);
+  cursor: pointer;
+}
+
+nav button.activa {
+  color: var(--primario);
+}
+
+/* Acciones poco frecuentes y reversibles: presentes, pero sin pelear con las otras. */
+.terciario {
+  display: block;
+  width: 100%;
+  margin-top: 4px;
+  padding: 11px;
+  border: none;
+  border-radius: 12px;
+  background: none;
+  color: var(--secundario);
+  font-family: inherit;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+}

@@ -1,0 +1,180 @@
+.alumnos .ayuda {
+  font-size: 14px;
+  line-height: 1.55;
+  color: var(--secundario);
+  margin-top: 8px;
+}
+
+.alumnos .volver {
+  background: none;
+  border: none;
+  padding: 0 0 10px;
+  font-family: inherit;
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--primario);
+  cursor: pointer;
+}
+
+.alumnos .resumen {
+  font-size: 15px;
+  font-weight: 700;
+  margin-top: 8px;
+}
+
+.alumnos .pendiente {
+  color: var(--durazno-osc);
+}
+
+.alumnos textarea {
+  flex: 1;
+  min-height: 220px;
+  margin-top: 16px;
+  padding: 14px;
+  border: 1px solid var(--borde);
+  border-radius: 14px;
+  background: var(--superficie);
+  color: var(--texto);
+  font-family: inherit;
+  font-size: 15px;
+  line-height: 1.7;
+  resize: none;
+}
+
+.alumnos textarea::placeholder {
+  color: var(--secundario);
+  opacity: 0.6;
+}
+
+.alumnos .descartado {
+  margin-top: 14px;
+  padding: 12px 14px;
+  background: var(--durazno);
+  color: var(--durazno-osc);
+  border-radius: 12px;
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+.alumnos .filas {
+  list-style: none;
+  margin-top: 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.alumnos .fila {
+  background: var(--superficie);
+  border: 1px solid var(--borde);
+  border-radius: 14px;
+  padding: 12px 14px;
+}
+
+.alumnos .fila.revisar {
+  border-color: var(--durazno);
+}
+
+.alumnos .campos {
+  display: flex;
+  gap: 10px;
+}
+
+.alumnos .campos label {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.alumnos .campos span {
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--secundario);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.alumnos .campos input {
+  width: 100%;
+  padding: 9px 10px;
+  border: 1px solid var(--borde);
+  border-radius: 10px;
+  background: var(--fondo);
+  color: var(--texto);
+  font-family: inherit;
+  font-size: 15px;
+  font-weight: 600;
+}
+
+.alumnos .campos input:focus {
+  outline: 2px solid var(--lila);
+  outline-offset: 1px;
+}
+
+.alumnos .motivo {
+  margin-top: 8px;
+  font-size: 13px;
+  color: var(--durazno-osc);
+}
+
+.alumnos .original {
+  margin-top: 10px;
+  padding-top: 9px;
+  border-top: 1px solid var(--borde);
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 12px;
+  color: var(--secundario);
+}
+
+.alumnos .original span {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.alumnos .original button {
+  background: none;
+  border: none;
+  padding: 0;
+  font-family: inherit;
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--primario);
+  cursor: pointer;
+  flex: none;
+}
+
+.alumnos .aviso {
+  margin-top: 10px;
+  font-size: 13px;
+  color: var(--durazno-osc);
+  text-align: center;
+}
+
+.alumnos .encabezado {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  margin-bottom: 8px;
+}
+
+.alumnos .num {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--secundario);
+}
+
+.alumnos .marca {
+  font-size: 12px;
+  font-weight: 700;
+  padding: 3px 9px;
+  border-radius: 999px;
+  background: var(--durazno);
+  color: var(--durazno-osc);
+}

@@ -1,0 +1,14 @@
+/* Sin recuadro ni fondo: el dibujo ya viene con transparencia.
+
+   `width` y `height` van también como atributos en el `<img>`, y de ahí sale
+   la proporción: el navegador reserva el alto antes de bajar la imagen, y
+   cuando aparece no empuja nada de lo que está alrededor. */
+.perrito {
+  display: block;
+  width: 120px;
+  max-width: 60%;
+  height: auto;
+  margin: 0 auto;
+  user-select: none;
+  pointer-events: none;
+}

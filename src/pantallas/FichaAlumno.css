@@ -1,0 +1,205 @@
+.ficha .volver {
+  background: none;
+  border: none;
+  padding: 0 0 10px;
+  font-family: inherit;
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--primario);
+  cursor: pointer;
+}
+
+.ficha h1 {
+  line-height: 1.2;
+}
+
+.ficha .materias {
+  display: flex;
+  gap: 7px;
+  flex-wrap: wrap;
+  margin-top: 12px;
+}
+
+.ficha .chip {
+  font-size: 12px;
+  font-weight: 600;
+  padding: 5px 11px;
+  border-radius: 999px;
+}
+
+.ficha .chip.lila { background: var(--lila); color: var(--lila-osc); }
+.ficha .chip.rosa { background: var(--rosa); color: var(--rosa-osc); }
+.ficha .chip.durazno { background: var(--durazno); color: var(--durazno-osc); }
+.ficha .chip.celeste { background: var(--celeste); color: var(--celeste-osc); }
+.ficha .chip.noche { background: var(--noche); color: var(--noche-osc); }
+
+.ficha .tarjetas {
+  display: flex;
+  gap: 10px;
+  margin-top: 18px;
+}
+
+.ficha .tarjeta {
+  flex: 1;
+  min-width: 0;
+  background: var(--superficie);
+  border: 1px solid var(--borde);
+  border-radius: 14px;
+  padding: 14px;
+}
+
+.ficha .rotulo {
+  font-size: 12px;
+  color: var(--secundario);
+  margin-bottom: 5px;
+}
+
+.ficha .valor {
+  font-size: 22px;
+  font-weight: 700;
+  letter-spacing: -0.3px;
+}
+
+.ficha .detalle {
+  font-size: 12px;
+  color: var(--secundario);
+  margin-top: 3px;
+  line-height: 1.4;
+}
+
+.ficha h2 {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--secundario);
+  text-transform: uppercase;
+  letter-spacing: 0.7px;
+  margin-top: 26px;
+}
+
+.ficha .ayuda {
+  font-size: 14px;
+  line-height: 1.55;
+  color: var(--secundario);
+  margin-top: 10px;
+}
+
+.ficha .obs {
+  list-style: none;
+  margin-top: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.ficha .observacion {
+  background: var(--superficie);
+  border: 1px solid var(--borde);
+  border-radius: 14px;
+  padding: 14px;
+}
+
+.ficha .cabecera {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  margin-bottom: 7px;
+}
+
+.ficha .fecha {
+  font-size: 13px;
+  color: var(--secundario);
+  flex: 1;
+}
+
+.ficha .texto {
+  font-size: 15px;
+  line-height: 1.55;
+  overflow-wrap: anywhere;
+}
+
+.ficha .borrar {
+  margin-top: 10px;
+  padding: 0;
+  border: none;
+  background: none;
+  color: var(--secundario);
+  font-family: inherit;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.ficha textarea {
+  flex: 1;
+  min-height: 160px;
+  margin-top: 16px;
+  padding: 14px;
+  border: 1px solid var(--borde);
+  border-radius: 14px;
+  background: var(--superficie);
+  color: var(--texto);
+  font-family: inherit;
+  font-size: 15px;
+  line-height: 1.7;
+  resize: none;
+}
+
+.ficha textarea::placeholder {
+  color: var(--secundario);
+  opacity: 0.6;
+}
+
+.ficha .privada {
+  margin-top: 14px;
+  padding: 12px 14px;
+  border-radius: 12px;
+  background: var(--lila);
+  color: var(--lila-osc);
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+.ficha .hecho {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 10px;
+  padding: 12px 14px;
+  border-radius: 12px;
+  background: var(--noche);
+  color: var(--noche-osc);
+  font-size: 14px;
+}
+
+.ficha .hecho span {
+  flex: 1;
+}
+
+.ficha .hecho button {
+  border: none;
+  background: none;
+  padding: 0;
+  font-family: inherit;
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--noche-osc);
+  cursor: pointer;
+}
+
+/* La tarjeta de notas se toca. Se ve igual que la otra salvo por el pie, que
+   es lo único que anuncia que hay algo detrás. */
+.ficha .tarjeta.abre {
+  display: block;
+  width: 100%;
+  text-align: left;
+  font-family: inherit;
+  cursor: pointer;
+}
+
+.ficha .tarjeta .ver {
+  display: block;
+  margin-top: 8px;
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--primario);
+}

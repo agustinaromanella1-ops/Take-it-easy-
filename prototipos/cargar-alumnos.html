@@ -1,0 +1,172 @@
+<!doctype html>
+<html lang="es-AR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Take It Easy — Pegar la lista</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --fondo:#FFF9F5; --superficie:#FFFFFF; --borde:#F0E8E1;
+    --texto:#2E2A45; --secundario:#6E6880; --primario:#7B5EA7;
+    --lila:#E3D5F5; --lila-osc:#6B4E9E;
+    --durazno:#FFDCC2; --durazno-osc:#C4652A;
+    --celeste:#CFE7F5; --celeste-osc:#2C7196;
+    --salvia:#8FC4A8; --salvia-osc:#3D7A5E;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{
+    font-family:'Nunito',system-ui,-apple-system,sans-serif;
+    background:var(--fondo);color:var(--texto);
+    -webkit-font-smoothing:antialiased;
+  }
+  .telefono{max-width:420px;margin:0 auto;min-height:100vh;padding:0 0 108px}
+  .barra{display:flex;align-items:center;gap:12px;padding:18px 20px 10px}
+  .atras{
+    width:34px;height:34px;border-radius:10px;border:1px solid var(--borde);
+    background:var(--superficie);color:var(--texto);font-size:17px;
+    display:flex;align-items:center;justify-content:center;cursor:pointer;flex:none;
+  }
+  .titulo{font-size:19px;font-weight:700}
+  .subtitulo{font-size:13px;color:var(--secundario);margin-top:2px}
+  h1{font-size:26px;font-weight:700;padding:10px 20px 6px;letter-spacing:-.3px}
+  .ayuda{padding:0 20px 14px;font-size:14px;color:var(--secundario);line-height:1.5}
+  .pegado{
+    margin:0 20px 18px;background:var(--superficie);border:1px solid var(--borde);
+    border-radius:14px;padding:14px;font-size:14px;line-height:1.7;color:var(--secundario);
+    max-height:132px;overflow:hidden;position:relative;white-space:pre-line;
+  }
+  .pegado::after{
+    content:"";position:absolute;left:0;right:0;bottom:0;height:44px;
+    background:linear-gradient(to bottom,rgba(255,255,255,0),#fff);
+  }
+  .editar{
+    display:block;margin:-8px 20px 20px;background:none;border:none;padding:0;
+    color:var(--primario);font-family:inherit;font-size:14px;font-weight:700;cursor:pointer;
+  }
+  .resumen{
+    margin:0 20px 12px;font-size:15px;font-weight:700;color:var(--texto);
+  }
+  .resumen .pendiente{color:var(--durazno-osc)}
+  .filas{padding:0 20px;display:flex;flex-direction:column;gap:7px}
+  .fila{
+    background:var(--superficie);border:1px solid var(--borde);border-radius:12px;
+    padding:11px 14px;display:flex;align-items:center;gap:10px;
+  }
+  .num{font-size:12px;color:var(--secundario);min-width:20px;flex:none}
+  .datos{flex:1;min-width:0}
+  .ape{font-size:15px;font-weight:700}
+  .nom{font-size:13px;color:var(--secundario);margin-top:1px}
+  .revisar{border-color:var(--durazno)}
+  .marca{
+    font-size:12px;font-weight:700;padding:3px 9px;border-radius:999px;
+    background:var(--durazno);color:var(--durazno-osc);flex:none;
+  }
+  .pie{
+    position:fixed;bottom:0;left:0;right:0;max-width:420px;margin:0 auto;
+    background:var(--fondo);padding:12px 20px 20px;border-top:1px solid var(--borde);
+  }
+  .primario{
+    display:block;width:100%;padding:15px;
+    background:var(--primario);color:#fff;border:none;border-radius:12px;
+    font-family:inherit;font-size:16px;font-weight:700;cursor:pointer;
+  }
+  .nota{
+    padding:20px;font-size:12px;color:var(--secundario);line-height:1.6;
+    border-top:1px dashed var(--borde);margin-top:24px;
+  }
+</style>
+</head>
+<body>
+<div class="telefono">
+
+  <div class="barra">
+    <button class="atras" aria-label="Volver">←</button>
+    <div>
+      <p class="titulo">Alumnos · 4.º A</p>
+      <p class="subtitulo">Historia · Escuela N.º 12</p>
+    </div>
+  </div>
+
+  <h1>Revisá la lista</h1>
+  <p class="ayuda">Esto es lo que se entendió del texto que pegaste. Corregí lo que haga falta antes de agregar.</p>
+
+  <div class="pegado">1. ACUÑA, Malena
+2. BARRETO, Ignacio
+3. CABRERA, Delfina
+4. DUARTE, Joaquín
+5. ESQUIVEL, Camila
+6. FERREYRA, Bautista</div>
+  <button class="editar">Editar el texto pegado</button>
+
+  <p class="resumen">24 alumnos reconocidos, <span class="pendiente">2 para revisar</span></p>
+
+  <div class="filas">
+
+    <div class="fila">
+      <span class="num">1</span>
+      <div class="datos">
+        <p class="ape">Acuña</p>
+        <p class="nom">Malena</p>
+      </div>
+    </div>
+
+    <div class="fila">
+      <span class="num">2</span>
+      <div class="datos">
+        <p class="ape">Barreto</p>
+        <p class="nom">Ignacio</p>
+      </div>
+    </div>
+
+    <div class="fila revisar">
+      <span class="num">3</span>
+      <div class="datos">
+        <p class="ape">Cabrera Nieto</p>
+        <p class="nom">Delfina</p>
+      </div>
+      <span class="marca">Revisar</span>
+    </div>
+
+    <div class="fila">
+      <span class="num">4</span>
+      <div class="datos">
+        <p class="ape">Duarte</p>
+        <p class="nom">Joaquín</p>
+      </div>
+    </div>
+
+    <div class="fila revisar">
+      <span class="num">5</span>
+      <div class="datos">
+        <p class="ape">Esquivel</p>
+        <p class="nom">Camila del Valle</p>
+      </div>
+      <span class="marca">Revisar</span>
+    </div>
+
+    <div class="fila">
+      <span class="num">6</span>
+      <div class="datos">
+        <p class="ape">Ferreyra</p>
+        <p class="nom">Bautista</p>
+      </div>
+    </div>
+
+  </div>
+
+  <p class="nota">
+    Prototipo — propuesta a revisar, no aprobada todavía. Nombres ficticios.<br>
+    Sólo se piden nombre y apellido. No hay campo de DNI, domicilio, fecha de
+    nacimiento ni foto, y no se agrega después.
+  </p>
+
+  <div class="pie">
+    <button class="primario">Agregar 24 alumnos</button>
+  </div>
+
+</div>
+</body>
+</html>

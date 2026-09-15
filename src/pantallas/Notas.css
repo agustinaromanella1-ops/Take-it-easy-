@@ -1,0 +1,164 @@
+.notas .volver {
+  background: none;
+  border: none;
+  padding: 0 0 10px;
+  font-family: inherit;
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--primario);
+  cursor: pointer;
+}
+
+.notas .detalle {
+  font-size: 14px;
+  line-height: 1.55;
+  color: var(--secundario);
+  margin-top: 6px;
+}
+
+.notas .resumen {
+  font-size: 15px;
+  font-weight: 700;
+  margin-top: 8px;
+}
+
+.notas .promedio {
+  color: var(--primario);
+}
+
+.notas .vacio {
+  margin-top: 24px;
+}
+
+.notas .invitacion {
+  font-size: 16px;
+  font-weight: 700;
+}
+
+.notas .alumnos {
+  list-style: none;
+  margin-top: 18px;
+}
+
+.notas .fila {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+  padding: 12px 14px;
+  margin-bottom: 8px;
+  border: 1px solid var(--borde);
+  border-radius: 14px;
+  background: var(--superficie);
+}
+
+.notas .fila.error {
+  border-color: var(--rosa-osc);
+}
+
+.notas .nombre {
+  flex: 1;
+  min-width: 0;
+  font-size: 15px;
+  overflow-wrap: anywhere;
+}
+
+.notas input.nota {
+  width: 72px;
+  padding: 10px;
+  border: 1px solid var(--borde);
+  border-radius: 11px;
+  background: var(--fondo);
+  color: var(--texto);
+  font-family: inherit;
+  font-size: 18px;
+  font-weight: 700;
+  text-align: center;
+}
+
+.notas .etiquetas {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.notas .etiquetas button {
+  padding: 8px 11px;
+  border: 1px solid var(--borde);
+  border-radius: 10px;
+  background: var(--fondo);
+  color: var(--secundario);
+  font-family: inherit;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.notas .etiquetas .elegida {
+  background: var(--lila);
+  border-color: var(--lila);
+  color: var(--lila-osc);
+  font-weight: 700;
+}
+
+.notas .aviso {
+  margin-top: 12px;
+  padding: 12px 14px;
+  border-radius: 12px;
+  background: var(--rosa);
+  color: var(--rosa-osc);
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+.notas .distribucion {
+  margin-top: 26px;
+}
+
+.notas .distribucion h2 {
+  font-size: 15px;
+  font-weight: 700;
+}
+
+.notas .distribucion ul {
+  list-style: none;
+  margin-top: 12px;
+}
+
+.notas .distribucion li {
+  display: flex;
+  justify-content: space-between;
+  padding: 10px 0;
+  border-bottom: 1px solid var(--borde);
+  font-size: 14px;
+}
+
+.notas .distribucion li:last-child {
+  border-bottom: none;
+}
+
+.notas .cuantas {
+  font-weight: 700;
+  color: var(--primario);
+}
+
+/* Las notas se guardan solas al escribirlas; esto lo dice, y se va solo. */
+.notas .guardada {
+  display: inline-block;
+  margin-top: 8px;
+  padding: 4px 10px;
+  border-radius: 999px;
+  background: var(--salvia);
+  color: #fff;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+/* El pie va después de la lista y antes de la distribución: terminar de
+   cargar es la acción de esta pantalla, no leer el resumen. */
+.notas .pie {
+  position: static;
+  margin-top: 20px;
+  padding-top: 0;
+}

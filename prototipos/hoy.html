@@ -1,0 +1,137 @@
+<!doctype html>
+<html lang="es-AR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Take It Easy — Hoy</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --fondo:#FFF9F5; --superficie:#FFFFFF; --borde:#F0E8E1;
+    --texto:#2E2A45; --secundario:#6E6880; --primario:#7B5EA7;
+    --lila:#E3D5F5; --lila-osc:#6B4E9E;
+    --rosa:#FBD5E3; --rosa-osc:#B54A75;
+    --durazno:#FFDCC2; --durazno-osc:#C4652A;
+    --celeste:#CFE7F5; --celeste-osc:#2C7196;
+    --noche:#D3D8F0; --noche-osc:#3A4380;
+    --salvia:#8FC4A8; --salvia-osc:#3D7A5E;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{
+    font-family:'Nunito',system-ui,-apple-system,sans-serif;
+    background:var(--fondo);color:var(--texto);
+    -webkit-font-smoothing:antialiased;
+  }
+  .telefono{max-width:420px;margin:0 auto;min-height:100vh;padding:0 0 92px;position:relative}
+  header{padding:28px 20px 16px}
+  .fecha{font-size:14px;color:var(--secundario);margin-bottom:2px}
+  h1{font-size:30px;font-weight:700;letter-spacing:-.4px}
+  .lista{padding:4px 20px;display:flex;flex-direction:column;gap:12px}
+  .clase{
+    background:var(--superficie);border:1px solid var(--borde);border-radius:16px;
+    padding:16px;display:flex;gap:14px;align-items:flex-start;
+    border-left:5px solid var(--borde);
+  }
+  .clase.lengua{border-left-color:var(--lila)}
+  .clase.historia{border-left-color:var(--celeste)}
+  .clase.siguiente{box-shadow:0 2px 10px rgba(123,94,167,.08)}
+  .hora{
+    font-size:14px;font-weight:700;min-width:52px;padding-top:2px;
+  }
+  .cuerpo{flex:1;min-width:0}
+  .materia{font-size:17px;font-weight:700;margin-bottom:3px}
+  .curso{font-size:14px;color:var(--secundario)}
+  .estado{font-size:14px;color:var(--secundario);margin-top:10px}
+  .estado.hecha{font-weight:600;color:var(--texto)}
+  .primario{
+    display:block;width:100%;margin-top:14px;padding:14px;
+    background:var(--primario);color:#fff;border:none;border-radius:12px;
+    font-family:inherit;font-size:16px;font-weight:700;cursor:pointer;
+  }
+  .etiqueta-siguiente{
+    font-size:12px;font-weight:700;color:var(--lila-osc);
+    text-transform:uppercase;letter-spacing:.6px;margin-bottom:8px;
+  }
+  nav{
+    position:fixed;bottom:0;left:0;right:0;max-width:420px;margin:0 auto;
+    background:var(--superficie);border-top:1px solid var(--borde);
+    display:flex;padding:10px 0 16px;
+  }
+  nav a{
+    flex:1;text-align:center;font-size:12px;font-weight:600;
+    color:var(--secundario);text-decoration:none;
+  }
+  nav a.activo{color:var(--primario)}
+  .nota{
+    padding:20px;font-size:12px;color:var(--secundario);line-height:1.6;
+    border-top:1px dashed var(--borde);margin-top:24px;
+  }
+</style>
+</head>
+<body>
+<div class="telefono">
+
+  <header>
+    <p class="fecha">martes 9 de septiembre</p>
+    <h1>Hoy</h1>
+  </header>
+
+  <div class="lista">
+
+    <article class="clase lengua">
+      <div class="hora">7:40</div>
+      <div class="cuerpo">
+        <p class="materia">Lengua</p>
+        <p class="curso">3.º B · Escuela N.º 12</p>
+        <p class="estado hecha">Asistencia tomada · 24 de 24</p>
+      </div>
+    </article>
+
+    <article class="clase historia siguiente">
+      <div class="hora">9:20</div>
+      <div class="cuerpo">
+        <p class="etiqueta-siguiente">La que sigue</p>
+        <p class="materia">Historia</p>
+        <p class="curso">4.º A · Escuela N.º 12</p>
+        <button class="primario">Tomar asistencia</button>
+      </div>
+    </article>
+
+    <article class="clase lengua">
+      <div class="hora">11:00</div>
+      <div class="cuerpo">
+        <p class="materia">Lengua</p>
+        <p class="curso">5.º C · Escuela N.º 12</p>
+        <p class="estado">Sin registrar</p>
+      </div>
+    </article>
+
+    <article class="clase historia">
+      <div class="hora">13:10</div>
+      <div class="cuerpo">
+        <p class="materia">Historia</p>
+        <p class="curso">2.º A · Instituto Belgrano</p>
+        <p class="estado">Sin registrar</p>
+      </div>
+    </article>
+
+  </div>
+
+  <p class="nota">
+    Prototipo — propuesta a revisar, no aprobada todavía.<br>
+    Una sola acción primaria en la pantalla: tomar asistencia de la clase que sigue.
+    El color de cada materia está en la franja izquierda; lo que se lee está en el texto.
+  </p>
+
+  <nav>
+    <a href="hoy.html" class="activo">Hoy</a>
+    <a href="ficha-alumno.html">Cursos</a>
+    <a href="#">Agenda</a>
+    <a href="#">Ajustes</a>
+  </nav>
+
+</div>
+</body>
+</html>

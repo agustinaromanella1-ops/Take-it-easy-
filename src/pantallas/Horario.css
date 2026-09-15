@@ -1,0 +1,156 @@
+.horario .barra {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.horario .atras {
+  width: 34px;
+  height: 34px;
+  flex: none;
+  border: 1px solid var(--borde);
+  border-radius: 10px;
+  background: var(--superficie);
+  color: var(--texto);
+  font-size: 17px;
+  font-family: inherit;
+  cursor: pointer;
+}
+
+.horario .barra h1 {
+  font-size: 22px;
+  line-height: 1.2;
+}
+
+.horario .subtitulo {
+  font-size: 13px;
+  color: var(--secundario);
+  margin-top: 3px;
+}
+
+.horario .ayuda {
+  margin-top: 18px;
+  font-size: 15px;
+  line-height: 1.55;
+  color: var(--secundario);
+}
+
+.horario .bloques {
+  list-style: none;
+  margin-top: 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.horario .bloques li {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 14px;
+  background: var(--superficie);
+  border: 1px solid var(--borde);
+  border-radius: 12px;
+}
+
+.horario .dia {
+  flex: 1;
+  min-width: 0;
+  font-size: 15px;
+  font-weight: 700;
+  text-transform: capitalize;
+}
+
+.horario .horas {
+  font-size: 14px;
+  color: var(--secundario);
+}
+
+.horario .bloques button {
+  background: none;
+  border: none;
+  padding: 0;
+  font-family: inherit;
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--primario);
+  cursor: pointer;
+  flex: none;
+}
+
+.horario .agregar {
+  margin-top: 26px;
+  padding-top: 18px;
+  border-top: 1px solid var(--borde);
+}
+
+.horario .rotulo,
+.horario .horas-campos span {
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--secundario);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.horario .dias {
+  display: flex;
+  gap: 6px;
+  margin-top: 10px;
+}
+
+.horario .dias button {
+  flex: 1;
+  height: 42px;
+  border: 1px solid var(--borde);
+  border-radius: 10px;
+  background: var(--superficie);
+  color: var(--secundario);
+  font-family: inherit;
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.horario .dias button.elegido {
+  background: var(--lila);
+  border-color: var(--lila);
+  color: var(--lila-osc);
+}
+
+.horario .horas-campos {
+  display: flex;
+  gap: 10px;
+  margin-top: 14px;
+}
+
+.horario .horas-campos label {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.horario .horas-campos input {
+  width: 100%;
+  padding: 11px 12px;
+  border: 1px solid var(--borde);
+  border-radius: 12px;
+  background: var(--superficie);
+  color: var(--texto);
+  font-family: inherit;
+  font-size: 16px;
+  font-weight: 600;
+}
+
+.horario .horas-campos input:focus {
+  outline: 2px solid var(--lila);
+  outline-offset: 1px;
+}
+
+.horario .aviso {
+  margin-top: 10px;
+  font-size: 13px;
+  color: var(--durazno-osc);
+}

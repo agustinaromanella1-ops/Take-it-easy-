@@ -1,0 +1,119 @@
+.ajustes section {
+  margin-top: 26px;
+  padding-top: 18px;
+  border-top: 1px solid var(--borde);
+}
+
+.ajustes section:first-of-type {
+  border-top: none;
+  padding-top: 0;
+}
+
+.ajustes h2 {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--secundario);
+  text-transform: uppercase;
+  letter-spacing: 0.6px;
+}
+
+.ajustes .detalle {
+  margin-top: 8px;
+  font-size: 15px;
+  line-height: 1.55;
+  color: var(--secundario);
+}
+
+.ajustes .aviso {
+  margin-top: 10px;
+  padding: 11px 13px;
+  background: var(--durazno);
+  color: var(--durazno-osc);
+  border-radius: 12px;
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+.ajustes .error {
+  margin-top: 10px;
+  padding: 11px 13px;
+  background: var(--rosa);
+  color: var(--rosa-osc);
+  border-radius: 12px;
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+.ajustes .secundario {
+  margin-top: 12px;
+  width: auto;
+  padding: 11px 16px;
+  border: 1px solid var(--borde);
+  border-radius: 12px;
+  background: var(--superficie);
+}
+
+.ajustes .primario {
+  margin-top: 12px;
+}
+
+.ajustes .terciario {
+  margin-top: 2px;
+}
+
+.ajustes .hecho {
+  margin-top: 12px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 14px;
+  background: var(--texto);
+  color: #fff;
+  border-radius: 12px;
+  font-size: 14px;
+}
+
+.ajustes .hecho span {
+  flex: 1;
+}
+
+.ajustes .hecho button {
+  flex: none;
+  background: none;
+  border: none;
+  padding: 0;
+  font-family: inherit;
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--lila);
+  cursor: pointer;
+}
+
+.ajustes .hecho2 {
+  margin-top: 12px;
+  padding: 12px 14px;
+  border-radius: 12px;
+  background: var(--noche);
+  color: var(--noche-osc);
+  font-size: 13px;
+  line-height: 1.55;
+}
+
+/* El nombre y la versión, al pie. Sirve para dos cosas: saber qué versión
+   tiene alguien cuando cuenta que algo no le anda, y esconder el perrito. */
+.ajustes .version {
+  margin: 26px 0 8px;
+  text-align: center;
+  font-size: 12px;
+  color: var(--secundario);
+  opacity: 0.7;
+  user-select: none;
+  cursor: pointer;
+}
+
+/* El hueco del perrito. Ocupa su alto desde siempre para que asomarse no
+   desplace nada: 120px de ancho sobre un dibujo de 480x320 son 80 de alto. */
+.ajustes .escondite {
+  height: 80px;
+  margin-bottom: 8px;
+}
