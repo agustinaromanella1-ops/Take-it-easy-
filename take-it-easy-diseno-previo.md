@@ -376,6 +376,26 @@ definió, y es la forma más silenciosa de que el promedio mienta. En una
 materia con escala conceptual no hay promedio: hay distribución, cuántas de
 cada etiqueta.
 
+**Aprobado o desaprobado es una tercera escala, no dos etiquetas más.** Lo
+pidió Agustina para cerrar una instancia —diciembre, febrero, un
+recuperatorio—, y va aparte de la conceptual común en vez de sumada a sus
+cuatro escalones, porque son dos sistemas distintos.
+
+Mezclarlas costaba dos cosas: seis botones por alumno, que en un teléfono son
+tres renglones por veintiocho alumnos; y que «Cómo quedó el curso» contara
+juntos «Bueno» y «Aprobado», que no son comparables. Separadas, una instancia
+se carga con dos toques y cada distribución se lee sola.
+
+Sus ids —`apr` y `des`— no chocan con los de la conceptual común, y hay un test
+que lo fija: una nota guardada apunta al id de su etiqueta, así que si dos
+escalas compartieran uno, cambiar la escala de una evaluación haría que una
+nota vieja se leyera como otra cosa en vez de quedar sin leer.
+
+**Comparar escalas dejó de ser mirar el `tipo`.** Con dos conceptuales, el
+formulario marcaba las dos como elegidas a la vez. `esLaMismaEscala` compara
+los ids de las etiquetas, y compara una copia como la misma escala, que es como
+vuelven de la base: cada evaluación guarda su escala, no una referencia.
+
 ### 2.10 Exportación
 
 IndexedDB puede ser desalojada por el sistema, y un teléfono se pierde o se

@@ -20,6 +20,40 @@ export const CONCEPTUAL_COMUN: Escala = {
 };
 
 /**
+ * Aprobado o desaprobado, sin puntos medios. Es la que se usa para cerrar una
+ * instancia: diciembre, febrero, un recuperatorio.
+ *
+ * Va aparte de la conceptual común y no sumada a sus cuatro escalones, porque
+ * son dos sistemas distintos. Mezclarlas daría seis botones por alumno —tres
+ * renglones en un teléfono, por veintiocho alumnos— y haría que «Cómo quedó el
+ * curso» contara juntos «Bueno» y «Aprobado», que no son comparables.
+ */
+export const APROBADO_DESAPROBADO: Escala = {
+  tipo: 'conceptual',
+  etiquetas: [
+    { id: 'des', texto: 'Desaprobado' },
+    { id: 'apr', texto: 'Aprobado' },
+  ],
+};
+
+/**
+ * Si dos escalas son la misma.
+ *
+ * Hace falta desde que hay más de una conceptual: comparar por `tipo` marcaría
+ * las dos como elegidas a la vez en el formulario.
+ */
+export function esLaMismaEscala(a: Escala, b: Escala): boolean {
+  if (a.tipo === 'numerica') {
+    return b.tipo === 'numerica' && a.min === b.min && a.max === b.max;
+  }
+  if (b.tipo !== 'conceptual') return false;
+  return (
+    a.etiquetas.length === b.etiquetas.length &&
+    a.etiquetas.every((e, i) => e.id === b.etiquetas[i].id)
+  );
+}
+
+/**
  * Si un valor entra en la escala. En las conceptuales el valor es el **id** de
  * la etiqueta y no su texto: renombrar "MB" a "Muy bueno" no puede dejar
  * huérfanas las notas ya cargadas.

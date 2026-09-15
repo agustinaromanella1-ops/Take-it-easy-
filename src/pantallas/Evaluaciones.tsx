@@ -2,7 +2,13 @@ import { useLiveQuery } from 'dexie-react-hooks';
 import { useEffect, useState } from 'react';
 
 import { enPalabras, hoy } from '../fecha';
-import { CONCEPTUAL_COMUN, NUMERICA_1_10, comoSeLlamaLaEscala } from '../datos/escalas';
+import {
+  APROBADO_DESAPROBADO,
+  CONCEPTUAL_COMUN,
+  NUMERICA_1_10,
+  comoSeLlamaLaEscala,
+  esLaMismaEscala,
+} from '../datos/escalas';
 import { crearEvaluacion, evaluacionesDeMateria } from '../datos/evaluaciones';
 import { comoSeLlama, materia as buscarMateria } from '../datos/materias';
 import { planillaDeNotas } from '../datos/planilla';
@@ -205,14 +211,14 @@ export default function Evaluaciones({ materiaId, volver, abrir, alCrear }: Prop
             texto={
               <>
                 <p>
-                  <strong>Con nota o conceptual</strong>, como la hayas tomado.
-                  Cada evaluación se guarda con su escala, así que podés
-                  mezclarlas en la misma materia.
+                  <strong>Como la hayas tomado</strong>: con nota del 1 al 10,
+                  conceptual, o aprobado y no. Cada evaluación se guarda con su
+                  escala, así que podés mezclarlas en la misma materia.
                 </p>
                 <p>
-                  Las conceptuales no entran en el promedio: promediar «En
-                  proceso» y «Logrado» inventa una distancia que nadie definió.
-                  Se cuentan aparte.
+                  Las dos últimas no entran en el promedio: promediar «Bueno» y
+                  «Aprobado» inventa una distancia que nadie definió. Se cuentan
+                  aparte.
                 </p>
               </>
             }
@@ -222,18 +228,21 @@ export default function Evaluaciones({ materiaId, volver, abrir, alCrear }: Prop
         <fieldset>
           <legend>Cómo se califica</legend>
           <div className="opciones">
-            <button
-              className={laEscala.tipo === 'numerica' ? 'elegida' : undefined}
-              onClick={() => setEscala(NUMERICA_1_10)}
-            >
-              Con nota
-            </button>
-            <button
-              className={laEscala.tipo === 'conceptual' ? 'elegida' : undefined}
-              onClick={() => setEscala(CONCEPTUAL_COMUN)}
-            >
-              Conceptual
-            </button>
+            {(
+              [
+                [NUMERICA_1_10, 'Con nota'],
+                [CONCEPTUAL_COMUN, 'Conceptual'],
+                [APROBADO_DESAPROBADO, 'Aprobado o no'],
+              ] as const
+            ).map(([escalaPosible, etiqueta]) => (
+              <button
+                key={etiqueta}
+                className={esLaMismaEscala(laEscala, escalaPosible) ? 'elegida' : undefined}
+                onClick={() => setEscala(escalaPosible)}
+              >
+                {etiqueta}
+              </button>
+            ))}
           </div>
           <p className="detalle">{comoSeLlamaLaEscala(laEscala)}</p>
         </fieldset>
