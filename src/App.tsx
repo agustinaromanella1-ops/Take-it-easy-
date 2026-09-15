@@ -76,14 +76,6 @@ export default function App() {
             setBienvenida(false);
             go('inicio');
           }}
-          // La app no tiene cuentas: los datos viven en este dispositivo. Lo
-          // más parecido a "ya tengo una cuenta" es traer una copia anterior,
-          // que se hace desde Ajustes. Si algún día hay inicio de sesión,
-          // este es el lugar donde engancharlo.
-          onYaTengoCuenta={() => {
-            setBienvenida(false);
-            go('ajustes');
-          }}
         />
       )}
       <div className="app">

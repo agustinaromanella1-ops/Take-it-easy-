@@ -1116,8 +1116,7 @@ a.btn {
 .welcome-kicker,
 .welcome-tagline,
 .welcome-wordmark,
-.welcome-cta,
-.welcome-link {
+.welcome-cta {
   position: absolute;
   left: 0;
   width: 100%;
@@ -1209,29 +1208,6 @@ a.btn {
 }
 .welcome-cta:active { filter: brightness(0.94); }
 .welcome-cta:focus-visible { outline: 3px solid var(--azul-noche); outline-offset: 3px; }
-
-/* La franja del enlace es más alta que su texto a propósito: el área tocable
-   nunca baja de 44px aunque la letra sea chica. */
-.welcome-link {
-  top: 78.6%;
-  height: 8.2%;
-  min-height: 44px;
-  padding: 0;
-  border: 0;
-  background: transparent;
-  color: var(--azul-noche);
-  font-family: var(--sans);
-  font-weight: 700;
-  font-size: calc(var(--u) * 0.0365);
-  cursor: pointer;
-}
-.welcome-link > span {
-  text-decoration: underline;
-  text-underline-offset: 0.22em;
-  text-decoration-thickness: 0.06em;
-}
-.welcome-link:active { opacity: 0.7; }
-.welcome-link:focus-visible { outline: 3px solid var(--azul-noche); outline-offset: 2px; }
 
 /* Quien pidió menos movimiento ve el perro quieto: el primer fotograma del GIF
    en imagen fija, sin tocar el resto de la pantalla. */

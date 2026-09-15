@@ -24,7 +24,6 @@ const OBJETIVO = {
   tagline:  { izq: 23.80, ancho: 52.82, arriba: 37.76, alto: 3.05 },
   perro:    { izq: 17.85, ancho: 71.84, arriba: 47.58, alto: 13.88 },
   boton:    { izq: 13.39, ancho: 73.33, arriba: 70.68, alto: 7.66 },
-  enlace:   { izq: 32.63, ancho: 34.64, arriba: 81.21, alto: 2.15 },
   botonTexto: { izq: 37.62, ancho: 25.08, arriba: 73.25, alto: 3.17 },
 };
 
@@ -163,7 +162,9 @@ console.log('\n1. Proporciones contra el diseño aprobado (390 x 844)');
   comparar('Perro', await tintaPintada(page, [43, 66]), OBJETIVO.perro);
   comparar('Botón Empezar', await tinta(page, '.welcome-cta'), OBJETIVO.boton);
   comparar('Palabra Empezar', await tintaClara(page, [71.2, 77.8], [16, 84]), OBJETIVO.botonTexto);
-  comparar('Enlace', await tintaPintada(page, [79.5, 86]), OBJETIVO.enlace);
+  // Debajo del botón no va nada: el diseño traía un "Ya tengo una cuenta" que
+  // se sacó porque la app no tiene cuentas.
+  check('Debajo del botón no queda nada suelto', (await tintaPintada(page, [79.5, 88])) === null);
   await page.close();
 }
 
@@ -177,12 +178,10 @@ for (const p of PANTALLAS) {
   const r = await page.evaluate(() => {
     const de = document.documentElement;
     const cta = document.querySelector('.welcome-cta').getBoundingClientRect();
-    const link = document.querySelector('.welcome-link').getBoundingClientRect();
     const stage = document.querySelector('.welcome-stage').getBoundingClientRect();
     return {
       scroll: de.scrollHeight > de.clientHeight + 1 || de.scrollWidth > de.clientWidth + 1,
       cta: { w: cta.width, h: cta.height },
-      link: { w: link.width, h: link.height },
       dentro: stage.top >= -0.5 && stage.bottom <= de.clientHeight + 0.5,
       // el unico <img> de la pantalla es el perro; los dos <svg> son las gotas
       perros: document.querySelectorAll('.welcome img').length,
@@ -193,13 +192,12 @@ for (const p of PANTALLAS) {
   check(`${p.nombre}: sin scroll`, !r.scroll);
   check(`${p.nombre}: el diseño entra completo`, r.dentro);
   check(`${p.nombre}: botón ≥ 44px`, r.cta.h >= 43.5 && r.cta.w >= 44, `${r.cta.w.toFixed(0)}x${r.cta.h.toFixed(0)}`);
-  check(`${p.nombre}: enlace ≥ 44px`, r.link.h >= 43.5 && r.link.w >= 44, `${r.link.w.toFixed(0)}x${r.link.h.toFixed(0)}`);
   check(`${p.nombre}: un solo perro`, r.perros === 1, `${r.perros}`);
   check(`${p.nombre}: las dos gotas`, r.gotas === 2, `${r.gotas}`);
   await page.close();
 }
 
-console.log('\n3. Los dos controles llevan a algún lado');
+console.log('\n3. Empezar lleva a la app');
 {
   const page = await browser.newPage({ viewport: { width: 390, height: 844 } });
   await page.goto(URL);
@@ -214,17 +212,6 @@ console.log('\n3. Los dos controles llevan a algún lado');
   check('La bienvenida no vuelve a aparecer', (await page.locator('.welcome').count()) === 0);
   await page.close();
 }
-{
-  const page = await browser.newPage({ viewport: { width: 390, height: 844 } });
-  await page.goto(URL);
-  await saltarSplash(page);
-  await page.waitForSelector('.welcome-link');
-  await page.click('.welcome-link');
-  await page.waitForTimeout(300);
-  check('Ya tengo una cuenta entra a la app', (await page.locator('.welcome').count()) === 0);
-  await page.close();
-}
-
 console.log('\n4. Menos movimiento: el perro queda quieto');
 {
   const page = await browser.newPage({ viewport: { width: 390, height: 844 }, reducedMotion: 'reduce' });

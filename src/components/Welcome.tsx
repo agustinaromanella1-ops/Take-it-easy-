@@ -45,7 +45,7 @@ function Gota() {
   );
 }
 
-export function Welcome({ onEmpezar, onYaTengoCuenta }: { onEmpezar: () => void; onYaTengoCuenta: () => void }) {
+export function Welcome({ onEmpezar }: { onEmpezar: () => void }) {
   return (
     <div className="welcome">
       {/* Las nubes van detrás de todo y no reciben eventos, así nunca tapan ni
@@ -90,17 +90,6 @@ export function Welcome({ onEmpezar, onYaTengoCuenta }: { onEmpezar: () => void;
           }}
         >
           Empezar
-        </button>
-
-        <button
-          type="button"
-          className="welcome-link"
-          onClick={() => {
-            marcarVista();
-            onYaTengoCuenta();
-          }}
-        >
-          <span>Ya tengo una cuenta</span>
         </button>
       </div>
     </div>
