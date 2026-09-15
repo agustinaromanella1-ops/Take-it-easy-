@@ -8,6 +8,7 @@ import { FinancePage } from './pages/Finance';
 import { SettingsPage } from './pages/Settings';
 import { IconCalendar, IconChart, IconGear, IconHome, IconPeople } from './components/icons';
 import { Splash } from './components/Splash';
+import { Welcome, bienvenidaPendiente } from './components/Welcome';
 
 type Page = 'inicio' | 'pacientes' | 'agenda' | 'finanzas' | 'ajustes';
 
@@ -54,6 +55,8 @@ class ErrorBoundary extends Component<{ children: ReactNode }, { error: Error | 
 
 export default function App() {
   const [page, setPage] = useState<Page>('inicio');
+  /** La bienvenida se muestra una sola vez, la primera que se abre la app. */
+  const [bienvenida, setBienvenida] = useState(bienvenidaPendiente);
   const [openPatientId, setOpenPatientId] = useState<string | null>(null);
 
   function go(next: Page) {
@@ -65,6 +68,24 @@ export default function App() {
   return (
     <StoreProvider>
       <Splash />
+      {bienvenida && (
+        <Welcome
+          // "Empezar" entra al flujo que ya existe: el inicio guía a cargar el
+          // primer paciente cuando todavía no hay ninguno.
+          onEmpezar={() => {
+            setBienvenida(false);
+            go('inicio');
+          }}
+          // La app no tiene cuentas: los datos viven en este dispositivo. Lo
+          // más parecido a "ya tengo una cuenta" es traer una copia anterior,
+          // que se hace desde Ajustes. Si algún día hay inicio de sesión,
+          // este es el lugar donde engancharlo.
+          onYaTengoCuenta={() => {
+            setBienvenida(false);
+            go('ajustes');
+          }}
+        />
+      )}
       <div className="app">
         <header className="topbar">
           <span className="brand">

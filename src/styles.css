@@ -212,7 +212,7 @@ h3 { font-size: 1.05rem; }
 .field label { font-size: 0.88rem; color: var(--body); font-weight: 600; }
 .field-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 12px; }
 
-input, select, textarea {
+input, select, textárea {
   font: inherit;
   color: var(--body);
   padding: 11px 14px;
@@ -222,12 +222,12 @@ input, select, textarea {
   width: 100%;
   transition: border-color 0.15s, background 0.15s;
 }
-input:focus, select:focus, textarea:focus {
+input:focus, select:focus, textárea:focus {
   outline: none;
   border-color: var(--accent);
   background: var(--surface);
 }
-textarea { resize: vertical; min-height: 70px; }
+textárea { resize: vertical; min-height: 70px; }
 input[type='checkbox'] { width: auto; accent-color: var(--accent); }
 
 .error-text { color: var(--danger); font-size: 0.85rem; font-weight: 600; }
@@ -490,7 +490,7 @@ td { color: var(--body); }
     background: rgba(255, 255, 255, 0.96);
     backdrop-filter: blur(8px);
     border-top: 1px solid var(--border);
-    padding: 7px 4px calc(7px + env(safe-area-inset-bottom));
+    padding: 7px 4px calc(7px + env(safe-área-inset-bottom));
     z-index: 40;
   }
   .tabbar button {
@@ -1053,4 +1053,188 @@ a.btn {
   height: auto;
   /* El logo ya trae su fondo: sin esto se recortaría en pantallas angostas. */
   object-fit: contain;
+}
+
+/* ============================================================
+   Pantalla de bienvenida
+   Colores y medidas tomados de src/assets/pipi-cucu-welcome-reference.png
+   (941 x 1671). Todo se ubica dentro de .welcome-stage, que mantiene esa
+   misma proporción: así los porcentajes de abajo son literalmente los del
+   diseño y la composición no se deforma en ninguna pantalla.
+   ============================================================ */
+.welcome {
+  --cielo: #b4dcef;
+  --azul-noche: #004963;
+  --wordmark-azul: #1c6f7a;
+  --coral: #de7c6b;
+  --coral-boton: #e07b66;
+  --celeste-tilde: #48add2;
+
+  /* El escenario entra completo en la pantalla: se achica por el ancho o por
+     el alto, lo que sea más ajustado, y nunca pasa de 460px para que en una
+     computadora siga leyéndose como una pantalla de celular. Lo que sobra es
+     cielo, igual que en el diseño. */
+  --ancho-util: calc(100vw - env(safe-área-inset-left, 0px) - env(safe-área-inset-right, 0px) - 32px);
+  --alto-util: calc(100dvh - env(safe-área-inset-top, 0px) - env(safe-área-inset-bottom, 0px) - 16px);
+  --u: min(var(--ancho-util), var(--alto-util) * 0.5631, 460px);
+
+  position: fixed;
+  inset: 0;
+  z-index: 90;
+  background: var(--cielo);
+  /* 100dvh sigue la barra del navegador en el celular; el 100vh de arriba es
+     el respaldo para los que no lo soportan. */
+  height: 100vh;
+  height: 100dvh;
+  display: grid;
+  place-items: center;
+  overflow: hidden;
+}
+/* Respaldo para navegadores sin dvh: allí --alto-util usa 100vh. */
+@supports not (height: 100dvh) {
+  .welcome { --alto-util: calc(100vh - 16px); }
+}
+
+/* Capa de nubes del diseño original, con su textura de crayón intacta. */
+.welcome-clouds {
+  position: absolute;
+  inset: 0;
+  background: url('/pipi-cucu-clouds.webp') center / cover no-repeat;
+  pointer-events: none;
+}
+
+.welcome-stage {
+  position: relative;
+  width: var(--u);
+  aspect-ratio: 941 / 1671;
+}
+
+/* --- Textos -------------------------------------------------------------
+   Cada texto ocupa una franja del escenario y se centra dentro de ella. Los
+   tamaños están calculados para que el ancho del texto renderizado coincida
+   con el del diseño (ver e2e/bienvenida.mjs, que lo vuelve a medir). */
+.welcome-kicker,
+.welcome-tagline,
+.welcome-wordmark,
+.welcome-cta,
+.welcome-link {
+  position: absolute;
+  left: 0;
+  width: 100%;
+  margin: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  white-space: nowrap;
+  line-height: 1;
+}
+
+.welcome-kicker {
+  top: 17.8%;
+  height: 7.7%;
+  font-family: var(--sans);
+  font-weight: 700;
+  font-size: calc(var(--u) * 0.0434);
+  color: var(--azul-noche);
+}
+
+.welcome-wordmark {
+  top: 22.4%;
+  height: 16.3%;
+  font-family: var(--serif);
+  font-weight: 700;
+  font-size: calc(var(--u) * 0.1834);
+  letter-spacing: -0.005em;
+}
+.wm-pipi { color: var(--wordmark-azul); }
+.wm-cucu { color: var(--coral); }
+
+/* Las gotas celestes son las tildes de la ı y la u. Cuelgan de su letra —de
+   ahí el span envolvente— y se miden en em, así siguen al texto a cualquier
+   tamaño. La punta va abajo a la izquierda y el cuerpo arriba a la derecha,
+   inclinada como un acento, igual que en el diseño. */
+.wm-letra { position: relative; }
+.wm-gota {
+  position: absolute;
+  left: 50%;
+  top: 0.238em;
+  width: 0.271em;
+  height: 0.288em;
+  margin-left: -0.155em;
+  fill: var(--celeste-tilde);
+  overflow: visible;
+  pointer-events: none;
+}
+
+.welcome-tagline {
+  top: 36.0%;
+  height: 6.5%;
+  font-family: var(--sans);
+  font-weight: 700;
+  font-size: calc(var(--u) * 0.0547);
+  color: var(--azul-noche);
+}
+
+/* --- Perro --------------------------------------------------------------
+   Se ubica por su dibujo, no por el borde del archivo: el GIF tiene aire
+   alrededor, así que el ancho y la posición compensan ese margen para que el
+   perro caiga donde cae en la referencia. La proporción es la del archivo,
+   nunca se estira ni se recorta. */
+.welcome-dog {
+  position: absolute;
+  left: 15.97%;
+  top: 45.55%;
+  width: 75.76%;
+  height: auto;
+  aspect-ratio: 483 / 177;
+  object-fit: contain;
+}
+
+/* --- Controles ---------------------------------------------------------- */
+.welcome-cta {
+  left: 13.39%;
+  top: 70.68%;
+  width: 73.33%;
+  height: 7.66%;
+  min-height: 44px;
+  padding: 0;
+  border: 0;
+  border-radius: 999px;
+  background: var(--coral-boton);
+  color: #fff;
+  font-family: var(--sans);
+  font-weight: 700;
+  font-size: calc(var(--u) * 0.0664);
+  cursor: pointer;
+}
+.welcome-cta:active { filter: brightness(0.94); }
+.welcome-cta:focus-visible { outline: 3px solid var(--azul-noche); outline-offset: 3px; }
+
+/* La franja del enlace es más alta que su texto a propósito: el área tocable
+   nunca baja de 44px aunque la letra sea chica. */
+.welcome-link {
+  top: 78.6%;
+  height: 8.2%;
+  min-height: 44px;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: var(--azul-noche);
+  font-family: var(--sans);
+  font-weight: 700;
+  font-size: calc(var(--u) * 0.0365);
+  cursor: pointer;
+}
+.welcome-link > span {
+  text-decoration: underline;
+  text-underline-offset: 0.22em;
+  text-decoration-thickness: 0.06em;
+}
+.welcome-link:active { opacity: 0.7; }
+.welcome-link:focus-visible { outline: 3px solid var(--azul-noche); outline-offset: 2px; }
+
+/* Quien pidió menos movimiento ve el perro quieto: el primer fotograma del GIF
+   en imagen fija, sin tocar el resto de la pantalla. */
+@media (prefers-reduced-motion: reduce) {
+  .welcome-dog { content: url('/pipi-cucu-dog-static.png'); }
 }

@@ -42,10 +42,18 @@ page.on('console', (m) => { if (m.type() === 'error' && !m.text().includes('favi
 
 /** La bienvenida tapa la pantalla al abrir: hay que sacarla antes de tocar nada. */
 async function saltarBienvenida() {
+  // Primero el logo de apertura, que tapa todo por un instante.
   const splash = page.locator('.splash');
   if (await splash.count()) {
     await splash.click({ timeout: 3000 }).catch(() => {});
     await splash.waitFor({ state: 'detached', timeout: 5000 }).catch(() => {});
+  }
+  // Y después la pantalla de bienvenida, que aparece solo la primera vez y se
+  // pasa con Empezar. Si ya se vio, no está y esto no hace nada.
+  const cta = page.locator('.welcome-cta');
+  if (await cta.count()) {
+    await cta.click({ timeout: 3000 }).catch(() => {});
+    await page.locator('.welcome').waitFor({ state: 'detached', timeout: 5000 }).catch(() => {});
   }
 }
 

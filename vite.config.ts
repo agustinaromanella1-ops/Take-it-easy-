@@ -9,7 +9,7 @@ export default defineConfig({
       // La app se actualiza sola cuando se publica una versión nueva: nadie
       // tiene que acordarse de vaciar la caché del navegador.
       registerType: 'autoUpdate',
-      includeAssets: ['apple-touch-icon.png', 'favicon-48.png', 'fonts/*.woff2', 'logo.webp'],
+      includeAssets: ['apple-touch-icon.png', 'favicon-48.png', 'fonts/*.woff2', 'logo.webp', 'pipi-cucu-dog-flying.gif', 'pipi-cucu-dog-static.png', 'pipi-cucu-clouds.webp'],
       manifest: {
         name: 'Pipí Cucú — tu agenda, pipí cucú',
         short_name: 'Pipí Cucú',
@@ -34,7 +34,7 @@ export default defineConfig({
       workbox: {
         // Todo lo que la app necesita para arrancar queda guardado de entrada,
         // así funciona sin conexión desde la primera visita.
-        globPatterns: ['**/*.{js,css,html,woff2,png,svg,ico}'],
+        globPatterns: ['**/*.{js,css,html,woff2,png,svg,ico,webp,gif}'],
         // Las fuentes pesan; el tope por defecto de 2 MB no alcanzaría si la
         // app creciera.
         maximumFileSizeToCacheInBytes: 4 * 1024 * 1024,
