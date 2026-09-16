@@ -10,6 +10,7 @@ import { IconCalendar, IconChart, IconGear, IconHome, IconPeople } from './compo
 import { Welcome, bienvenidaPendiente } from './components/Welcome';
 import { Tour, cartelesPendientes } from './components/Tour';
 import { Guia } from './components/Guia';
+import { Footer } from './components/Footer';
 
 type Page = 'inicio' | 'pacientes' | 'agenda' | 'finanzas' | 'ajustes';
 
@@ -126,6 +127,7 @@ export default function App() {
             {page === 'finanzas' && <FinancePage />}
             {page === 'ajustes' && <SettingsPage />}
           </ErrorBoundary>
+          <Footer />
         </main>
 
         {/* Navegación inferior: en celular es lo que queda al alcance del pulgar. */}

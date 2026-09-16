@@ -62,29 +62,42 @@ ser encanto y pasa a ser una demora, y esta app se abre varias veces por día.
 ## Estética
 
 Serif de display (Playfair Display) para títulos y cifras principales, sans redondeada (Nunito)
-para el cuerpo, fondo en degradado pastel, tarjetas muy redondeadas y acento turquesa. Los títulos
-de sección van fuera de la tarjeta, con su acción a la derecha.
+para el cuerpo. Los títulos de sección van fuera de la tarjeta, con su acción a la derecha.
 
-La mascota es el mismo perro salchicha de la portada —el dibujo aprobado, sin redibujar— en el
-encabezado del inicio. Ahí está quieto y callado: es el primer fotograma, sin mensaje. Al tocarlo
-sale un mensaje y el perro vuela un par de segundos. Arranca callado a propósito: si el mensaje ya
-está ahí al abrir la app, deja de ser un hallazgo y pasa a ser un cartel más compitiendo por la
-atención justo cuando entrás a ver tus números. Un dibujo animado dando vueltas para siempre
-al lado de los números del mes cansa y distrae; que vuele solo cuando lo tocan lo deja como lo que
-es, un guiño.
+**Atardecer.** El fondo va de celeste (#d9ebfb) a lila (#e9dff7) a durazno (#ffe3d2), como un cielo
+al caer la tarde. Los acentos salen de ahí: naranja para la acción, lila para lo seleccionado,
+amarillo para el guiño, menta y rosa para los estados.
 
-**Dos naranjas, no uno.** El naranja lindo (`--warm`, #e08a4f) no llega a 4,5:1 sobre blanco, así
-que solo se usa en degradés y rellenos sin texto. Para texto y bordes hay un segundo tono más
-oscuro (`--warm-ink`, #ad5417) que sí pasa. Lo mismo en el héroe: el turquesa de la interfaz da
-3,2:1 sobre el degradé y ahí hay texto chico, así que ese bloque usa `--accent-ink` (#2f6273, 5,4:1).
+**Todo se dibuja con tinta.** Contornos de 2,5px, sombra dura sin desenfoque y esquinas muy
+redondeadas: las tarjetas se leen como calcomanías pegadas sobre la página en vez de flotando
+encima. La tinta (`--ink`, #1f1e47) es la misma de la portada —contornos, títulos y sombras salen
+todos de ahí—, y eso es lo que hace que la app y la bienvenida se lean como una sola cosa. Al
+apretar, un botón baja hasta donde estaba su sombra, que es lo que hace un botón de verdad.
 
-**El naranja es calidez de marca, no jerarquía.** Turquesa es acción, el ámbar de los gráficos es
-"pendiente", y el naranja queda para lo cálido y celebratorio. Si el naranja marcara además lo
-importante, el mismo color tendría dos significados.
+**Los pares de color están medidos, no elegidos a ojo.** Todos pasan WCAG AA (4,5:1): tinta sobre
+blanco 15,7:1, cuerpo sobre blanco 9,1:1, apagado sobre el degradé 5,1:1, `--naranja-ink` (#a63508)
+sobre blanco 6,7:1. El caso que obligó a decidir: blanco sobre el naranja del botón da 2,7:1 y no
+pasa, así que el botón principal lleva **tinta sobre naranja** (5,9:1), que además es lo que pide
+el estilo.
 
-**Los degradés van sobre superficies grandes y tranquilas** —el héroe, el botón de cierre del día,
-la burbuja de la mascota, el ícono— y nunca sobre marcas de datos, donde el color significa algo y
-un degradé lo volvería ambiguo.
+**Los colores de los gráficos se validaron aparte.** Violeta #7b52ab para lo cobrado y naranja
+#e0642b para lo pendiente: ΔE 23,6 en protanopía y 23,7 en tritanopía, muy por encima del piso de
+8, así que se distinguen con cualquier tipo de daltonismo. El gris #8b84a0 de "canceladas" no llega
+al piso de saturación a propósito: es el estado sin consecuencias y tiene que leerse apagado.
+
+**El naranja es acción, no jerarquía.** Lila es lo seleccionado, el naranja de los gráficos es
+"pendiente", y el naranja de los botones es "tocá acá". Si el mismo color marcara además lo
+importante, tendría dos significados.
+
+**Los degradés van sobre superficies grandes y tranquilas** —el héroe, el cierre del día, el
+ícono— y nunca sobre marcas de datos, donde el color significa algo y un degradé lo volvería
+ambiguo.
+
+**El pie con el perrito** cierra todas las secciones. Es el mismo perro de la portada —el dibujo
+aprobado, sin redibujar— y ahí está quieto y callado: es el primer fotograma, sin mensaje. Al
+tocarlo sale un mensaje y vuela un par de segundos. Arranca callado a propósito: si el mensaje ya
+estuviera ahí, dejaría de ser un hallazgo y sería un cartel más compitiendo por la atención justo
+cuando entrás a ver tus números.
 
 **La guía y los carteles.** El signo de pregunta de la barra de arriba abre la guía de uso, escrita
 para leerse de un tirón la primera vez y consultarse suelta después. Aparte, la primera vez que se

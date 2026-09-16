@@ -67,7 +67,7 @@ await page.waitForTimeout(400);
 await saltarBienvenida();
 
 titulo('1. Arranque limpio');
-check('la app abre vacía', await page.getByText('Tu agenda, pipí cucú').isVisible());
+check('la app abre vacía', await page.locator('.empty strong', { hasText: 'Tu agenda, pipí cucú.' }).isVisible());
 
 titulo('2. Alta de paciente con TODOS los campos');
 await page.getByRole('button', { name: 'Cargar primer paciente' }).click();
@@ -164,7 +164,10 @@ check('marcó una como realizada', trasCierre.realizadas === 1);
 check('marcó una como ausente', trasCierre.ausentes === 1);
 check('creó el cobro de la realizada', trasCierre.pagos === 1);
 check('el cobro usa el honorario con centavos', trasCierre.importe === 4250050, `${trasCierre.importe} centavos`);
-check('cerrado el día, el cartel se va del inicio', (await page.locator('.close-day-btn').count()) === 0);
+// El cartel no se va: baja la voz. Así se ve de un vistazo que el día quedó
+// resuelto, en vez de tener que acordarse de que el botón estaba y ya no.
+check('cerrado el día, el cartel baja la voz', (await page.locator('.close-day-btn.is-quiet').count()) === 1);
+check('y dice que el día está cerrado', (await page.locator('.close-day-btn').innerText()).includes('Día cerrado'));
 
 titulo('5. Persistencia tras recargar');
 await page.reload({ waitUntil: 'networkidle' });
@@ -213,7 +216,7 @@ await page.evaluate(() => localStorage.clear());
 await page.reload({ waitUntil: 'networkidle' });
 await page.waitForTimeout(400);
 await saltarBienvenida();
-check('tras borrar, la app queda vacía', await page.getByText('Tu agenda, pipí cucú').isVisible());
+check('tras borrar, la app queda vacía', await page.locator('.empty strong', { hasText: 'Tu agenda, pipí cucú.' }).isVisible());
 
 await page.locator('.tabbar button', { hasText: 'Ajustes' }).click();
 await page.waitForTimeout(400);
@@ -251,27 +254,28 @@ const texto = await page.locator('.bill-text').inputValue();
 check('el texto de factura usa el nombre completo', texto.includes('Ana Laura Gómez Sosa'));
 check('el texto de factura usa el afiliado', texto.includes('SM-99/04'));
 
-titulo('8. El perro del inicio');
+titulo('8. El perro del pie');
 await page.locator('.tabbar button', { hasText: 'Inicio' }).click();
 await page.waitForTimeout(400);
-const perro = page.locator('.mascot-dog img').first();
+const perro = page.locator('.footer-dog img').first();
+check('el pie está en todas las secciones', (await page.locator('.app-footer').count()) === 1);
 check('es el mismo perro que la portada', (await perro.getAttribute('src')) === '/pipi-cucu-dog-static.png');
-check('al abrir no hay ningún mensaje', (await page.locator('.mascot-bubble').count()) === 0);
-await page.locator('.mascot-dog').first().click();
+check('al abrir no hay ningún mensaje', (await page.locator('.footer-bubble').count()) === 0);
+await page.locator('.footer-dog').first().click();
 await page.waitForTimeout(300);
 check('al tocarlo vuela', (await perro.getAttribute('src')) === '/pipi-cucu-dog-flying.gif');
-check('al tocarlo aparece el mensaje', (await page.locator('.mascot-bubble').count()) === 1);
-const mensajeAntes = await page.locator('.mascot-bubble').first().innerText();
-await page.locator('.mascot-dog').first().click();
+check('al tocarlo aparece el mensaje', (await page.locator('.footer-bubble').count()) === 1);
+const mensajeAntes = await page.locator('.footer-bubble').first().innerText();
+await page.locator('.footer-dog').first().click();
 await page.waitForTimeout(300);
-check('al tocarlo de nuevo cambia el mensaje', (await page.locator('.mascot-bubble').first().innerText()) !== mensajeAntes);
+check('al tocarlo de nuevo cambia el mensaje', (await page.locator('.footer-bubble').first().innerText()) !== mensajeAntes);
 await page.waitForTimeout(2800);
 check('después se queda quieto de nuevo', (await perro.getAttribute('src')) === '/pipi-cucu-dog-static.png');
 
 titulo('9. La guía y los carteles');
 await page.locator('.tabbar button', { hasText: 'Ajustes' }).click();
 await page.waitForTimeout(300);
-check('el pie dice el eslogan una sola vez', (await page.locator('.app-footer').innerText()) === 'Tu agenda, Pipí Cucú');
+check('el pie dice el eslogan', (await page.locator('.footer-slogan').innerText()) === 'Tu agenda, Pipí Cucú');
 await page.locator('.ayuda').click();
 await page.waitForTimeout(400);
 check('el signo de pregunta abre la guía', (await page.locator('.guia').count()) === 1);

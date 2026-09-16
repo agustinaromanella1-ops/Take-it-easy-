@@ -4,7 +4,6 @@ import { dashboardStats, pendingReview, upcomingSessions } from '../store/select
 import { formatMoney } from '../lib/money';
 import { formatDateLong, formatDateShort, formatMonthKey, monthKey, today } from '../lib/dates';
 import { Card, Empty, Stat } from '../components/ui';
-import { Mascot } from '../components/Mascot';
 import { DayClose } from '../components/DayClose';
 import { goalProgress } from '../lib/pricing';
 import { patientColor } from '../lib/palette';
@@ -47,7 +46,6 @@ export function DashboardPage({ onGo }: { onGo: (page: 'agenda' | 'finanzas' | '
       <>
         <div className="page-head">
           <h1>Inicio</h1>
-          <Mascot />
         </div>
         <Card>
           <Empty>
@@ -71,14 +69,26 @@ export function DashboardPage({ onGo }: { onGo: (page: 'agenda' | 'finanzas' | '
           <span className="muted small cap-first">{formatDateLong(today())}</span>
           <h1>Inicio</h1>
         </div>
-        <Mascot />
       </div>
 
-      {porCerrarHoy > 0 && (
+      {/* El cierre está siempre a la vista, aunque no haya nada que cerrar.
+          Escondiéndolo nadie se entera de que existe, y además "¿me quedó algo
+          abierto de hoy?" es una pregunta que se responde mirando, no
+          buscando. Cambia de tono según el día, no de lugar. */}
+      {porCerrarHoy > 0 ? (
         <button className="close-day-btn" onClick={() => setCerrando(true)}>
           🌙 Cierre del día
           <span className="badge">{porCerrarHoy}</span>
         </button>
+      ) : sesionesHoy.length > 0 ? (
+        <button className="close-day-btn is-quiet" onClick={() => setCerrando(true)}>
+          🌙 Día cerrado
+          <span className="close-day-hint">
+            {sesionesHoy.length === 1 ? '1 sesión resuelta' : `${sesionesHoy.length} sesiones resueltas`}
+          </span>
+        </button>
+      ) : (
+        <p className="close-day-btn is-quiet is-static">🌙 Hoy no tenés sesiones agendadas</p>
       )}
 
       {cerrando && (

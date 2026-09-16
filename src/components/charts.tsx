@@ -21,12 +21,12 @@ import type { ReactNode } from 'react';
  */
 
 export const CHART_COLORS = {
-  /** Azul: lo cobrado, lo realizado. */
-  primary: '#0f74a8',
-  /** Ámbar: lo pendiente, las ausencias. */
-  attention: '#d9963f',
+  /** Violeta: lo cobrado, lo realizado. */
+  primary: '#7b52ab',
+  /** Naranja: lo pendiente, las ausencias. */
+  attention: '#e0642b',
   /** Gris deliberado: lo cancelado, el estado sin consecuencias. */
-  neutral: '#9a94a4',
+  neutral: '#8b84a0',
 } as const;
 
 export interface Segment {
