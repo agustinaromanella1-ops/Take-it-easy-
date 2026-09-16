@@ -65,8 +65,10 @@ para el cuerpo, fondo en degradado pastel, tarjetas muy redondeadas y acento tur
 de sección van fuera de la tarjeta, con su acción a la derecha.
 
 La mascota es el mismo perro salchicha de la portada —el dibujo aprobado, sin redibujar— en el
-encabezado del inicio junto al mensaje del día. Ahí está quieto: es el primer fotograma. Al tocarlo
-cambia el mensaje y el perro vuela un par de segundos. Un dibujo animado dando vueltas para siempre
+encabezado del inicio. Ahí está quieto y callado: es el primer fotograma, sin mensaje. Al tocarlo
+sale un mensaje y el perro vuela un par de segundos. Arranca callado a propósito: si el mensaje ya
+está ahí al abrir la app, deja de ser un hallazgo y pasa a ser un cartel más compitiendo por la
+atención justo cuando entrás a ver tus números. Un dibujo animado dando vueltas para siempre
 al lado de los números del mes cansa y distrae; que vuele solo cuando lo tocan lo deja como lo que
 es, un guiño.
 

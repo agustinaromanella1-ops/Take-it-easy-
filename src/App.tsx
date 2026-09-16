@@ -7,7 +7,6 @@ import { AgendaPage } from './pages/Agenda';
 import { FinancePage } from './pages/Finance';
 import { SettingsPage } from './pages/Settings';
 import { IconCalendar, IconChart, IconGear, IconHome, IconPeople } from './components/icons';
-import { Splash } from './components/Splash';
 import { Welcome, bienvenidaPendiente } from './components/Welcome';
 
 type Page = 'inicio' | 'pacientes' | 'agenda' | 'finanzas' | 'ajustes';
@@ -67,7 +66,6 @@ export default function App() {
 
   return (
     <StoreProvider>
-      <Splash />
       {bienvenida && (
         <Welcome
           // "Empezar" entra al flujo que ya existe: el inicio guía a cargar el

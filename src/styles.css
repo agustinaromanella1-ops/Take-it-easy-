@@ -212,7 +212,7 @@ h3 { font-size: 1.05rem; }
 .field label { font-size: 0.88rem; color: var(--body); font-weight: 600; }
 .field-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 12px; }
 
-input, select, textárea {
+input, select, textarea {
   font: inherit;
   color: var(--body);
   padding: 11px 14px;
@@ -222,12 +222,12 @@ input, select, textárea {
   width: 100%;
   transition: border-color 0.15s, background 0.15s;
 }
-input:focus, select:focus, textárea:focus {
+input:focus, select:focus, textarea:focus {
   outline: none;
   border-color: var(--accent);
   background: var(--surface);
 }
-textárea { resize: vertical; min-height: 70px; }
+textarea { resize: vertical; min-height: 70px; }
 input[type='checkbox'] { width: auto; accent-color: var(--accent); }
 
 .error-text { color: var(--danger); font-size: 0.85rem; font-weight: 600; }
@@ -481,7 +481,7 @@ td { color: var(--body); }
   .page-head { align-items: flex-start; margin-bottom: 16px; }
   .mascot-bubble { font-size: 0.84rem; padding: 8px 13px; }
   .mascot-dog img { width: 88px; }
-  .main { padding: 8px 14px 90px; }
+  .main { padding: 8px 14px 104px; }
   .topbar { padding: 14px 16px 4px; }
   .topbar .nav { display: none; }
   .week-grid { grid-template-columns: 1fr; }
@@ -489,6 +489,8 @@ td { color: var(--body); }
   .card { padding: 17px; border-radius: 18px; }
   .fab { display: block; }
 
+  /* Todo env() lleva su valor de respaldo: sin él, un error de tipeo en el
+     nombre invalida la declaración entera y la barra se queda sin aire. */
   .tabbar {
     display: flex;
     position: fixed;
@@ -498,7 +500,7 @@ td { color: var(--body); }
     background: rgba(255, 255, 255, 0.96);
     backdrop-filter: blur(8px);
     border-top: 1px solid var(--border);
-    padding: 7px 4px calc(7px + env(safe-área-inset-bottom));
+    padding: 8px 4px calc(8px + env(safe-area-inset-bottom, 0px));
     z-index: 40;
   }
   .tabbar button {
@@ -508,22 +510,26 @@ td { color: var(--body); }
     display: flex;
     flex-direction: column;
     align-items: center;
-    gap: 3px;
-    padding: 5px 2px;
+    justify-content: center;
+    gap: 5px;
+    /* Es la navegación principal del celular y se toca con el pulgar a una
+       mano: conviene bien holgada. */
+    min-height: 56px;
+    padding: 6px 2px;
     color: var(--muted);
     font: inherit;
-    font-size: 0.72rem;
+    font-size: 0.76rem;
     font-weight: 600;
     cursor: pointer;
   }
-  .tabbar button svg { width: 22px; height: 22px; }
+  .tabbar button svg { width: 25px; height: 25px; }
   .tabbar button[aria-current='page'] { color: var(--accent-dark); }
   .tabbar button[aria-current='page'] svg {
     background: var(--accent-soft);
     border-radius: 999px;
-    padding: 3px 11px;
-    width: 44px;
-    height: 26px;
+    padding: 3px 13px;
+    width: 51px;
+    height: 29px;
   }
 }
 
@@ -1039,30 +1045,6 @@ a.btn {
   }
 }
 
-/* ---------- Pantalla de bienvenida ---------- */
-.splash {
-  position: fixed;
-  inset: 0;
-  z-index: 100;
-  /* El mismo color que tiene el fondo del logo, muestreado del archivo: si no
-     coincide se ve el borde de la imagen. */
-  background: #f9eaf6;
-  display: grid;
-  place-items: center;
-  padding: 24px;
-  cursor: pointer;
-}
-.splash.is-leaving { animation: splash-out 0.45s ease-in forwards; }
-@keyframes splash-out {
-  to { opacity: 0; visibility: hidden; }
-}
-.splash-logo {
-  width: min(100%, 460px);
-  height: auto;
-  /* El logo ya trae su fondo: sin esto se recortaría en pantallas angostas. */
-  object-fit: contain;
-}
-
 /* ============================================================
    Pantalla de bienvenida
    Colores y medidas tomados de src/assets/pipi-cucu-welcome-reference.png
@@ -1082,8 +1064,8 @@ a.btn {
      el alto, lo que sea más ajustado, y nunca pasa de 460px para que en una
      computadora siga leyéndose como una pantalla de celular. Lo que sobra es
      cielo, igual que en el diseño. */
-  --ancho-util: calc(100vw - env(safe-área-inset-left, 0px) - env(safe-área-inset-right, 0px) - 32px);
-  --alto-util: calc(100dvh - env(safe-área-inset-top, 0px) - env(safe-área-inset-bottom, 0px) - 16px);
+  --ancho-util: calc(100vw - env(safe-area-inset-left, 0px) - env(safe-area-inset-right, 0px) - 32px);
+  --alto-util: calc(100dvh - env(safe-area-inset-top, 0px) - env(safe-area-inset-bottom, 0px) - 16px);
   --u: min(var(--ancho-util), var(--alto-util) * 0.5631, 460px);
 
   position: fixed;

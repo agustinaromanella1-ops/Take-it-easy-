@@ -42,14 +42,8 @@ page.on('console', (m) => { if (m.type() === 'error' && !m.text().includes('favi
 
 /** La bienvenida tapa la pantalla al abrir: hay que sacarla antes de tocar nada. */
 async function saltarBienvenida() {
-  // Primero el logo de apertura, que tapa todo por un instante.
-  const splash = page.locator('.splash');
-  if (await splash.count()) {
-    await splash.click({ timeout: 3000 }).catch(() => {});
-    await splash.waitFor({ state: 'detached', timeout: 5000 }).catch(() => {});
-  }
-  // Y después la pantalla de bienvenida, que aparece solo la primera vez y se
-  // pasa con Empezar. Si ya se vio, no está y esto no hace nada.
+  // La bienvenida aparece solo la primera vez y se pasa con Empezar. Si ya se
+  // vio, no está y esto no hace nada.
   const cta = page.locator('.welcome-cta');
   if (await cta.count()) {
     await cta.click({ timeout: 3000 }).catch(() => {});
@@ -247,11 +241,15 @@ await page.locator('.tabbar button', { hasText: 'Inicio' }).click();
 await page.waitForTimeout(400);
 const perro = page.locator('.mascot-dog img').first();
 check('es el mismo perro que la portada', (await perro.getAttribute('src')) === '/pipi-cucu-dog-static.png');
-const mensajeAntes = await page.locator('.mascot-bubble').first().innerText();
+check('al abrir no hay ningún mensaje', (await page.locator('.mascot-bubble').count()) === 0);
 await page.locator('.mascot-dog').first().click();
 await page.waitForTimeout(300);
 check('al tocarlo vuela', (await perro.getAttribute('src')) === '/pipi-cucu-dog-flying.gif');
-check('al tocarlo cambia el mensaje', (await page.locator('.mascot-bubble').first().innerText()) !== mensajeAntes);
+check('al tocarlo aparece el mensaje', (await page.locator('.mascot-bubble').count()) === 1);
+const mensajeAntes = await page.locator('.mascot-bubble').first().innerText();
+await page.locator('.mascot-dog').first().click();
+await page.waitForTimeout(300);
+check('al tocarlo de nuevo cambia el mensaje', (await page.locator('.mascot-bubble').first().innerText()) !== mensajeAntes);
 await page.waitForTimeout(2800);
 check('después se queda quieto de nuevo', (await perro.getAttribute('src')) === '/pipi-cucu-dog-static.png');
 

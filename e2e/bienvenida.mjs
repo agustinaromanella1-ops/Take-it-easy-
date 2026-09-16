@@ -30,15 +30,6 @@ const OBJETIVO = {
 const TOL_ANCHO = 2.5;  // puntos porcentuales
 const TOL_POS = 1.5;
 
-/** El logo de apertura tapa todo por ~1,6 s: se saltea tocándolo. */
-async function saltarSplash(page) {
-  const splash = page.locator('.splash');
-  if (await splash.count()) {
-    await splash.click({ force: true }).catch(() => {});
-    await splash.waitFor({ state: 'detached', timeout: 5000 }).catch(() => {});
-  }
-}
-
 let ok = 0, fail = 0;
 function check(nombre, cond, detalle = '') {
   if (cond) { ok++; console.log(`   ✓ ${nombre}${detalle ? ' — ' + detalle : ''}`); }
@@ -151,7 +142,6 @@ console.log('\n1. Proporciones contra el diseño aprobado (390 x 844)');
 {
   const page = await browser.newPage({ viewport: { width: 390, height: 844 } });
   await page.goto(URL);
-  await saltarSplash(page);
   await page.waitForSelector('.welcome-stage');
   await page.waitForTimeout(400);
 
@@ -172,7 +162,6 @@ console.log('\n2. Entra en pantalla sin scroll y los controles se pueden tocar')
 for (const p of PANTALLAS) {
   const page = await browser.newPage({ viewport: { width: p.w, height: p.h } });
   await page.goto(URL);
-  await saltarSplash(page);
   await page.waitForSelector('.welcome-stage');
   await page.waitForTimeout(300);
   const r = await page.evaluate(() => {
@@ -201,13 +190,11 @@ console.log('\n3. Empezar lleva a la app');
 {
   const page = await browser.newPage({ viewport: { width: 390, height: 844 } });
   await page.goto(URL);
-  await saltarSplash(page);
   await page.waitForSelector('.welcome-cta');
   await page.click('.welcome-cta');
   await page.waitForTimeout(300);
   check('Empezar entra a la app', (await page.locator('.welcome').count()) === 0);
   await page.reload();
-  await saltarSplash(page);
   await page.waitForTimeout(300);
   check('La bienvenida no vuelve a aparecer', (await page.locator('.welcome').count()) === 0);
   await page.close();
@@ -216,7 +203,6 @@ console.log('\n4. Menos movimiento: el perro queda quieto');
 {
   const page = await browser.newPage({ viewport: { width: 390, height: 844 }, reducedMotion: 'reduce' });
   await page.goto(URL);
-  await saltarSplash(page);
   await page.waitForSelector('.welcome-dog');
   await page.waitForTimeout(400);
   const quieto = await page.evaluate(() => {
