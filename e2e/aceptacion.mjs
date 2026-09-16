@@ -136,6 +136,13 @@ const totalSesiones = await page.evaluate(() => JSON.parse(localStorage.getItem(
 check('quedan 5 sesiones (1 suelta + serie de 4)', totalSesiones === 5, `hay ${totalSesiones}`);
 
 titulo('4. Cierre del día');
+// Se cierra desde Inicio, que es donde se entra al terminar de atender, en vez
+// de ir a buscar el día de hoy en el calendario.
+await page.locator('.tabbar button', { hasText: 'Inicio' }).click();
+await page.waitForTimeout(500);
+check('el inicio ofrece el cierre del día', (await page.locator('.close-day-btn').count()) === 1);
+check('el cierre del inicio cuenta las de hoy', (await page.locator('.close-day-btn .badge').innerText()) === '2');
+check('el cartel del cierre lleva la luna', (await page.locator('.close-day-btn').innerText()).includes('🌙'));
 await page.locator('.close-day-btn').click();
 await page.waitForTimeout(500);
 const filas = await page.locator('.close-row').count();
@@ -157,6 +164,7 @@ check('marcó una como realizada', trasCierre.realizadas === 1);
 check('marcó una como ausente', trasCierre.ausentes === 1);
 check('creó el cobro de la realizada', trasCierre.pagos === 1);
 check('el cobro usa el honorario con centavos', trasCierre.importe === 4250050, `${trasCierre.importe} centavos`);
+check('cerrado el día, el cartel se va del inicio', (await page.locator('.close-day-btn').count()) === 0);
 
 titulo('5. Persistencia tras recargar');
 await page.reload({ waitUntil: 'networkidle' });

@@ -24,7 +24,8 @@ const SECCIONES: { titulo: string; puntos: string[] }[] = [
       'El calendario muestra el mes. Tocá un día para ver o agregar sesiones.',
       'Al agendar podés elegir que se repita: se crean todas las sesiones de una vez, sin cargarlas una por una.',
       'Cada sesión puede quedar como realizada, cancelada o ausente. Eso es lo que después se factura.',
-      'El cierre del día repasa las sesiones de hoy y te deja marcarlas todas juntas. Es el atajo de fin de jornada.',
+      'El cierre del día 🌙 repasa las sesiones de la jornada y te deja marcarlas todas juntas, con sus cobros. Es el atajo de fin de día.',
+      'El botón del cierre aparece solo cuando hay sesiones sin resolver: en Inicio para las de hoy, y en Agenda para el día que estés mirando. Si no lo ves, es que no quedó nada pendiente.',
     ],
   },
   {

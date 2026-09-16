@@ -1,10 +1,11 @@
-import { useMemo } from 'react';
+import { useMemo, useState } from 'react';
 import { useStore } from '../store/StoreContext';
 import { dashboardStats, pendingReview, upcomingSessions } from '../store/selectors';
 import { formatMoney } from '../lib/money';
 import { formatDateLong, formatDateShort, formatMonthKey, monthKey, today } from '../lib/dates';
 import { Card, Empty, Stat } from '../components/ui';
 import { Mascot } from '../components/Mascot';
+import { DayClose } from '../components/DayClose';
 import { goalProgress } from '../lib/pricing';
 import { patientColor } from '../lib/palette';
 
@@ -16,6 +17,17 @@ export function DashboardPage({ onGo }: { onGo: (page: 'agenda' | 'finanzas' | '
   const patientsById = useMemo(() => new Map(data.patients.map((p) => [p.id, p])), [data.patients]);
   const upcoming = useMemo(() => upcomingSessions(data.sessions, 7).slice(0, 8), [data.sessions]);
   const overdue = useMemo(() => pendingReview(data.sessions).slice(0, 8), [data.sessions]);
+
+  // El cierre del día también vive acá, no solo en la agenda: al terminar de
+  // atender se entra al inicio, no se va a buscar el día de hoy en el
+  // calendario. Apunta siempre a hoy.
+  const hoy = today();
+  const [cerrando, setCerrando] = useState(false);
+  const sesionesHoy = useMemo(() => data.sessions.filter((s) => s.date === hoy), [data.sessions, hoy]);
+  const porCerrarHoy = useMemo(
+    () => sesionesHoy.filter((s) => s.status === 'programada').length,
+    [sesionesHoy],
+  );
 
   // Lo facturado del mes que todavía no entró. La etiqueta del encabezado
   // nombra la situación en vez de dejar a la usuaria interpretar el número.
@@ -61,6 +73,22 @@ export function DashboardPage({ onGo }: { onGo: (page: 'agenda' | 'finanzas' | '
         </div>
         <Mascot />
       </div>
+
+      {porCerrarHoy > 0 && (
+        <button className="close-day-btn" onClick={() => setCerrando(true)}>
+          🌙 Cierre del día
+          <span className="badge">{porCerrarHoy}</span>
+        </button>
+      )}
+
+      {cerrando && (
+        <DayClose
+          date={hoy}
+          sessions={sesionesHoy}
+          patientsById={patientsById}
+          onClose={() => setCerrando(false)}
+        />
+      )}
 
       <section className="hero">
         <div className="hero-label">{heroLabel}</div>

@@ -28,7 +28,8 @@ al IVA, obra social y número de afiliado) y tarjetas con honorario, tipo, frecu
 sesiones realizadas, porcentaje de cancelación, saldo y fecha del último aumento. Color
 identificatorio, botón de WhatsApp, y ficha con historial de sesiones, pagos y saldo.
 
-**Cierre del día.** Al terminar la jornada, un botón en la agenda abre el repaso de las sesiones
+**Cierre del día.** Al terminar la jornada, un botón —en el inicio para las de hoy, en la agenda
+para el día que se esté mirando— abre el repaso de las sesiones
 del día: en dos toques por paciente se marca vino / faltó / canceló y si ya se cobró. Todo entra
 como un único cambio, con el resumen de lo facturado y lo cobrado antes de confirmar.
 
