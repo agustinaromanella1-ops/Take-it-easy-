@@ -9,6 +9,13 @@
     <!-- iOS no lee el manifest: necesita sus propias etiquetas para
          instalarse en la pantalla de inicio y abrirse sin barra del navegador. -->
     <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+    <!-- Las tipografías se piden desde el HTML y no al llegar al CSS: si no,
+         el primer dibujado sale con la fuente de respaldo del sistema (Times)
+         y un instante después salta a la buena. Ese salto se ve como si el
+         nombre de la app estuviera mal dibujado. crossorigin es obligatorio
+         en el precargado de fuentes aunque el archivo sea del mismo sitio. -->
+    <link rel="preload" as="font" type="font/woff2" crossorigin href="/fonts/playfair-display-latin.woff2" />
+    <link rel="preload" as="font" type="font/woff2" crossorigin href="/fonts/nunito-latin.woff2" />
     <meta name="apple-mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-status-bar-style" content="default" />
     <meta name="apple-mobile-web-app-title" content="Pipí Cucú" />

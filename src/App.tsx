@@ -8,6 +8,8 @@ import { FinancePage } from './pages/Finance';
 import { SettingsPage } from './pages/Settings';
 import { IconCalendar, IconChart, IconGear, IconHome, IconPeople } from './components/icons';
 import { Welcome, bienvenidaPendiente } from './components/Welcome';
+import { Tour, cartelesPendientes } from './components/Tour';
+import { Guia } from './components/Guia';
 
 type Page = 'inicio' | 'pacientes' | 'agenda' | 'finanzas' | 'ajustes';
 
@@ -56,6 +58,10 @@ export default function App() {
   const [page, setPage] = useState<Page>('inicio');
   /** La bienvenida se muestra una sola vez, la primera que se abre la app. */
   const [bienvenida, setBienvenida] = useState(bienvenidaPendiente);
+  /** Los carteles que señalan cada botón: también una sola vez, después de la
+      bienvenida. Se pueden volver a pedir desde la guía. */
+  const [carteles, setCarteles] = useState(() => !bienvenidaPendiente() && cartelesPendientes());
+  const [guia, setGuia] = useState(false);
   const [openPatientId, setOpenPatientId] = useState<string | null>(null);
 
   function go(next: Page) {
@@ -73,6 +79,9 @@ export default function App() {
           onEmpezar={() => {
             setBienvenida(false);
             go('inicio');
+            // Los carteles arrancan recién acá: encima de la bienvenida no
+            // tendrían a qué apuntar.
+            if (cartelesPendientes()) setCarteles(true);
           }}
         />
       )}
@@ -85,6 +94,7 @@ export default function App() {
             {NAV.map((item) => (
               <button
                 key={item.id}
+                data-tour={item.id}
                 onClick={() => go(item.id)}
                 aria-current={page === item.id ? 'page' : undefined}
               >
@@ -92,6 +102,15 @@ export default function App() {
               </button>
             ))}
           </nav>
+          <button
+            className="ayuda"
+            data-tour="ayuda"
+            onClick={() => setGuia(true)}
+            aria-label="Guía de uso"
+            title="Guía de uso"
+          >
+            ?
+          </button>
         </header>
 
         <main className="main">
@@ -114,6 +133,7 @@ export default function App() {
           {NAV.map((item) => (
             <button
               key={item.id}
+              data-tour={item.id}
               onClick={() => go(item.id)}
               aria-current={page === item.id ? 'page' : undefined}
             >
@@ -122,6 +142,17 @@ export default function App() {
             </button>
           ))}
         </nav>
+
+        {guia && (
+          <Guia
+            onClose={() => setGuia(false)}
+            onVerCarteles={() => {
+              setGuia(false);
+              setCarteles(true);
+            }}
+          />
+        )}
+        {carteles && <Tour onCerrar={() => setCarteles(false)} />}
       </div>
     </StoreProvider>
   );

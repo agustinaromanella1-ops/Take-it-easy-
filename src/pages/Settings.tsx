@@ -138,7 +138,7 @@ export function SettingsPage() {
         </p>
       </Card>
 
-      <p className="app-footer">Pipí Cucú · tu agenda, pipí cucú</p>
+      <p className="app-footer">Tu agenda, Pipí Cucú</p>
 
     </>
   );

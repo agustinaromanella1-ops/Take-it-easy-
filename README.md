@@ -85,6 +85,12 @@ importante, el mismo color tendría dos significados.
 la burbuja de la mascota, el ícono— y nunca sobre marcas de datos, donde el color significa algo y
 un degradé lo volvería ambiguo.
 
+**La guía y los carteles.** El signo de pregunta de la barra de arriba abre la guía de uso, escrita
+para leerse de un tirón la primera vez y consultarse suelta después. Aparte, la primera vez que se
+entra salen cinco carteles que señalan los botones de verdad —los busca por `data-tour` y mide dónde
+están, así el mismo paso sirve para la barra de abajo del celular y la de arriba de la computadora—.
+Se pueden saltear en cualquier momento, no vuelven solos, y se piden de nuevo desde la guía.
+
 **`prefers-reduced-motion` anula todo el movimiento**, incluido el vuelo del perro: cambia el
 mensaje pero la imagen no se toca. Para varias personas el movimiento no es adorno sino una distracción que compite con lo
 que están tratando de hacer. En celular

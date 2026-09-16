@@ -1053,12 +1053,14 @@ a.btn {
    diseño y la composición no se deforma en ninguna pantalla.
    ============================================================ */
 .welcome {
-  --cielo: #b4dcef;
-  --azul-noche: #004963;
-  --wordmark-azul: #1c6f7a;
-  --coral: #de7c6b;
-  --coral-boton: #e07b66;
-  --celeste-tilde: #48add2;
+  /* Muestreados de la referencia, no elegidos a ojo. El texto chico, el
+     eslogan y "Pipí" son el mismo azul tinta; el naranja del botón es un punto
+     más apagado que el de "Cucú". */
+  --cielo: #95d6fd;
+  --tinta: #1f1e47;
+  --naranja: #fa7e5a;
+  --naranja-boton: #f77957;
+  --celeste-gota: #49b3f5;
 
   /* El escenario entra completo en la pantalla: se achica por el ancho o por
      el alto, lo que sea más ajustado, y nunca pasa de 460px para que en una
@@ -1124,7 +1126,7 @@ a.btn {
   font-family: var(--sans);
   font-weight: 700;
   font-size: calc(var(--u) * 0.0434);
-  color: var(--azul-noche);
+  color: var(--tinta);
 }
 
 .welcome-wordmark {
@@ -1135,8 +1137,8 @@ a.btn {
   font-size: calc(var(--u) * 0.1834);
   letter-spacing: -0.005em;
 }
-.wm-pipi { color: var(--wordmark-azul); }
-.wm-cucu { color: var(--coral); }
+.wm-pipi { color: var(--tinta); }
+.wm-cucu { color: var(--naranja); }
 
 /* Las gotas celestes son las tildes de la ı y la u. Cuelgan de su letra —de
    ahí el span envolvente— y se miden en em, así siguen al texto a cualquier
@@ -1150,7 +1152,7 @@ a.btn {
   width: 0.271em;
   height: 0.288em;
   margin-left: -0.155em;
-  fill: var(--celeste-tilde);
+  fill: var(--celeste-gota);
   overflow: visible;
   pointer-events: none;
 }
@@ -1161,7 +1163,7 @@ a.btn {
   font-family: var(--sans);
   font-weight: 700;
   font-size: calc(var(--u) * 0.0547);
-  color: var(--azul-noche);
+  color: var(--tinta);
 }
 
 /* --- Perro --------------------------------------------------------------
@@ -1189,7 +1191,7 @@ a.btn {
   padding: 0;
   border: 0;
   border-radius: 999px;
-  background: var(--coral-boton);
+  background: var(--naranja-boton);
   color: #fff;
   font-family: var(--sans);
   font-weight: 700;
@@ -1197,10 +1199,114 @@ a.btn {
   cursor: pointer;
 }
 .welcome-cta:active { filter: brightness(0.94); }
-.welcome-cta:focus-visible { outline: 3px solid var(--azul-noche); outline-offset: 3px; }
+.welcome-cta:focus-visible { outline: 3px solid var(--tinta); outline-offset: 3px; }
 
 /* Quien pidió menos movimiento ve el perro quieto: el primer fotograma del GIF
    en imagen fija, sin tocar el resto de la pantalla. */
 @media (prefers-reduced-motion: reduce) {
   .welcome-dog { content: url('/pipi-cucu-dog-static.png'); }
 }
+
+/* ============================================================
+   Guía de uso y carteles
+   ============================================================ */
+
+/* El signo de pregunta vive en la barra de arriba, donde se ve siempre y en
+   cualquier pantalla: es el salvavidas y no puede estar escondido. */
+.ayuda {
+  margin-left: auto;
+  width: 40px;
+  height: 40px;
+  flex-shrink: 0;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  background: var(--surface);
+  color: var(--accent-dark);
+  font: inherit;
+  font-family: var(--serif);
+  font-weight: 700;
+  font-size: 1.15rem;
+  line-height: 1;
+  cursor: pointer;
+}
+.ayuda:hover { background: var(--accent-soft); }
+.ayuda:focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; }
+
+.guia-intro { margin: 0 0 4px; color: var(--body); }
+.guia-bloque { margin-top: 18px; }
+.guia-bloque h3 {
+  margin: 0 0 8px;
+  font-family: var(--serif);
+  font-size: 1.05rem;
+  color: var(--text);
+}
+.guia-bloque ul { margin: 0; padding-left: 20px; }
+.guia-bloque li { margin-bottom: 7px; color: var(--body); line-height: 1.55; }
+.guia .btn { margin-top: 22px; width: 100%; }
+
+/* --- Carteles ------------------------------------------------------------
+   Van por encima de todo (z-index 95) para poder señalar la barra de abajo,
+   que ya está fija. */
+.tour { position: fixed; inset: 0; z-index: 95; }
+.tour-fondo {
+  position: absolute;
+  inset: 0;
+  background: rgba(38, 28, 44, 0.55);
+}
+/* El aro rodea el botón del que se habla. La sombra enorme hacia afuera es lo
+   que lo deja iluminado: recorta el oscurecido justo en ese rectángulo. */
+.tour-aro {
+  position: absolute;
+  border-radius: 14px;
+  box-shadow: 0 0 0 3px var(--surface), 0 0 0 9999px rgba(38, 28, 44, 0.55);
+  pointer-events: none;
+}
+.tour-fondo:has(~ .tour-aro) { background: transparent; }
+
+.tour-cartel {
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%);
+  width: min(calc(100vw - 32px), 340px);
+  background: var(--surface);
+  border-radius: 18px;
+  box-shadow: 0 14px 40px rgba(38, 28, 44, 0.3);
+  padding: 18px 20px 16px;
+}
+/* Cuando no hay a qué apuntar, el cartel se centra y el transform ya lo pone
+   el estilo en línea. */
+.tour-cartel[style*='translate(-50%'] { transform: translate(-50%, -50%); }
+
+.tour-paso {
+  margin: 0 0 4px;
+  font-size: 0.76rem;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  color: var(--muted);
+}
+.tour-cartel h2 {
+  margin: 0 0 6px;
+  font-family: var(--serif);
+  font-size: 1.15rem;
+  color: var(--text);
+}
+.tour-texto { margin: 0; color: var(--body); line-height: 1.55; font-size: 0.92rem; }
+.tour-acciones {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-top: 16px;
+}
+.tour-saltar {
+  border: 0;
+  background: transparent;
+  color: var(--muted);
+  font: inherit;
+  font-weight: 600;
+  padding: 11px 4px;
+  min-height: 44px;
+  cursor: pointer;
+}
+.tour-saltar:hover { color: var(--text); }
+.tour-acciones .btn { min-height: 44px; }

@@ -49,6 +49,13 @@ async function saltarBienvenida() {
     await cta.click({ timeout: 3000 }).catch(() => {});
     await page.locator('.welcome').waitFor({ state: 'detached', timeout: 5000 }).catch(() => {});
   }
+  // Y los carteles que salen enseguida: tapan toda la pantalla hasta que se
+  // los saltea.
+  const saltar = page.locator('.tour-saltar');
+  if (await saltar.count()) {
+    await saltar.click({ timeout: 3000 }).catch(() => {});
+    await page.locator('.tour').waitFor({ state: 'detached', timeout: 5000 }).catch(() => {});
+  }
 }
 
 const campo = (etiqueta) => page.locator('.modal .field').filter({ hasText: etiqueta }).locator('input, select, textarea').first();
@@ -253,7 +260,37 @@ check('al tocarlo de nuevo cambia el mensaje', (await page.locator('.mascot-bubb
 await page.waitForTimeout(2800);
 check('después se queda quieto de nuevo', (await perro.getAttribute('src')) === '/pipi-cucu-dog-static.png');
 
-titulo('9. Sin conexión');
+titulo('9. La guía y los carteles');
+await page.locator('.tabbar button', { hasText: 'Ajustes' }).click();
+await page.waitForTimeout(300);
+check('el pie dice el eslogan una sola vez', (await page.locator('.app-footer').innerText()) === 'Tu agenda, Pipí Cucú');
+await page.locator('.ayuda').click();
+await page.waitForTimeout(400);
+check('el signo de pregunta abre la guía', (await page.locator('.guia').count()) === 1);
+check('la guía tiene todas sus secciones', (await page.locator('.guia-bloque').count()) === 5);
+const guiaTxt = await page.locator('.guia').innerText();
+check('la guía avisa que hay que hacer copia', guiaTxt.toLowerCase().includes('export'));
+await page.locator('.guia .btn').click();
+await page.waitForTimeout(400);
+check('desde la guía vuelven los carteles', (await page.locator('.tour-cartel').count()) === 1);
+const pasos = [];
+for (let i = 0; i < 5; i++) {
+  pasos.push(await page.locator('.tour-cartel h2').innerText());
+  check(`el cartel ${i + 1} señala un botón real`, (await page.locator('.tour-aro').count()) === 1);
+  const sig = page.locator('.tour-acciones .btn');
+  if (!(await sig.count())) break;
+  await sig.click();
+  await page.waitForTimeout(200);
+}
+check('son cinco carteles distintos', new Set(pasos).size === 5, pasos.length + '');
+await page.locator('.tour-saltar').click();
+await page.waitForTimeout(300);
+check('al terminar los carteles se van', (await page.locator('.tour').count()) === 0);
+await page.reload({ waitUntil: 'networkidle' });
+await page.waitForTimeout(600);
+check('los carteles no vuelven solos', (await page.locator('.tour').count()) === 0);
+
+titulo('10. Sin conexión');
 await ctx.setOffline(true);
 await page.reload({ waitUntil: 'load' });
 await page.waitForTimeout(1200);
