@@ -64,10 +64,11 @@ Serif de display (Playfair Display) para títulos y cifras principales, sans red
 para el cuerpo, fondo en degradado pastel, tarjetas muy redondeadas y acento turquesa. Los títulos
 de sección van fuera de la tarjeta, con su acción a la derecha.
 
-La mascota es un perro salchicha de color plano dibujado en SVG, en el encabezado del inicio junto
-al mensaje del día. Al tocarlo cambia el mensaje y mueve la cola. Va dibujado y no como emoji para
-que se vea igual en todos los dispositivos: el emoji de perro cambia bastante entre Android, iOS y
-Windows.
+La mascota es el mismo perro salchicha de la portada —el dibujo aprobado, sin redibujar— en el
+encabezado del inicio junto al mensaje del día. Ahí está quieto: es el primer fotograma. Al tocarlo
+cambia el mensaje y el perro vuela un par de segundos. Un dibujo animado dando vueltas para siempre
+al lado de los números del mes cansa y distrae; que vuele solo cuando lo tocan lo deja como lo que
+es, un guiño.
 
 **Dos naranjas, no uno.** El naranja lindo (`--warm`, #e08a4f) no llega a 4,5:1 sobre blanco, así
 que solo se usa en degradés y rellenos sin texto. Para texto y bordes hay un segundo tono más
@@ -82,8 +83,8 @@ importante, el mismo color tendría dos significados.
 la burbuja de la mascota, el ícono— y nunca sobre marcas de datos, donde el color significa algo y
 un degradé lo volvería ambiguo.
 
-**`prefers-reduced-motion` anula todo el movimiento**, incluida la cola del perro, que ni siquiera
-se monta. Para varias personas el movimiento no es adorno sino una distracción que compite con lo
+**`prefers-reduced-motion` anula todo el movimiento**, incluido el vuelo del perro: cambia el
+mensaje pero la imagen no se toca. Para varias personas el movimiento no es adorno sino una distracción que compite con lo
 que están tratando de hacer. En celular
 la navegación pasa a una barra inferior con un botón flotante para la acción principal de cada
 pantalla. Las fuentes están alojadas en el propio proyecto en lugar de pedirlas a Google: así la app se ve

@@ -242,7 +242,20 @@ const texto = await page.locator('.bill-text').inputValue();
 check('el texto de factura usa el nombre completo', texto.includes('Ana Laura Gómez Sosa'));
 check('el texto de factura usa el afiliado', texto.includes('SM-99/04'));
 
-titulo('8. Sin conexión');
+titulo('8. El perro del inicio');
+await page.locator('.tabbar button', { hasText: 'Inicio' }).click();
+await page.waitForTimeout(400);
+const perro = page.locator('.mascot-dog img').first();
+check('es el mismo perro que la portada', (await perro.getAttribute('src')) === '/pipi-cucu-dog-static.png');
+const mensajeAntes = await page.locator('.mascot-bubble').first().innerText();
+await page.locator('.mascot-dog').first().click();
+await page.waitForTimeout(300);
+check('al tocarlo vuela', (await perro.getAttribute('src')) === '/pipi-cucu-dog-flying.gif');
+check('al tocarlo cambia el mensaje', (await page.locator('.mascot-bubble').first().innerText()) !== mensajeAntes);
+await page.waitForTimeout(2800);
+check('después se queda quieto de nuevo', (await perro.getAttribute('src')) === '/pipi-cucu-dog-static.png');
+
+titulo('9. Sin conexión');
 await ctx.setOffline(true);
 await page.reload({ waitUntil: 'load' });
 await page.waitForTimeout(1200);

@@ -445,13 +445,20 @@ td { color: var(--body); }
   line-height: 1.4;
 }
 .mascot-dog {
-  font-size: 1.9rem;
   background: none;
   border: 0;
   cursor: pointer;
   padding: 0;
-  line-height: 1;
+  line-height: 0;
   flex-shrink: 0;
+}
+/* El mismo perro de la portada. La proporción es la del archivo: no se estira
+   ni se recorta, solo se achica. */
+.mascot-dog img {
+  display: block;
+  width: 112px;
+  height: auto;
+  aspect-ratio: 483 / 177;
 }
 .mascot-dog:hover { transform: rotate(-6deg); }
 
@@ -473,6 +480,7 @@ td { color: var(--body); }
   .stat-label { font-size: 0.82rem; }
   .page-head { align-items: flex-start; margin-bottom: 16px; }
   .mascot-bubble { font-size: 0.84rem; padding: 8px 13px; }
+  .mascot-dog img { width: 88px; }
   .main { padding: 8px 14px 90px; }
   .topbar { padding: 14px 16px 4px; }
   .topbar .nav { display: none; }
