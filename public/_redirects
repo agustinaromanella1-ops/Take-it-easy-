@@ -1,0 +1,7 @@
+# La app es de una sola página: cualquier ruta la resuelve el index.
+# Sin esto, recargar dentro de la app daría 404.
+#
+# Lo mismo está en netlify.toml, que es lo que manda cuando se publica desde
+# GitHub. Este archivo existe para que también valga al subir la carpeta
+# compilada a mano (Netlify Drop), donde el netlify.toml no viaja.
+/*  /index.html  200
