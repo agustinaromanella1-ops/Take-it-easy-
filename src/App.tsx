@@ -1,4 +1,4 @@
-import { Component, useState, type ReactNode } from 'react';
+import { Component, useEffect, useState, type ReactNode } from 'react';
 import { StoreProvider } from './store/StoreContext';
 import { DashboardPage } from './pages/Dashboard';
 import { PatientsPage } from './pages/Patients';
@@ -11,6 +11,7 @@ import { Welcome, bienvenidaPendiente } from './components/Welcome';
 import { Tour, cartelesPendientes } from './components/Tour';
 import { Guia } from './components/Guia';
 import { Footer } from './components/Footer';
+import { alHaberVersionNueva } from './pwa';
 
 type Page = 'inicio' | 'pacientes' | 'agenda' | 'finanzas' | 'ajustes';
 
@@ -64,6 +65,14 @@ export default function App() {
   const [carteles, setCarteles] = useState(() => !bienvenidaPendiente() && cartelesPendientes());
   const [guia, setGuia] = useState(false);
   const [openPatientId, setOpenPatientId] = useState<string | null>(null);
+  /** La función que aplica la versión nueva, cuando hay una esperando. */
+  const [aplicarVersion, setAplicarVersion] = useState<(() => void) | null>(null);
+
+  useEffect(() => {
+    // El setState guarda una función, así que va envuelta: si no, React la
+    // llamaría creyendo que es un actualizador de estado.
+    alHaberVersionNueva((aplicar) => setAplicarVersion(() => aplicar));
+  }, []);
 
   function go(next: Page) {
     setOpenPatientId(null);
@@ -87,6 +96,14 @@ export default function App() {
         />
       )}
       <div className="app">
+        {aplicarVersion && (
+          <div className="update-bar" role="status">
+            <span>Hay una versión nueva de la app.</span>
+            <button type="button" className="btn small primary" onClick={aplicarVersion}>
+              Actualizar
+            </button>
+          </div>
+        )}
         <header className="topbar">
           <span className="brand">
             Pipí <em>Cucú</em>

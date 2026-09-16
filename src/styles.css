@@ -1428,3 +1428,18 @@ a.btn {
   .footer-dog img { width: 88px; }
   .footer-slogan { font-size: 0.94rem; }
 }
+
+/* Aviso de versión nueva. Va arriba de todo y se queda hasta que se toca:
+   enterarse de que hay una versión nueva no puede depender de adivinar. */
+.update-bar {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 12px;
+  background: var(--amarillo);
+  border-bottom: var(--borde) solid var(--border);
+  color: var(--ink);
+  font-weight: 700;
+  padding: 11px 16px;
+}

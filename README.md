@@ -236,6 +236,20 @@ Ese keystore y su contraseña no van nunca al repositorio — ya están en `.git
 ambos puede publicar actualizaciones haciéndose pasar por la app. Guardalos en un gestor de
 contraseñas, no en una captura de pantalla ni en un chat.
 
+## Cuando se publica una versión nueva
+
+El service worker guarda la app entera para que ande sin conexión, y eso tiene una contracara: sin
+avisar, el navegador sigue sirviendo la versión que ya tenía. Cuando hay una nueva, la app muestra
+una barra amarilla arriba —"Hay una versión nueva"— con un botón para aplicarla.
+
+Antes esto intentaba ser astuto: aplicaba la versión nueva sola, pero solo cuando la app pasaba a
+segundo plano, para no interrumpir a nadie en medio de cargar una sesión. El problema es que nadie
+puede adivinar esa regla: si no salías y volvías, te quedabas en la versión vieja sin ninguna señal
+de que había otra. Actualizar tiene que ser algo que se ve y se decide.
+
+Para forzar la versión nueva a mano —por ejemplo, para comprobar que un cambio se publicó— alcanza
+con abrir el sitio en una ventana de incógnito, que no usa el service worker.
+
 ## Dónde viven los datos
 
 Todo se guarda en el navegador (`localStorage`), en esta computadora. No hay servidor ni cuenta:
