@@ -33,6 +33,8 @@
           var oscuro = g === 'oscuro' || (g !== 'claro' && matchMedia('(prefers-color-scheme: dark)').matches);
           document.documentElement.dataset.tema = oscuro ? 'oscuro' : 'claro';
           document.querySelector('meta[name="theme-color"]').content = oscuro ? '#1a1533' : '#d9ebfb';
+          var a = localStorage.getItem('pipicucu:animaciones');
+          document.documentElement.dataset.animaciones = a === 'siempre' || a === 'nunca' ? a : 'auto';
         } catch (e) {}
       })();
     </script>

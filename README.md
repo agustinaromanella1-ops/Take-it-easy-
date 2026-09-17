@@ -134,6 +134,12 @@ entra salen cinco carteles que señalan los botones de verdad —los busca por `
 están, así el mismo paso sirve para la barra de abajo del celular y la de arriba de la computadora—.
 Se pueden saltear en cualquier momento, no vuelven solos, y se piden de nuevo desde la guía.
 
+**El movimiento se puede decidir en la app.** Por defecto manda el sistema, que es lo correcto: hay
+gente a la que el movimiento le hace mal. Pero ese ajuste se prende sin querer —el ahorro de batería
+de Android lo activa solo— y desde adentro de la app nadie puede adivinar por qué el perro dejó de
+volar. En Ajustes › Cómo se ve hay *Según el sistema / Siempre / Nunca*, y el valor de fábrica sigue
+siendo el del equipo.
+
 **`prefers-reduced-motion` anula todo el movimiento**, incluido el vuelo del perro: cambia el
 mensaje pero la imagen no se toca. Para varias personas el movimiento no es adorno sino una distracción que compite con lo
 que están tratando de hacer. En celular

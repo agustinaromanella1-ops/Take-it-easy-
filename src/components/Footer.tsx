@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { sinMovimiento } from '../lib/movimiento';
 
 /**
  * El pie de la app: el perrito y el eslogan, al final de cada sección.
@@ -71,9 +72,9 @@ export function Footer() {
   useEffect(() => () => window.clearTimeout(reloj.current), []);
 
   const tocar = useCallback(() => {
-    // Si el sistema pide menos movimiento, el perro cambia de mensaje pero no
-    // vuela: el movimiento es adorno y no vale la distracción.
-    const quieto = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    // Con las animaciones apagadas, el perro cambia de mensaje pero no vuela:
+    // el movimiento es adorno y no vale la distracción.
+    const quieto = sinMovimiento();
 
     setMensaje((actual) => (actual === null ? primero : alAzar(actual)));
 

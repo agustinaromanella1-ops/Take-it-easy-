@@ -1195,16 +1195,28 @@ a.btn {
 /* ---------- Movimiento ----------
    Quien pidió menos movimiento en su sistema no debería ver ninguno: para
    varias personas el movimiento no es adorno, es una distracción que compite
-   con lo que están tratando de hacer. */
+   con lo que están tratando de hacer.
+
+   El sistema manda salvo que en Ajustes se haya pedido otra cosa. Ese ajuste
+   se prende sin querer —el ahorro de batería de Android lo activa solo— y
+   desde adentro de la app nadie puede adivinar por qué se quedó todo quieto. */
 @media (prefers-reduced-motion: reduce) {
-  *,
-  *::before,
-  *::after {
+  :root:not([data-animaciones='siempre']) *,
+  :root:not([data-animaciones='siempre']) *::before,
+  :root:not([data-animaciones='siempre']) *::after {
     animation-duration: 0.001ms !important;
     animation-iteration-count: 1 !important;
     transition-duration: 0.001ms !important;
     scroll-behavior: auto !important;
   }
+}
+:root[data-animaciones='nunca'] *,
+:root[data-animaciones='nunca'] *::before,
+:root[data-animaciones='nunca'] *::after {
+  animation-duration: 0.001ms !important;
+  animation-iteration-count: 1 !important;
+  transition-duration: 0.001ms !important;
+  scroll-behavior: auto !important;
 }
 
 /* ============================================================
@@ -1365,8 +1377,15 @@ a.btn {
 
 /* Quien pidió menos movimiento ve el perro quieto: el primer fotograma del GIF
    en imagen fija, sin tocar el resto de la pantalla. */
+/* El perro de la portada: quieto si el sistema lo pide y nadie dijo lo
+   contrario, o si se eligió "nunca". */
 @media (prefers-reduced-motion: reduce) {
-  .welcome-dog { content: url('/pipi-cucu-dog-static.png'); }
+  :root:not([data-animaciones='siempre']) .welcome-dog {
+    content: url('/pipi-cucu-dog-static.png');
+  }
+}
+:root[data-animaciones='nunca'] .welcome-dog {
+  content: url('/pipi-cucu-dog-static.png');
 }
 
 /* ============================================================

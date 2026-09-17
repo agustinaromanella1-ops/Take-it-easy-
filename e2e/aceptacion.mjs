@@ -410,6 +410,26 @@ await page.getByRole('button', { name: /Claro/ }).click();
 await page.waitForTimeout(400);
 check('se puede volver al claro', (await page.evaluate(() => document.documentElement.dataset.tema)) === 'claro');
 
+// El ajuste de animaciones del sistema se prende sin querer —el ahorro de
+// batería de Android lo hace solo— y desde la app nadie puede adivinar por qué
+// se quedó todo quieto. Por eso se puede decidir acá también.
+await page.getByRole('button', { name: 'Nunca' }).click();
+await page.waitForTimeout(300);
+check('se pueden apagar las animaciones', (await page.evaluate(() => document.documentElement.dataset.animaciones)) === 'nunca');
+await page.reload({ waitUntil: 'networkidle' });
+await page.waitForTimeout(500);
+check('con las animaciones apagadas el perro de la portada está quieto',
+  (await page.evaluate(() => {
+    const d = document.querySelector('.welcome-dog');
+    return d ? getComputedStyle(d).content.includes('dog-static') : false;
+  })));
+await saltarBienvenida();
+await page.locator('.tabbar button', { hasText: 'Ajustes' }).click();
+await page.waitForTimeout(400);
+await page.getByRole('button', { name: 'Según el sistema' }).click();
+await page.waitForTimeout(300);
+check('y se puede volver a dejárselo al sistema', (await page.evaluate(() => document.documentElement.dataset.animaciones)) === 'auto');
+
 titulo('14. Sin conexión');
 await ctx.setOffline(true);
 await page.reload({ waitUntil: 'load' });

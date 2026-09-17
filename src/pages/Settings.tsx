@@ -5,6 +5,7 @@ import { today } from '../lib/dates';
 import { downloadText } from '../lib/download';
 import { cobrosCSV, sesionesCSV } from '../lib/csv';
 import { guardarTema, leerTema, seguirAlSistema, type Tema } from '../lib/tema';
+import { guardarAnimaciones, leerAnimaciones, type Animaciones } from '../lib/movimiento';
 import { Card, Field } from '../components/ui';
 
 /**
@@ -25,6 +26,13 @@ export function SettingsPage() {
   function cambiarTema(nuevo: Tema) {
     setTema(nuevo);
     guardarTema(nuevo);
+  }
+
+  const [animaciones, setAnimaciones] = useState<Animaciones>(leerAnimaciones);
+
+  function cambiarAnimaciones(nuevo: Animaciones) {
+    setAnimaciones(nuevo);
+    guardarAnimaciones(nuevo);
   }
 
   /** Planillas para abrir en Excel. No reemplazan la copia de seguridad: la
@@ -206,6 +214,28 @@ export function SettingsPage() {
             </button>
           ))}
         </div>
+
+        <p className="small" style={{ marginBottom: 6, marginTop: 20 }}>Animaciones</p>
+        <div className="seg" role="group" aria-label="Animaciones">
+          {([
+            ['auto', 'Según el sistema'],
+            ['siempre', 'Siempre'],
+            ['nunca', 'Nunca'],
+          ] as const).map(([valor, etiqueta]) => (
+            <button
+              key={valor}
+              className={animaciones === valor ? 'is-on' : ''}
+              aria-pressed={animaciones === valor}
+              onClick={() => cambiarAnimaciones(valor)}
+            >
+              {etiqueta}
+            </button>
+          ))}
+        </div>
+        <p className="small muted" style={{ marginBottom: 0 }}>
+          Si el perrito de la portada está quieto es porque tu equipo tiene las animaciones
+          apagadas —el ahorro de batería suele hacerlo solo—. Con “Siempre” vuela igual.
+        </p>
       </Card>
 
       <Card title="Planillas para Excel">
