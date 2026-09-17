@@ -384,7 +384,28 @@ const planillaCobros = readFileSync(`${SC}/pipi-cucu-cobros-${new Date().toISOSt
 check('los importes usan coma decimal, que es lo que Excel suma', planillaCobros.includes('42500,50'), 
   planillaCobros.split('\r\n')[1] ?? '');
 
-titulo('13. Sin conexión');
+titulo('13. Tema claro y oscuro');
+await page.locator('.tabbar button', { hasText: 'Ajustes' }).click();
+await page.waitForTimeout(400);
+await page.getByRole('button', { name: /Oscuro/ }).click();
+await page.waitForTimeout(400);
+check('el modo oscuro se aplica', (await page.evaluate(() => document.documentElement.dataset.tema)) === 'oscuro');
+// La barra del navegador tiene que acompañar, o queda una franja clara arriba.
+check('la barra del navegador acompaña',
+  (await page.evaluate(() => document.querySelector('meta[name="theme-color"]').content)) === '#1a1533');
+await page.reload({ waitUntil: 'networkidle' });
+await page.waitForTimeout(600);
+await saltarBienvenida();
+check('el tema sobrevive a recargar', (await page.evaluate(() => document.documentElement.dataset.tema)) === 'oscuro');
+// El texto tiene que seguir leyéndose: en oscuro, un color fijo de modo claro
+// deja letra clara sobre fondo claro.
+await page.locator('.tabbar button', { hasText: 'Ajustes' }).click();
+await page.waitForTimeout(400);
+await page.getByRole('button', { name: /Claro/ }).click();
+await page.waitForTimeout(400);
+check('se puede volver al claro', (await page.evaluate(() => document.documentElement.dataset.tema)) === 'claro');
+
+titulo('14. Sin conexión');
 await ctx.setOffline(true);
 await page.reload({ waitUntil: 'load' });
 await page.waitForTimeout(1200);

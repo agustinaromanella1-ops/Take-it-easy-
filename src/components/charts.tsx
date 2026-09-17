@@ -6,7 +6,9 @@ import type { ReactNode } from 'react';
  * Son barras hechas con HTML y CSS, sin librería: pesan cero, andan sin
  * conexión y heredan la tipografía de la app.
  *
- * Sobre el color: la paleta se validó con el verificador de contraste y
+ * Sobre el color: los valores viven en el CSS —no acá— porque el modo oscuro
+ * necesita otros tonos, y una constante de JavaScript no se entera de que
+ * cambió el tema. La paleta se validó con el verificador de contraste y
  * daltonismo en vez de elegirla a ojo. El primer intento usaba verde para
  * "cobrado" y rojo para "pendiente", que es el par clásico de los tableros y
  * resulta indistinguible en deuteranopía (ΔE 4,2). El par azul/ámbar que quedó
@@ -22,11 +24,11 @@ import type { ReactNode } from 'react';
 
 export const CHART_COLORS = {
   /** Violeta: lo cobrado, lo realizado. */
-  primary: '#7b52ab',
+  primary: 'var(--grafico-1)',
   /** Naranja: lo pendiente, las ausencias. */
-  attention: '#e0642b',
+  attention: 'var(--grafico-2)',
   /** Gris deliberado: lo cancelado, el estado sin consecuencias. */
-  neutral: '#8b84a0',
+  neutral: 'var(--grafico-3)',
 } as const;
 
 export interface Segment {

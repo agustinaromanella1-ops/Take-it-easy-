@@ -6,6 +6,7 @@ import {
   emptyDecision,
   summarizeDayClose,
   type DayCloseDecision,
+  type DayCloseResult,
 } from '../lib/dayclose';
 import { formatMoney } from '../lib/money';
 import { formatDateLong } from '../lib/dates';
@@ -19,6 +20,68 @@ const ATTENDANCE: { value: Exclude<Session['status'], 'programada'>; label: stri
   { value: 'ausente', label: 'Faltó' },
   { value: 'cancelada', label: 'Canceló' },
 ];
+
+/** Lo que se cuenta al final de la jornada. */
+interface Despedida {
+  titular: string;
+  nombres: string[];
+  faltaron: number;
+  facturado: number;
+  cobrado: number;
+}
+
+/** Nombres en castellano: "Ana, Luis y Mara". */
+function listar(nombres: string[]): string {
+  if (nombres.length === 1) return nombres[0]!;
+  return `${nombres.slice(0, -1).join(', ')} y ${nombres[nombres.length - 1]}`;
+}
+
+/**
+ * El resumen de la jornada, contando TODAS las sesiones del día y no solo las
+ * que se acaban de resolver: si a la mañana ya se había cerrado una, igual
+ * formó parte del día.
+ */
+function armarDespedida(
+  sessions: Session[],
+  decisions: Map<string, DayCloseDecision>,
+  patientsById: Map<string, Patient>,
+  result: DayCloseResult,
+): Despedida {
+  // Estado final de cada sesión: el que ya tenía, o el que se acaba de elegir.
+  const finales = sessions.map((s) => {
+    if (s.status !== 'programada') return { sesion: s, estado: s.status };
+    const elegido = decisions.get(s.id)?.status;
+    return { sesion: s, estado: elegido ?? 'programada' };
+  });
+
+  const atendidas = finales.filter((f) => f.estado === 'realizada');
+  const caidas = finales.filter((f) => f.estado === 'ausente' || f.estado === 'cancelada');
+
+  // Un nombre por persona aunque haya venido dos veces el mismo día.
+  const nombres = [
+    ...new Set(
+      atendidas.map((f) => {
+        const nombre = patientsById.get(f.sesion.patientId)?.name ?? 'Alguien';
+        return nombre.split(' ')[0] ?? nombre;
+      }),
+    ),
+  ];
+
+  const facturado = finales.reduce(
+    (t, f) => t + (f.estado === 'realizada' ? f.sesion.fee : 0),
+    0,
+  );
+  const cobrado = result.payments.reduce((t, p) => t + p.amount, 0);
+
+  const titular =
+    atendidas.length === 0
+      ? 'Hoy no se concretó ninguna sesión.'
+      : atendidas.length === 1
+        ? 'Hoy atendiste a una persona.'
+        : `Hoy atendiste a ${atendidas.length} personas.`;
+
+  return { titular, nombres, faltaron: caidas.length, facturado, cobrado };
+}
 
 /**
  * Cierre del día: repasar las sesiones de la jornada y dejarlas resueltas en
@@ -43,6 +106,8 @@ export function DayClose({
 
   const [decisions, setDecisions] = useState<Map<string, DayCloseDecision>>(new Map());
   const [method, setMethod] = useState<PaymentMethod>('efectivo');
+  /** Lo que se muestra una vez guardado: el resumen de la jornada. */
+  const [despedida, setDespedida] = useState<Despedida | null>(null);
 
   const pending = useMemo(() => sessions.filter((s) => s.status === 'programada'), [sessions]);
   const alreadyClosed = useMemo(() => sessions.filter((s) => s.status !== 'programada'), [sessions]);
@@ -72,7 +137,43 @@ export function DayClose({
   function confirm() {
     const result = buildDayClose(sessions, decisions, date, method);
     dispatch({ type: 'day/close', payload: result });
-    onClose();
+    // En vez de cerrar y devolver a la pantalla de números, la jornada termina
+    // con su resumen. Es el momento de soltar el trabajo, no de mirar totales.
+    setDespedida(armarDespedida(sessions, decisions, patientsById, result));
+  }
+
+  if (despedida) {
+    return (
+      <Modal title="Listo por hoy" onClose={onClose}>
+        {/* En gris a propósito: el día se terminó y la app baja la voz. Es la
+            única pantalla sin color de toda la app. */}
+        <div className="despedida">
+          <p className="despedida-linea">{despedida.titular}</p>
+          {despedida.nombres.length > 0 && (
+            <p className="despedida-nombres">{listar(despedida.nombres)}</p>
+          )}
+          {despedida.faltaron > 0 && (
+            <p className="despedida-nota">
+              {despedida.faltaron === 1 ? 'Una sesión no se concretó.' : `${despedida.faltaron} sesiones no se concretaron.`}
+            </p>
+          )}
+          <div className="despedida-cifras">
+            <span>
+              Facturado <strong>{formatMoney(despedida.facturado, currency)}</strong>
+            </span>
+            <span>
+              Cobrado <strong>{formatMoney(despedida.cobrado, currency)}</strong>
+            </span>
+          </div>
+          <p className="despedida-cierre">A descansar 🌙</p>
+        </div>
+        <div className="modal-foot">
+          <button className="btn primary" onClick={onClose}>
+            Cerrar
+          </button>
+        </div>
+      </Modal>
+    );
   }
 
   return (
@@ -184,6 +285,16 @@ export function DayClose({
       {alreadyClosed.length > 0 && (
         <p className="small muted" style={{ marginBottom: 0 }}>
           {alreadyClosed.length} sesión(es) de este día ya estaban cerradas y no se tocan.
+        </p>
+      )}
+
+      {/* La duda más común al cerrar el día es "¿y si me olvidé de algo?".
+          Se puede arreglar todo después, así que conviene decirlo acá y no
+          dejar que cerrar dé miedo. */}
+      {pending.length > 0 && (
+        <p className="small muted" style={{ marginBottom: 0 }}>
+          Si te olvidás de alguien o te equivocás, se arregla después: la sesión se edita desde la
+          Agenda y el cobro se borra desde Finanzas. Nada de esto queda cerrado con llave.
         </p>
       )}
 

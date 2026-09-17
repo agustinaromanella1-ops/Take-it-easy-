@@ -47,3 +47,72 @@ export function whatsappLink(phone: string, message = '', defaultCountry = '54')
   const text = message.trim() === '' ? '' : `?text=${encodeURIComponent(message)}`;
   return `https://wa.me/${number}${text}`;
 }
+
+/* ------------------------------------------------------------------
+   Plantillas de mensaje
+   ------------------------------------------------------------------ */
+
+export type PlantillaId = 'recordatorio' | 'confirmar' | 'reprogramar' | 'cobro' | 'saludo';
+
+export interface Plantilla {
+  id: PlantillaId;
+  etiqueta: string;
+  /** Si necesita una sesión concreta para tener sentido. */
+  necesitaSesion: boolean;
+}
+
+export const PLANTILLAS: Plantilla[] = [
+  { id: 'recordatorio', etiqueta: 'Recordar el turno', necesitaSesion: true },
+  { id: 'confirmar', etiqueta: 'Pedir confirmación', necesitaSesion: true },
+  { id: 'reprogramar', etiqueta: 'Reprogramar', necesitaSesion: true },
+  { id: 'cobro', etiqueta: 'Recordar un pago', necesitaSesion: false },
+  { id: 'saludo', etiqueta: 'Solo saludar', necesitaSesion: false },
+];
+
+/**
+ * Minúscula inicial. Los días de la semana van en minúscula en español, pero
+ * en pantalla se muestran capitalizados porque encabezan una línea. Dentro de
+ * una frase —"te recuerdo nuestra sesión el jueves"— hay que devolverlos.
+ */
+function enMinuscula(texto: string): string {
+  return texto.charAt(0).toLowerCase() + texto.slice(1);
+}
+
+/** El nombre con el que uno se dirige a alguien: el de pila. */
+export function nombreDePila(nombre: string): string {
+  return nombre.trim().split(/\s+/)[0] ?? nombre;
+}
+
+/**
+ * El texto que se abre ya escrito en WhatsApp.
+ *
+ * Son borradores, no mensajes automáticos: WhatsApp los muestra en el campo de
+ * texto y recién se envían si la persona toca enviar. Esa diferencia importa
+ * —mandar solo un recordatorio a un paciente sin leerlo sería imprudente— y es
+ * también la razón de que el tono quede llano y sin firmar: cada una lo
+ * termina como escribe.
+ */
+export function textoPlantilla(
+  id: PlantillaId,
+  datos: { nombre: string; cuando?: string; hora?: string; monto?: string },
+): string {
+  const quien = nombreDePila(datos.nombre);
+  const cuando = datos.cuando ? enMinuscula(datos.cuando) : '';
+  const hora = datos.hora ?? '';
+  const momento = cuando && hora ? `el ${cuando} a las ${hora}` : cuando ? `el ${cuando}` : '';
+
+  switch (id) {
+    case 'recordatorio':
+      return `Hola ${quien}, ¿cómo estás? Te recuerdo nuestra sesión ${momento}. ¡Nos vemos!`;
+    case 'confirmar':
+      return `Hola ${quien}, ¿cómo estás? ¿Me confirmás la sesión ${momento}?`;
+    case 'reprogramar':
+      return `Hola ${quien}, ¿cómo estás? Necesito mover la sesión ${momento}. ¿Qué día te vendría bien?`;
+    case 'cobro':
+      return datos.monto
+        ? `Hola ${quien}, ¿cómo estás? Te paso el recordatorio del saldo pendiente: ${datos.monto}. ¡Gracias!`
+        : `Hola ${quien}, ¿cómo estás? Te paso el recordatorio del saldo pendiente. ¡Gracias!`;
+    case 'saludo':
+      return `Hola ${quien}, ¿cómo estás?`;
+  }
+}

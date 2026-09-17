@@ -22,6 +22,7 @@ import { DayClose } from '../components/DayClose';
 import { IconBell } from '../components/icons';
 import { patientColor } from '../lib/palette';
 import { MAX_OCCURRENCES, occurrences, REPEAT_LABEL, type Repeat } from '../lib/recurrence';
+import { PLANTILLAS, textoPlantilla, whatsappLink, type PlantillaId } from '../lib/contact';
 import { icsFileName, sessionToICS } from '../lib/calendar';
 import { downloadText } from '../lib/download';
 
@@ -219,6 +220,26 @@ export function AgendaPage({ onGo }: { onGo: (page: 'pacientes') => void }) {
 
   /** Si se intentó agendar sin tener pacientes todavía. */
   const [faltanPacientes, setFaltanPacientes] = useState(false);
+  /** La sesión para la que se está eligiendo un mensaje. */
+  const [escribiendo, setEscribiendo] = useState<Session | null>(null);
+
+  /**
+   * Abre WhatsApp con el mensaje ya escrito. No lo manda: WhatsApp lo deja en
+   * el campo de texto y recién sale si la persona toca enviar. Un mensaje a un
+   * paciente no se despacha solo.
+   */
+  function escribirPor(plantilla: PlantillaId, sesion: Session) {
+    const paciente = patientsById.get(sesion.patientId);
+    if (!paciente) return;
+    const texto = textoPlantilla(plantilla, {
+      nombre: paciente.name,
+      cuando: formatDateLong(sesion.date),
+      hora: sesion.time,
+    });
+    const enlace = whatsappLink(paciente.phone, texto);
+    if (enlace) window.open(enlace, '_blank', 'noopener,noreferrer');
+    setEscribiendo(null);
+  }
 
   /** Agendar necesita un paciente. Si no hay, se explica en vez de no hacer nada. */
   function nuevaSesion(fecha: string) {
@@ -443,6 +464,16 @@ export function AgendaPage({ onGo }: { onGo: (page: 'pacientes') => void }) {
                           </option>
                         ))}
                       </select>
+                      {s.status === 'programada' && patient?.phone.trim() !== '' && (
+                        <button
+                          className="btn small wapp"
+                          onClick={() => setEscribiendo(s)}
+                          title={`Escribirle a ${patient?.name ?? ''} por WhatsApp`}
+                          aria-label={`Escribirle a ${patient?.name ?? ''} por WhatsApp`}
+                        >
+                          Escribir
+                        </button>
+                      )}
                       {s.status === 'programada' && (
                         <button
                           className="btn small"
@@ -477,6 +508,35 @@ export function AgendaPage({ onGo }: { onGo: (page: 'pacientes') => void }) {
       >
         +
       </button>
+
+      {escribiendo && (
+        <Modal
+          title={`Escribirle a ${patientsById.get(escribiendo.patientId)?.name ?? ''}`}
+          onClose={() => setEscribiendo(null)}
+        >
+          <p className="small muted" style={{ marginTop: 0 }}>
+            Se abre WhatsApp con el mensaje escrito. No se manda solo: lo revisás, lo cambiás si
+            querés y lo enviás vos.
+          </p>
+          <div className="plantillas">
+            {PLANTILLAS.filter((pl) => pl.id !== 'cobro').map((pl) => (
+              <button key={pl.id} className="btn" onClick={() => escribirPor(pl.id, escribiendo)}>
+                {pl.etiqueta}
+              </button>
+            ))}
+          </div>
+          <p className="small muted" style={{ marginBottom: 0 }}>
+            Ejemplo:{' '}
+            <em>
+              {textoPlantilla('recordatorio', {
+                nombre: patientsById.get(escribiendo.patientId)?.name ?? '',
+                cuando: formatDateLong(escribiendo.date),
+                hora: escribiendo.time,
+              })}
+            </em>
+          </p>
+        </Modal>
+      )}
 
       {faltanPacientes && (
         <SinPacientes onClose={() => setFaltanPacientes(false)} onIr={() => onGo('pacientes')} />

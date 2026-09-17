@@ -1,9 +1,10 @@
-import { useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useStore } from '../store/StoreContext';
 import { parseAppData } from '../lib/storage';
 import { today } from '../lib/dates';
 import { downloadText } from '../lib/download';
 import { cobrosCSV, sesionesCSV } from '../lib/csv';
+import { guardarTema, leerTema, seguirAlSistema, type Tema } from '../lib/tema';
 import { Card, Field } from '../components/ui';
 
 /**
@@ -15,6 +16,16 @@ export function SettingsPage() {
   const { data, dispatch } = useStore();
   const fileRef = useRef<HTMLInputElement>(null);
   const [message, setMessage] = useState<{ text: string; ok: boolean } | null>(null);
+
+  const [tema, setTema] = useState<Tema>(leerTema);
+
+  // Mientras esté en automático, acompañar al sistema sin recargar.
+  useEffect(() => seguirAlSistema(leerTema), []);
+
+  function cambiarTema(nuevo: Tema) {
+    setTema(nuevo);
+    guardarTema(nuevo);
+  }
 
   /** Planillas para abrir en Excel. No reemplazan la copia de seguridad: la
       copia sirve para volver atrás, la planilla para mirar y compartir. */
@@ -153,6 +164,28 @@ export function SettingsPage() {
         <p className="small muted" style={{ margin: 0 }}>
           {data.patients.length} paciente(s) · {data.sessions.length} sesión(es) · {data.payments.length} pago(s)
         </p>
+      </Card>
+
+      <Card title="Cómo se ve">
+        <p className="small" style={{ marginTop: 0 }}>
+          Automático sigue lo que tengas puesto en el teléfono.
+        </p>
+        <div className="seg" role="group" aria-label="Tema de la app">
+          {([
+            ['auto', 'Automático'],
+            ['claro', '☀ Claro'],
+            ['oscuro', '🌙 Oscuro'],
+          ] as const).map(([valor, etiqueta]) => (
+            <button
+              key={valor}
+              className={tema === valor ? 'is-on' : ''}
+              aria-pressed={tema === valor}
+              onClick={() => cambiarTema(valor)}
+            >
+              {etiqueta}
+            </button>
+          ))}
+        </div>
       </Card>
 
       <Card title="Planillas para Excel">

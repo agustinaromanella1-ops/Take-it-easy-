@@ -100,6 +100,24 @@ segundos. Arranca callado a propósito: si el mensaje ya
 estuviera ahí, dejaría de ser un hallazgo y sería un cartel más compitiendo por la atención justo
 cuando entrás a ver tus números.
 
+**Modo oscuro.** No es el claro con los colores dados vuelta: es el mismo atardecer un rato más
+tarde. Los fondos son noche con un resto de ciruela, el contorno pasa de tinta a lila claro —sobre
+oscuro, una línea oscura no se ve— y los acentos se levantan lo justo para seguir pasando el
+contraste. Todos los pares están medidos, y los gráficos tienen su propio juego validado para ese
+fondo (ΔE 22,3 en protanopía). Los colores de los gráficos viven en el CSS y no en el JavaScript,
+porque una constante no se entera de que cambió el tema. El tema se pinta en un script del
+`index.html` antes del primer dibujado: si esperara al JavaScript de la app, la pantalla arrancaría
+en claro y saltaría a oscuro de golpe.
+
+**La despedida del cierre del día.** Cerrar la jornada termina con un resumen —a cuántas personas
+atendiste, quiénes, cuánto facturaste— y no devolviendo a la pantalla de números. Es la única
+pantalla sin color de toda la app: el día se terminó y la app baja la voz.
+
+**Mensajes de WhatsApp.** Cada turno agendado de alguien con teléfono cargado tiene un botón que
+abre WhatsApp con el mensaje ya escrito: recordar, pedir confirmación o reprogramar. Son borradores,
+no envíos: WhatsApp los deja en el campo de texto y salen recién si la persona toca enviar. Un
+mensaje a un paciente no se despacha solo.
+
 **La guía y los carteles.** El signo de pregunta de la barra de arriba abre la guía de uso, escrita
 para leerse de un tirón la primera vez y consultarse suelta después. Aparte, la primera vez que se
 entra salen cinco carteles que señalan los botones de verdad —los busca por `data-tour` y mide dónde

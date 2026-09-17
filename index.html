@@ -23,6 +23,19 @@
     <title>Pipí Cucú — tu agenda, pipí cucú</title>
   </head>
   <body>
+    <!-- El tema se pinta antes de que cargue el JavaScript de la app: si
+         esperara, la pantalla arrancaría en claro y saltaría a oscuro de
+         golpe. Son tres líneas y evitan el flash. -->
+    <script>
+      (function () {
+        try {
+          var g = localStorage.getItem('pipicucu:tema');
+          var oscuro = g === 'oscuro' || (g !== 'claro' && matchMedia('(prefers-color-scheme: dark)').matches);
+          document.documentElement.dataset.tema = oscuro ? 'oscuro' : 'claro';
+          document.querySelector('meta[name="theme-color"]').content = oscuro ? '#1a1533' : '#d9ebfb';
+        } catch (e) {}
+      })();
+    </script>
     <div id="root"></div>
     <script type="module" src="/src/main.tsx"></script>
   </body>
