@@ -44,6 +44,7 @@ const SECCIONES: { titulo: string; puntos: string[] }[] = [
       'Por eso: exportá una copia cada tanto y guardala donde la vayas a encontrar (el mail, Drive, lo que uses).',
       'Si cambiás de teléfono o limpiás la caché del navegador, se borra todo. La copia es la única forma de recuperarlo.',
       'Importar vuelve a poner una copia. Reemplaza lo que haya cargado en ese momento.',
+      'En Ajustes también está la política de privacidad, que explica en detalle por qué tus datos no salen de acá.',
     ],
   },
   {

@@ -237,6 +237,17 @@ Ese keystore y su contraseña no van nunca al repositorio — ya están en `.git
 ambos puede publicar actualizaciones haciéndose pasar por la app. Guardalos en un gestor de
 contraseñas, no en una captura de pantalla ni en un chat.
 
+## Privacidad
+
+`public/privacidad.html` es una página suelta, no una pantalla de la app: Google Play pide una
+dirección pública que se pueda abrir sin instalar nada. Se publica en `/privacidad.html` y se
+enlaza desde Ajustes.
+
+Lo que dice es verificable en el código: no hay una sola llamada de red (`fetch`, `XMLHttpRequest`,
+websockets), no hay analítica ni rastreadores, las tipografías están alojadas acá y el `index.html`
+no pide nada a dominios externos. El único enlace a un tercero es `wa.me`, y lo abre la persona
+tocando un botón. Antes de tocar esa página, conviene volver a correr esa comprobación.
+
 ## Cuando se publica una versión nueva
 
 El service worker guarda la app entera para que ande sin conexión, y eso tiene una contracara: sin

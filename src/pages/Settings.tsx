@@ -138,6 +138,17 @@ export function SettingsPage() {
         </p>
       </Card>
 
+      <Card title="Privacidad">
+        <p className="small" style={{ marginTop: 0 }}>
+          Tus datos no salen de este dispositivo. No hay servidores, ni cuentas, ni terceros.
+        </p>
+        {/* Página aparte y no una pantalla de la app: Google Play pide una
+            dirección pública que se pueda abrir sin instalar nada. */}
+        <a className="btn small" href="/privacidad.html" target="_blank" rel="noopener noreferrer">
+          Leer la política de privacidad
+        </a>
+      </Card>
+
     </>
   );
 }
