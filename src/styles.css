@@ -1377,17 +1377,21 @@ a.btn {
 
 /* ============================================================
    Pie de la app
+   Es un pie: cierra la página y se corre a un costado. Tiene que poder
+   ignorarse. Si compite con el contenido dejó de ser un pie.
    ============================================================ */
 .app-footer {
-  margin: 34px 0 0;
-  padding-top: 22px;
-  border-top: var(--borde) dashed var(--border);
+  margin: 26px 0 0;
+  padding-top: 14px;
+  border-top: 1.5px dashed var(--border);
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 10px;
+  gap: 8px;
+  opacity: 0.75;
 }
-.footer-row { display: flex; align-items: center; gap: 12px; }
+.app-footer:hover, .app-footer:focus-within { opacity: 1; }
+.footer-row { display: flex; align-items: center; gap: 8px; }
 .footer-dog {
   border: 0;
   background: none;
@@ -1398,7 +1402,7 @@ a.btn {
 }
 .footer-dog img {
   display: block;
-  width: 104px;
+  width: 52px;
   height: auto;
   aspect-ratio: 483 / 177;
 }
@@ -1406,27 +1410,23 @@ a.btn {
 .footer-slogan {
   font-family: var(--serif);
   font-weight: 700;
-  color: var(--text);
-  font-size: 1rem;
+  color: var(--muted);
+  font-size: 0.8rem;
 }
 /* El mensaje aparece sobre el perro, no al costado: así el pie no se
    descoloca cuando sale y cuando se va. */
 .footer-bubble {
   margin: 0;
-  max-width: 300px;
+  max-width: 280px;
   text-align: center;
   background: var(--amarillo);
-  border: var(--borde) solid var(--border);
-  border-radius: 16px;
+  border: 2px solid var(--border);
+  border-radius: 14px;
   box-shadow: var(--shadow-sm);
-  padding: 9px 15px;
-  font-size: 0.9rem;
+  padding: 7px 13px;
+  font-size: 0.84rem;
   font-weight: 600;
   color: var(--ink);
-}
-@media (max-width: 780px) {
-  .footer-dog img { width: 88px; }
-  .footer-slogan { font-size: 0.94rem; }
 }
 
 /* Aviso de versión nueva. Va arriba de todo y se queda hasta que se toca:
