@@ -237,6 +237,20 @@ Ese keystore y su contraseña no van nunca al repositorio — ya están en `.git
 ambos puede publicar actualizaciones haciéndose pasar por la app. Guardalos en un gestor de
 contraseñas, no en una captura de pantalla ni en un chat.
 
+## Sacar los datos afuera
+
+Hay dos salidas y hacen cosas distintas, así que conviene no confundirlas:
+
+- **Copia de seguridad (`.json`)** — es la única que la app puede volver a importar. Sirve para
+  recuperar todo tal cual estaba. No se abre en Excel.
+- **Planillas (`.csv`)** — sesiones y cobros, para hacer números, pasarle algo al contador o
+  guardar el año cerrado. No sirven para restaurar.
+
+Las planillas están pensadas para Excel en español, que es donde esto suele romperse: separador
+`;` (con comas, Excel mete todo en una columna), decimales con coma (si no, los toma como texto y
+no los suma), BOM al principio (sin él lee el archivo como Latin-1 y "sesión" sale "sesiÃ³n"), y
+fechas con el año completo, porque una planilla se guarda y se mira el año que viene.
+
 ## Privacidad
 
 `public/privacidad.html` es una página suelta, no una pantalla de la app: Google Play pide una

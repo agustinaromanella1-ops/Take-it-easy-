@@ -10,6 +10,7 @@
  *   node e2e/aceptacion.mjs
  */
 import { chromium } from 'playwright';
+import { readFileSync } from 'node:fs';
 
 const SC = process.env.SC ?? '/tmp';
 const errs = [];
@@ -362,7 +363,28 @@ await page.reload({ waitUntil: 'networkidle' });
 await page.waitForTimeout(600);
 check('los carteles no vuelven solos', (await page.locator('.tour').count()) === 0);
 
-titulo('12. Sin conexión');
+titulo('12. Planillas para Excel');
+await page.locator('.tabbar button', { hasText: 'Ajustes' }).click();
+await page.waitForTimeout(500);
+for (const [boton, cabecera] of [['Sesiones (.csv)', 'Fecha;Hora;Paciente'], ['Cobros (.csv)', 'Fecha;Paciente;Importe']]) {
+  const [bajada] = await Promise.all([
+    page.waitForEvent('download'),
+    page.getByRole('button', { name: boton }).click(),
+  ]);
+  const ruta = `${SC}/${bajada.suggestedFilename()}`;
+  await bajada.saveAs(ruta);
+  const txt = readFileSync(ruta, 'utf8');
+  check(`baja la planilla de ${boton}`, bajada.suggestedFilename().endsWith('.csv'), bajada.suggestedFilename());
+  // Sin el BOM, Excel lee el archivo como Latin-1 y rompe todos los acentos.
+  check('lleva el BOM que necesita Excel', txt.charCodeAt(0) === 0xfeff);
+  check('separa con punto y coma', txt.includes(cabecera), cabecera);
+  check('escribe la fecha con año', /\d{2}\/\d{2}\/\d{4}/.test(txt));
+}
+const planillaCobros = readFileSync(`${SC}/pipi-cucu-cobros-${new Date().toISOString().slice(0, 10)}.csv`, 'utf8');
+check('los importes usan coma decimal, que es lo que Excel suma', planillaCobros.includes('42500,50'), 
+  planillaCobros.split('\r\n')[1] ?? '');
+
+titulo('13. Sin conexión');
 await ctx.setOffline(true);
 await page.reload({ waitUntil: 'load' });
 await page.waitForTimeout(1200);
