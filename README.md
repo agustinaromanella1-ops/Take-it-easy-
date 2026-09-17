@@ -274,6 +274,18 @@ Las planillas están pensadas para Excel en español, que es donde esto suele ro
 no los suma), BOM al principio (sin él lee el archivo como Latin-1 y "sesión" sale "sesiÃ³n"), y
 fechas con el año completo, porque una planilla se guarda y se mira el año que viene.
 
+## Que recargar adentro de la app no dé 404
+
+La app es de una sola página: el navegador pide `/agenda` y en el servidor ese archivo no existe.
+Hay que decirle a la plataforma que responda con el index, y **cada una lo pide a su manera**:
+
+- **Cloudflare Workers** → `not_found_handling: "single-page-application"` en `wrangler.jsonc`.
+- **Netlify** → la regla de redirección en `netlify.toml`.
+
+Lo que no se puede es pedirlo por los dos caminos a la vez. Había además un `public/_redirects`
+con `/* -> /index.html 200`, y Cloudflare rechaza el despliegue entero: ve esa regla junto al
+`not_found_handling` y la reporta como bucle infinito. Ese archivo ya no está.
+
 ## Privacidad
 
 `public/privacidad.html` es una página suelta, no una pantalla de la app: Google Play pide una

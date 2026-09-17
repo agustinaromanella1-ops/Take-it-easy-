@@ -12,6 +12,10 @@
     // archivo la resuelve el index. Sin esto, recargar dentro de la app daría
     // 404. Los archivos que sí existen —privacidad.html, los íconos— se sirven
     // tal cual, así que esto no los pisa.
+    //
+    // Esto y un "/* -> /index.html" en _redirects son la misma orden dada dos
+    // veces, y Cloudflare rechaza el despliegue por bucle infinito. Va acá y
+    // en ningún otro lado.
     "not_found_handling": "single-page-application"
   }
 }

@@ -1,5 +1,11 @@
-# Mismo criterio que netlify.toml, repetido acá para que valga también al
-# subir la carpeta compilada a mano (Netlify Drop).
+# Reglas de caché de la carpeta compilada. Las leen tanto Cloudflare como
+# Netlify con este mismo formato.
+#
+# El archivo hermano, _redirects, ya no está: llevaba "/* -> /index.html 200"
+# para que recargar dentro de la app no diera 404, pero Cloudflare rechaza esa
+# regla como un bucle infinito, porque en Workers ese trabajo lo hace
+# "not_found_handling" en wrangler.jsonc. En Netlify lo sigue haciendo
+# netlify.toml. Pedirlo por los dos caminos a la vez era el error.
 
 # Los archivos con hash en el nombre nunca cambian de contenido.
 /assets/*
