@@ -45,6 +45,7 @@ const SECCIONES: { titulo: string; puntos: string[] }[] = [
       'Los datos viven en este dispositivo y en ningún otro lado. No hay servidor ni cuenta: nadie más los ve, y tampoco viajan solos a otro teléfono.',
       'Por eso: exportá una copia cada tanto y guardala donde la vayas a encontrar (el mail, Drive, lo que uses).',
       'Si cambiás de teléfono o limpiás la caché del navegador, se borra todo. La copia es la única forma de recuperarlo.',
+      'La app funciona en un dispositivo por vez, a propósito: no se sincroniza entre tu celular y tu computadora. Sincronizar obligaría a mandar tus pacientes a un servidor y a protegerlos con una contraseña que, de perderse, nadie podría devolverte. Para pasar de un dispositivo a otro se exporta y se importa.',
       'Importar vuelve a poner una copia. Reemplaza lo que haya cargado en ese momento.',
       'En Ajustes también está la política de privacidad, que explica en detalle por qué tus datos no salen de acá.',
     ],

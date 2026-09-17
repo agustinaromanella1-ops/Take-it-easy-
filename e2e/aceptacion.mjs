@@ -341,10 +341,17 @@ check('después se queda quieto de nuevo', (await perro.getAttribute('src')) ===
 titulo('11. La guía y los carteles');
 await page.locator('.tabbar button', { hasText: 'Ajustes' }).click();
 await page.waitForTimeout(300);
+const avisoSync = await page.locator('.card', { hasText: 'Por qué no se sincroniza' }).innerText();
+check('Ajustes explica por qué no se sincroniza', avisoSync.includes('un dispositivo por vez'));
+check('y avisa que importar reemplaza', avisoSync.includes('reemplaza'));
 check('el pie dice el eslogan', (await page.locator('.footer-slogan').innerText()) === 'Tu agenda, Pipí Cucú');
 await page.locator('.ayuda').click();
 await page.waitForTimeout(400);
 check('el signo de pregunta abre la guía', (await page.locator('.guia').count()) === 1);
+// Que no se sincronice es una decisión, no una función que falta. Sin el
+// porqué escrito, se lee como lo segundo.
+const textoGuia = await page.locator('.guia').innerText();
+check('la guía explica por qué no se sincroniza', textoGuia.includes('un dispositivo por vez'), '');
 check('la guía tiene todas sus secciones', (await page.locator('.guia-bloque').count()) === 5);
 const guiaTxt = await page.locator('.guia').innerText();
 check('la guía avisa que hay que hacer copia', guiaTxt.toLowerCase().includes('export'));

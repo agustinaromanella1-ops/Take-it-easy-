@@ -256,6 +256,22 @@ export function SettingsPage() {
         </p>
       </Card>
 
+      {/* La pregunta "¿y en la computadora?" aparece sola. Conviene responderla
+          antes de que aparezca, y explicando el motivo: sin el porqué, esto se
+          lee como una función que falta en lugar de una decisión. */}
+      <Card title="Por qué no se sincroniza">
+        <p className="small" style={{ marginTop: 0 }}>
+          Pipí Cucú funciona en un dispositivo por vez, a propósito. Sincronizar obligaría a mandar
+          tus pacientes a un servidor y a protegerlos con una contraseña que, si se pierde, nadie
+          podría devolverte: si alguien pudiera recuperarla, también podría leerlos.
+        </p>
+        <p className="small" style={{ marginBottom: 0 }}>
+          Entre esas dos cosas, la app elige que tu información no salga de acá y que no dependa de
+          que te acuerdes de nada. A cambio, para pasar a otro dispositivo hay que exportar e
+          importar —y tené en cuenta que importar reemplaza lo que haya cargado—.
+        </p>
+      </Card>
+
       <Card title="Privacidad">
         <p className="small" style={{ marginTop: 0 }}>
           Tus datos no salen de este dispositivo. No hay servidores, ni cuentas, ni terceros.
