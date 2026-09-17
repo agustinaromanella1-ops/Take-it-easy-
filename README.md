@@ -1,4 +1,9 @@
-# PsicoFinance
+# Pipí Cucú
+
+**En línea:** https://pipi-cucu.agustina-romanella1.workers.dev
+
+Publicada en Cloudflare Workers desde la rama `main`: cada commit se publica solo. Los pasos y el
+porqué de cada archivo de configuración están en `CLOUDFLARE.md`.
 
 Agenda y finanzas para consultorio psicológico. Gestiona pacientes, turnos, honorarios y cobros,
 y muestra en todo momento cuánto se facturó, cuánto se cobró y quién debe.
