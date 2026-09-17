@@ -5,6 +5,7 @@ import { billingLine, billingText, formatDateList, invoiceFields, invoiceName } 
 function patient(over: Partial<Patient> = {}): Patient {
   return {
     id: 'p1',
+    updatedAt: '2026-03-01T10:00:00.000Z',
     name: 'María Gómez',
     email: '',
     phone: '',
@@ -29,6 +30,7 @@ function patient(over: Partial<Patient> = {}): Patient {
 function session(id: string, date: string, over: Partial<Session> = {}): Session {
   return {
     id,
+    updatedAt: '2026-03-01T10:00:00.000Z',
     patientId: 'p1',
     date,
     time: '10:00',

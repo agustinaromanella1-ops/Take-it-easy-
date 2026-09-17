@@ -16,6 +16,7 @@ import {
 function patient(id: string, over: Partial<Patient> = {}): Patient {
   return {
     id,
+    updatedAt: '2026-03-01T10:00:00.000Z',
     name: `Paciente ${id}`,
     email: '',
     phone: '',
@@ -40,6 +41,7 @@ function patient(id: string, over: Partial<Patient> = {}): Patient {
 function session(id: string, over: Partial<Session> = {}): Session {
   return {
     id,
+    updatedAt: '2026-03-01T10:00:00.000Z',
     patientId: 'p1',
     date: '2026-03-10',
     time: '10:00',
@@ -53,7 +55,7 @@ function session(id: string, over: Partial<Session> = {}): Session {
 }
 
 function payment(id: string, over: Partial<Payment> = {}): Payment {
-  return { id, patientId: 'p1', date: '2026-03-10', amount: 500000, method: 'efectivo', notes: '', ...over };
+  return { id, updatedAt: '2026-03-01T10:00:00.000Z', patientId: 'p1', date: '2026-03-10', amount: 500000, method: 'efectivo', notes: '', ...over };
 }
 
 function build(over: Partial<AppData> = {}): AppData {

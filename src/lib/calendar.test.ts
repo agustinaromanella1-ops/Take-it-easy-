@@ -4,6 +4,7 @@ import type { Session } from '../types';
 
 const session: Session = {
   id: 's1',
+  updatedAt: '2026-03-01T10:00:00.000Z',
   patientId: 'p1',
   date: '2026-03-10',
   time: '15:00',

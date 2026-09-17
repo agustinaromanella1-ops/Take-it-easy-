@@ -1,6 +1,8 @@
 import type {
   AppData,
+  Borrados,
   Frequency,
+  Lapida,
   Patient,
   PatientKind,
   Payment,
@@ -26,7 +28,7 @@ export const STORAGE_KEY = 'pipicucu:data';
  * primer guardado la app escribe siempre en la nueva.
  */
 const LEGACY_KEYS = ['encuadre:data', 'psicofinance:data'] as const;
-export const SCHEMA_VERSION = 1;
+export const SCHEMA_VERSION = 2;
 
 export const DEFAULT_SETTINGS: Settings = {
   currency: '$',
@@ -50,8 +52,38 @@ export function emptyData(): AppData {
     patients: [],
     sessions: [],
     payments: [],
+    deleted: { patients: [], sessions: [], payments: [] },
     settings: { ...DEFAULT_SETTINGS },
   };
+}
+
+/**
+ * Qué hora ponerle a un registro que viene de antes de que existiera el sello.
+ *
+ * La versión 1 no anotaba cuándo se tocó cada cosa, y esa información no se
+ * puede inventar: no está en ningún lado. Se usa el momento de la migración,
+ * que es la verdad —"desde acá lo sabemos"— y no altera ninguna comparación,
+ * porque cuando esto corre todavía no hay un segundo dispositivo contra el
+ * cual comparar.
+ */
+function selloDeMigracion(): string {
+  return new Date().toISOString();
+}
+
+/** Una lápida válida, o null. Solo id y fecha: nunca contenido. */
+function parseLapida(raw: unknown): Lapida | null {
+  if (!isRecord(raw)) return null;
+  const id = str(raw.id);
+  const deletedAt = str(raw.deletedAt);
+  if (id === '' || deletedAt === '') return null;
+  return { id, deletedAt };
+}
+
+function parseBorrados(raw: unknown): Borrados {
+  const lista = (v: unknown): Lapida[] =>
+    Array.isArray(v) ? v.map(parseLapida).filter((l): l is Lapida => l !== null) : [];
+  if (!isRecord(raw)) return { patients: [], sessions: [], payments: [] };
+  return { patients: lista(raw.patients), sessions: lista(raw.sessions), payments: lista(raw.payments) };
 }
 
 /* --- Helpers de validación -------------------------------------------------
@@ -95,6 +127,7 @@ function parsePatient(raw: unknown): Patient | null {
   if (!id || !name) return null;
   return {
     id,
+    updatedAt: str(raw.updatedAt) || selloDeMigracion(),
     name,
     email: str(raw.email),
     phone: str(raw.phone),
@@ -132,6 +165,7 @@ function parseSession(raw: unknown, patientIds: Set<string>): Session | null {
   return {
     id,
     patientId,
+    updatedAt: str(raw.updatedAt) || selloDeMigracion(),
     date,
     time,
     durationMin: Math.max(5, int(raw.durationMin, DEFAULT_SETTINGS.defaultDurationMin)),
@@ -155,6 +189,7 @@ function parsePayment(raw: unknown, patientIds: Set<string>): Payment | null {
   return {
     id,
     patientId,
+    updatedAt: str(raw.updatedAt) || selloDeMigracion(),
     date,
     amount,
     method: PAYMENT_METHODS.has(str(raw.method)) ? (raw.method as Payment['method']) : 'efectivo',
@@ -184,6 +219,7 @@ export function parseAppData(raw: unknown): AppData {
     patients,
     sessions,
     payments,
+    deleted: parseBorrados(raw.deleted),
     settings: parseSettings(rawSettings),
   };
 }
@@ -223,7 +259,20 @@ export function loadData(): AppData {
   try {
     const raw = readRaw();
     if (!raw) return emptyData();
-    return parseAppData(JSON.parse(raw));
+    const crudo: unknown = JSON.parse(raw);
+    const datos = parseAppData(crudo);
+
+    // Si lo leído venía de un esquema anterior, la versión migrada se guarda
+    // enseguida y no cuando la persona toque algo.
+    //
+    // No es prolijidad: a lo que no traía sello se le pone el del momento de
+    // migrar, y si eso no queda guardado, cada arranque le inventa uno nuevo.
+    // Un registro que nadie tocó parecería recién editado cada vez que se abre
+    // la app, que es justo lo que el sello viene a evitar.
+    const versionLeida = isRecord(crudo) && typeof crudo.version === 'number' ? crudo.version : 0;
+    if (versionLeida !== SCHEMA_VERSION) saveData(datos);
+
+    return datos;
   } catch {
     // Modo incógnito, storage deshabilitado o JSON corrupto: se arranca vacío
     // en vez de dejar la app en pantalla blanca.

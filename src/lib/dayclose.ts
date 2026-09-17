@@ -1,4 +1,4 @@
-import type { Cents, DateISO, PaymentMethod, Session } from '../types';
+import type { Cents, DateISO, Payment, PaymentMethod, Session } from '../types';
 import { isBillable } from '../store/selectors';
 
 /**
@@ -26,7 +26,7 @@ export function emptyDecision(chargeNoShowByDefault: boolean): DayCloseDecision 
 
 export interface DayCloseResult {
   updates: { id: string; status: Session['status']; chargeable: boolean }[];
-  payments: { patientId: string; date: DateISO; amount: Cents; method: PaymentMethod; notes: string }[];
+  payments: Omit<Payment, 'id' | 'updatedAt'>[];
 }
 
 export interface DayCloseSummary {

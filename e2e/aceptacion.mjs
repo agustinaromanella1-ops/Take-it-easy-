@@ -430,7 +430,48 @@ await page.getByRole('button', { name: 'Según el sistema' }).click();
 await page.waitForTimeout(300);
 check('y se puede volver a dejárselo al sistema', (await page.evaluate(() => document.documentElement.dataset.animaciones)) === 'auto');
 
-titulo('14. Sin conexión');
+titulo('14. Migración de datos de la versión anterior');
+// Lo que más importa de este cambio: que a quien ya venía usando la app no se
+// le pierda nada al abrirla después de actualizar.
+// Se guarda lo que había para devolverlo al final: las secciones siguientes
+// cuentan con esos datos.
+const respaldoReal = await page.evaluate(() => localStorage.getItem('pipicucu:data'));
+await page.evaluate(() => {
+  localStorage.setItem('pipicucu:data', JSON.stringify({
+    version: 1,
+    patients: [{ id: 'viejo1', name: 'Paciente De Antes', email: '', phone: '', defaultFee: 700000,
+      status: 'activo', colorIndex: 1, frequency: 'semanal', kind: 'particular', legalName: '',
+      taxId: '', taxCondition: 'consumidor_final', memberId: '', notes: 'nota que no se puede perder',
+      createdAt: '2025-06-01', lastRaise: null }],
+    sessions: [{ id: 'vs1', patientId: 'viejo1', date: '2026-03-10', time: '09:00', durationMin: 50,
+      status: 'realizada', fee: 700000, chargeable: true, notes: '' }],
+    payments: [{ id: 'vg1', patientId: 'viejo1', date: '2026-03-10', amount: 700000,
+      method: 'efectivo', notes: '' }],
+    settings: { currency: '$' },
+  }));
+});
+await page.reload({ waitUntil: 'networkidle' });
+await page.waitForTimeout(700);
+await saltarBienvenida();
+const migrado = await page.evaluate(() => JSON.parse(localStorage.getItem('pipicucu:data')));
+check('el paciente viejo sigue estando', migrado.patients.length === 1 && migrado.patients[0].name === 'Paciente De Antes');
+check('su nota no se perdió', migrado.patients[0].notes === 'nota que no se puede perder');
+check('la sesión y el pago siguen estando', migrado.sessions.length === 1 && migrado.payments.length === 1);
+check('ahora todo lleva su sello', [migrado.patients[0], migrado.sessions[0], migrado.payments[0]].every((r) => typeof r.updatedAt === 'string' && r.updatedAt.length > 10));
+check('quedaron las listas de borrados', migrado.deleted && Array.isArray(migrado.deleted.patients));
+check('subió la versión del esquema', migrado.version === 2, `versión ${migrado.version}`);
+// Y que la app siga andando con esos datos migrados, no solo que el JSON esté bien.
+await page.locator('.tabbar button', { hasText: 'Pacientes' }).click();
+await page.waitForTimeout(500);
+check('la app muestra los datos migrados', (await page.locator('.patient-card').count()) === 1);
+
+// Devolver los datos de verdad, que es con los que siguen las pruebas de abajo.
+await page.evaluate((r) => localStorage.setItem('pipicucu:data', r), respaldoReal);
+await page.reload({ waitUntil: 'networkidle' });
+await page.waitForTimeout(600);
+await saltarBienvenida();
+
+titulo('15. Sin conexión');
 await ctx.setOffline(true);
 await page.reload({ waitUntil: 'load' });
 await page.waitForTimeout(1200);

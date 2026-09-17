@@ -5,6 +5,7 @@ import { buildDayClose, emptyDecision, summarizeDayClose, type DayCloseDecision 
 function session(id: string, over: Partial<Session> = {}): Session {
   return {
     id,
+    updatedAt: '2026-03-01T10:00:00.000Z',
     patientId: `pac-${id}`,
     date: '2026-03-10',
     time: '10:00',

@@ -79,9 +79,15 @@ edición borra. Es predecible y se puede probar.
 
 ## Las etapas
 
-**1. Preparar el modelo** — `actualizadoEn` y lápidas, con su migración. Sin servidor todavía.
-Es la única etapa que conviene hacer aunque la sincronización nunca se construya: hoy no hay forma
-de saber qué se tocó y cuándo.
+**1. Preparar el modelo** — ✅ **hecha.** Cada paciente, sesión y pago lleva su `updatedAt`, y
+borrar deja una lápida con el id y la fecha —nunca el contenido—. La migración desde la versión 1
+está probada de punta a punta con datos reales.
+
+Un detalle que apareció al construirla y que conviene no perder: la versión migrada **se guarda
+enseguida**, no cuando la persona toque algo. A lo que no traía sello se le pone el del momento de
+migrar, y si eso no quedara guardado, cada arranque le inventaría uno nuevo: un registro que nadie
+tocó parecería recién editado cada vez que se abre la app, que es justo lo que el sello viene a
+evitar.
 
 **2. El módulo de cifrado** — derivar, envolver, desenvolver, cifrar, descifrar, generar el código
 de recuperación. Funciones puras, con pruebas: es la parte donde un error se paga caro.
@@ -129,7 +135,7 @@ alguien que sí lo sea.
 
 ## La recomendación
 
-**Hacer la etapa 1 ahora y parar ahí.** Sirve igual, no compromete nada y deja la puerta abierta.
+**La etapa 1 ya está hecha.** Sirve igual, no compromete nada y deja la puerta abierta.
 
 **No publicar la sincronización en la primera versión de Play.** Salir con la app local, ver si
 las usuarias efectivamente la piden y con qué urgencia, y recién entonces construir las etapas 2 a

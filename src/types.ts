@@ -40,6 +40,15 @@ export type TaxCondition =
 
 export interface Patient {
   id: string;
+  /**
+   * Cuándo se tocó por última vez, en ISO completo con hora.
+   *
+   * No es para mostrar: existe para poder decidir, el día que la app
+   * sincronice entre dispositivos, cuál de dos versiones del mismo registro es
+   * la buena. Sin esto no hay forma de saberlo y gana la última que llegó, que
+   * es como se pierde trabajo. Ver SINCRONIZACION.md.
+   */
+  updatedAt: string;
   name: string;
   email: string;
   phone: string;
@@ -86,6 +95,8 @@ export type SessionStatus = 'programada' | 'realizada' | 'ausente' | 'cancelada'
 
 export interface Session {
   id: string;
+  /** Cuándo se tocó por última vez. Ver la nota en `Patient`. */
+  updatedAt: string;
   patientId: string;
   date: DateISO;
   time: TimeHM;
@@ -104,6 +115,8 @@ export type PaymentMethod = 'efectivo' | 'transferencia' | 'tarjeta' | 'otro';
 
 export interface Payment {
   id: string;
+  /** Cuándo se tocó por última vez. Ver la nota en `Patient`. */
+  updatedAt: string;
   patientId: string;
   date: DateISO;
   amount: Cents;
@@ -144,11 +157,35 @@ export interface Settings {
   rateInputs: RateInputs;
 }
 
+/**
+ * La marca que deja algo borrado.
+ *
+ * Borrar saca la fila, pero anota que se borró y cuándo. Sin esta marca, un
+ * dispositivo que estuvo desconectado "reviviría" lo que el otro borró: al
+ * fusionar vería un registro de un lado y nada del otro, y no tendría cómo
+ * distinguir "esto es nuevo acá" de "esto se borró allá".
+ *
+ * Guarda el id y la fecha, nunca el contenido: una lápida de un paciente no
+ * puede llevarse su nombre ni sus notas.
+ */
+export interface Lapida {
+  id: string;
+  deletedAt: string;
+}
+
+export interface Borrados {
+  patients: Lapida[];
+  sessions: Lapida[];
+  payments: Lapida[];
+}
+
 export interface AppData {
   /** Versión del esquema persistido. Habilita migraciones sin perder datos. */
   version: number;
   patients: Patient[];
   sessions: Session[];
   payments: Payment[];
+  /** Qué se borró y cuándo. Ver `Lapida`. */
+  deleted: Borrados;
   settings: Settings;
 }
