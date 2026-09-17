@@ -100,7 +100,27 @@ check('el calendario avisa que sirve para días pasados', pista.includes('ya pas
 await page.locator('.tabbar button', { hasText: 'Inicio' }).click();
 await page.waitForTimeout(400);
 
-titulo('3. Alta de paciente con TODOS los campos');
+titulo('3. Se puede escribir sin que salte el foco');
+// El modal devolvía el foco al primer campo en cada render, y el padre
+// re-renderiza en cada tecla: escribir un honorario de cinco cifras era
+// imposible, al segundo dígito el cursor saltaba al nombre.
+await page.locator('.tabbar button', { hasText: 'Pacientes' }).click();
+await page.waitForTimeout(400);
+await page.locator('.fab').click();
+await page.waitForTimeout(400);
+const campoHonorario = page.locator('.modal .field').filter({ hasText: 'Honorario' }).locator('input').first();
+await campoHonorario.click();
+for (const d of '35000') await page.keyboard.type(d, { delay: 25 });
+check('se escribe el número entero, no solo el primer dígito', (await campoHonorario.inputValue()) === '35000', await campoHonorario.inputValue());
+check('el foco no se va a otro campo', await campoHonorario.evaluate((el) => el === document.activeElement));
+await page.keyboard.press('Backspace');
+check('borrar tampoco lo mueve', await campoHonorario.evaluate((el) => el === document.activeElement));
+await page.locator('.modal-close').click();
+await page.waitForTimeout(300);
+await page.locator('.tabbar button', { hasText: 'Inicio' }).click();
+await page.waitForTimeout(400);
+
+titulo('4. Alta de paciente con TODOS los campos');
 await page.getByRole('button', { name: 'Cargar primer paciente' }).click();
 await page.waitForTimeout(400);
 await page.locator('.fab').click();
@@ -140,7 +160,7 @@ await page.getByRole('button', { name: 'Guardar' }).click();
 await page.waitForTimeout(500);
 check('se cargan dos pacientes', (await page.locator('.patient-card').count()) === 2);
 
-titulo('4. Agenda: sesión suelta y serie recurrente');
+titulo('5. Agenda: sesión suelta y serie recurrente');
 await page.locator('.tabbar button', { hasText: 'Agenda' }).click();
 await page.waitForTimeout(400);
 await page.locator('.fab').click();
@@ -166,7 +186,7 @@ await page.waitForTimeout(600);
 const totalSesiones = await page.evaluate(() => JSON.parse(localStorage.getItem('pipicucu:data')).sessions.length);
 check('quedan 5 sesiones (1 suelta + serie de 4)', totalSesiones === 5, `hay ${totalSesiones}`);
 
-titulo('5. Cierre del día');
+titulo('6. Cierre del día');
 // Se cierra desde Inicio, que es donde se entra al terminar de atender, en vez
 // de ir a buscar el día de hoy en el calendario.
 await page.locator('.tabbar button', { hasText: 'Inicio' }).click();
@@ -200,7 +220,7 @@ check('el cobro usa el honorario con centavos', trasCierre.importe === 4250050, 
 check('cerrado el día, el cartel baja la voz', (await page.locator('.close-day-btn.is-quiet').count()) === 1);
 check('y dice que el día está cerrado', (await page.locator('.close-day-btn').innerText()).includes('Día cerrado'));
 
-titulo('6. Persistencia tras recargar');
+titulo('7. Persistencia tras recargar');
 await page.reload({ waitUntil: 'networkidle' });
 await page.waitForTimeout(400);
 await saltarBienvenida();
@@ -233,7 +253,7 @@ for (const [k, esperado] of Object.entries({ ...P1, estado: undefined })) {
 await page.getByRole('button', { name: 'Cancelar' }).click();
 await page.waitForTimeout(300);
 
-titulo('7. Exportar, borrar todo, importar');
+titulo('8. Exportar, borrar todo, importar');
 const antes = await page.evaluate(() => localStorage.getItem('pipicucu:data'));
 await page.locator('.tabbar button', { hasText: 'Ajustes' }).click();
 await page.waitForTimeout(400);
@@ -270,7 +290,7 @@ check('las sesiones son idénticas', mismosDatos(a.sessions, b.sessions));
 check('los pagos son idénticos', mismosDatos(a.payments, b.payments));
 check('los ajustes son idénticos', mismosDatos(a.settings, b.settings));
 
-titulo('8. Las pantallas muestran los datos recuperados');
+titulo('9. Las pantallas muestran los datos recuperados');
 await page.locator('.tabbar button', { hasText: 'Inicio' }).click();
 await page.waitForTimeout(600);
 const heroe = await page.locator('.hero-value').textContent();
@@ -298,7 +318,7 @@ const porCobrar = await page.locator('.stat').filter({ hasText: 'Por cobrar del 
 check('lo que queda por cobrar se dice con palabras, no con un cero',
   !porCobrar.includes('$ 0'), porCobrar.replace(/\n/g, ' | '));
 
-titulo('9. La ficha del paciente dice qué es cada número');
+titulo('10. La ficha del paciente dice qué es cada número');
 await page.locator('.tabbar button', { hasText: 'Pacientes' }).click();
 await page.waitForTimeout(500);
 const ficha = (await page.locator('.patient-stats').first().innerText()).replace(/\n/g, ' ');
@@ -307,7 +327,7 @@ check('la ficha muestra lo cobrado', ficha.includes('cobrado'), ficha);
 // hubiera contado el cobro.
 check('el saldo en cero se dice con palabras', !ficha.includes('$ 0 al día') && ficha.includes('Al día'), ficha);
 
-titulo('10. El perro del pie');
+titulo('11. El perro del pie');
 await page.locator('.tabbar button', { hasText: 'Inicio' }).click();
 await page.waitForTimeout(400);
 const perro = page.locator('.footer-dog img').first();
@@ -338,7 +358,7 @@ check('hay variedad de frases', new Set(frases).size >= 12, `${new Set(frases).s
 await page.waitForTimeout(2800);
 check('después se queda quieto de nuevo', (await perro.getAttribute('src')) === '/pipi-cucu-dog-static.png');
 
-titulo('11. La guía y los carteles');
+titulo('12. La guía y los carteles');
 await page.locator('.tabbar button', { hasText: 'Ajustes' }).click();
 await page.waitForTimeout(300);
 const avisoSync = await page.locator('.card', { hasText: 'Por qué no se sincroniza' }).innerText();
@@ -375,7 +395,7 @@ await page.reload({ waitUntil: 'networkidle' });
 await page.waitForTimeout(600);
 check('los carteles no vuelven solos', (await page.locator('.tour').count()) === 0);
 
-titulo('12. Planillas para Excel');
+titulo('13. Planillas para Excel');
 await page.locator('.tabbar button', { hasText: 'Ajustes' }).click();
 await page.waitForTimeout(500);
 for (const [boton, cabecera] of [['Sesiones (.csv)', 'Fecha;Hora;Paciente'], ['Cobros (.csv)', 'Fecha;Paciente;Importe']]) {
@@ -396,7 +416,7 @@ const planillaCobros = readFileSync(`${SC}/pipi-cucu-cobros-${new Date().toISOSt
 check('los importes usan coma decimal, que es lo que Excel suma', planillaCobros.includes('42500,50'), 
   planillaCobros.split('\r\n')[1] ?? '');
 
-titulo('13. Tema claro y oscuro');
+titulo('14. Tema claro y oscuro');
 await page.locator('.tabbar button', { hasText: 'Ajustes' }).click();
 await page.waitForTimeout(400);
 await page.getByRole('button', { name: /Oscuro/ }).click();
@@ -437,7 +457,7 @@ await page.getByRole('button', { name: 'Según el sistema' }).click();
 await page.waitForTimeout(300);
 check('y se puede volver a dejárselo al sistema', (await page.evaluate(() => document.documentElement.dataset.animaciones)) === 'auto');
 
-titulo('14. Migración de datos de la versión anterior');
+titulo('15. Migración de datos de la versión anterior');
 // Lo que más importa de este cambio: que a quien ya venía usando la app no se
 // le pierda nada al abrirla después de actualizar.
 // Se guarda lo que había para devolverlo al final: las secciones siguientes
@@ -478,7 +498,7 @@ await page.reload({ waitUntil: 'networkidle' });
 await page.waitForTimeout(600);
 await saltarBienvenida();
 
-titulo('15. Sin conexión');
+titulo('16. Sin conexión');
 await ctx.setOffline(true);
 await page.reload({ waitUntil: 'load' });
 await page.waitForTimeout(1200);

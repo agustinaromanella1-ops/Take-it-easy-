@@ -89,6 +89,12 @@ va `'\;'` en el código y `String.raw` en las pruebas.
 **El atributo `hidden` lo pisa cualquier `display: flex`.** Hay un `[hidden] { display: none
 !important; }` global que lo restituye; no lo saques.
 
+**Un efecto que depende de una función escrita en el JSX se rearma en cada render.** El `Modal`
+de `ui.tsx` tenía `onClose` como dependencia del efecto que pone el foco: cada tecla cambiaba el
+estado del formulario, el padre volvía a dibujar, el efecto se rearmaba y el cursor saltaba al
+primer campo. Escribir un honorario de cinco cifras era imposible. Si el efecto tiene que leer una
+función que cambia, guardala en una ref y dejá las dependencias vacías.
+
 **Verificá que una edición se aplicó.** Un `str_replace` que no encuentra su objetivo puede fallar
 en silencio: después de tocar JSX, confirmá con `grep`.
 

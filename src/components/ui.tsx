@@ -82,16 +82,30 @@ export function Modal({ title, onClose, children }: { title: string; onClose: ()
   const boxRef = useRef<HTMLDivElement>(null);
   const openerRef = useRef<HTMLElement | null>(null);
 
+  /**
+   * `onClose` llega casi siempre como una función escrita en el JSX, así que es
+   * una función distinta en cada render. Guardarla en una ref permite que el
+   * efecto de abajo se monte UNA vez y siga llamando a la versión actual.
+   *
+   * Tenerla como dependencia del efecto costaba caro: cada tecla cambiaba el
+   * estado del formulario, el padre volvía a dibujar, el efecto se rearmaba y
+   * devolvía el foco al primer campo. Escribir un honorario de cinco cifras era
+   * imposible: al segundo dígito el cursor saltaba al nombre.
+   */
+  const cerrarRef = useRef(onClose);
+  cerrarRef.current = onClose;
+
   useEffect(() => {
     openerRef.current = document.activeElement as HTMLElement | null;
     const onKey = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') onClose();
+      if (e.key === 'Escape') cerrarRef.current();
     };
     document.addEventListener('keydown', onKey);
     const prevOverflow = document.body.style.overflow;
     document.body.style.overflow = 'hidden';
 
-    // Foco al primer control del formulario, listo para escribir.
+    // Foco al primer control del formulario, listo para escribir. Solo al
+    // abrir: si se repitiera, pisaría el campo en el que se está tipeando.
     const first = boxRef.current?.querySelector<HTMLElement>(
       'input, select, textarea, button:not([data-close])',
     );
@@ -102,7 +116,7 @@ export function Modal({ title, onClose, children }: { title: string; onClose: ()
       document.body.style.overflow = prevOverflow;
       openerRef.current?.focus();
     };
-  }, [onClose]);
+  }, []);
 
   return (
     <div
