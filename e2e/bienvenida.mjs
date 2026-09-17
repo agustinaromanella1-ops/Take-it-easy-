@@ -194,9 +194,16 @@ console.log('\n3. Empezar lleva a la app');
   await page.click('.welcome-cta');
   await page.waitForTimeout(300);
   check('Empezar entra a la app', (await page.locator('.welcome').count()) === 0);
+
+  // A partir del segundo arranque la portada saluda igual, pero se va sola:
+  // es un saludo, no una puerta.
   await page.reload();
-  await page.waitForTimeout(300);
-  check('La bienvenida no vuelve a aparecer', (await page.locator('.welcome').count()) === 0);
+  await page.waitForSelector('.welcome', { timeout: 3000 });
+  check('En el siguiente arranque vuelve a saludar', true);
+  const desde = Date.now();
+  await page.locator('.welcome').waitFor({ state: 'detached', timeout: 5000 });
+  const tardo = (Date.now() - desde) / 1000;
+  check('Y se va sola, sin tocar nada', tardo < 4, `${tardo.toFixed(1)} s`);
   await page.close();
 }
 console.log('\n4. Menos movimiento: el perro queda quieto');

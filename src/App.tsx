@@ -1,4 +1,4 @@
-import { Component, useEffect, useState, type ReactNode } from 'react';
+import { Component, useEffect, useRef, useState, type ReactNode } from 'react';
 import { StoreProvider } from './store/StoreContext';
 import { DashboardPage } from './pages/Dashboard';
 import { PatientsPage } from './pages/Patients';
@@ -58,11 +58,14 @@ class ErrorBoundary extends Component<{ children: ReactNode }, { error: Error | 
 
 export default function App() {
   const [page, setPage] = useState<Page>('inicio');
-  /** La bienvenida se muestra una sola vez, la primera que se abre la app. */
-  const [bienvenida, setBienvenida] = useState(bienvenidaPendiente);
-  /** Los carteles que señalan cada botón: también una sola vez, después de la
-      bienvenida. Se pueden volver a pedir desde la guía. */
-  const [carteles, setCarteles] = useState(() => !bienvenidaPendiente() && cartelesPendientes());
+  /** La portada saluda en cada arranque. */
+  const [bienvenida, setBienvenida] = useState(true);
+  /** Si es el primer arranque de todos: ahí espera a que la toquen. */
+  const primeraVez = useRef(bienvenidaPendiente());
+  /** Los carteles que señalan cada botón: una sola vez, al pasar la portada.
+      Se pueden volver a pedir desde la guía. Arrancan siempre desde ahí y no
+      al montar: encima de la portada no tendrían a qué apuntar. */
+  const [carteles, setCarteles] = useState(false);
   const [guia, setGuia] = useState(false);
   const [openPatientId, setOpenPatientId] = useState<string | null>(null);
   /** La función que aplica la versión nueva, cuando hay una esperando. */
@@ -84,6 +87,7 @@ export default function App() {
     <StoreProvider>
       {bienvenida && (
         <Welcome
+          primeraVez={primeraVez.current}
           // "Empezar" entra al flujo que ya existe: el inicio guía a cargar el
           // primer paciente cuando todavía no hay ninguno.
           onEmpezar={() => {

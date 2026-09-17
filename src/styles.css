@@ -349,6 +349,11 @@ h3 { font-size: 1.05rem; }
 .field { display: flex; flex-direction: column; gap: 5px; margin-bottom: 14px; }
 .field label { font-size: 0.88rem; color: var(--body); font-weight: 600; }
 .field-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 12px; }
+/* Cuando una etiqueta ocupa dos líneas y la de al lado una sola, los campos
+   dejaban de coincidir: el más alto empujaba su caja para abajo y quedaban
+   escalonados. El margen automático debajo de la etiqueta se come la
+   diferencia, así las cajas apoyan siempre en la misma línea. */
+.field-row .field > label { margin-bottom: auto; }
 
 input, select, textarea {
   font: inherit;

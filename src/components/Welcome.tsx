@@ -1,3 +1,5 @@
+import { useEffect, useState } from 'react';
+
 /**
  * Pantalla de bienvenida de Pipí Cucú.
  *
@@ -12,6 +14,14 @@
  * ni recortes.
  */
 const CLAVE_VISTA = 'pipicucu:bienvenida-vista';
+
+/**
+ * Cuánto se queda la portada en los arranques siguientes al primero.
+ *
+ * Corta a propósito: es un saludo, no una puerta. Una app de trabajo se abre
+ * varias veces por día y lo que al principio es encanto se vuelve una demora.
+ */
+const SALUDO_MS = 1700;
 
 /** Si ya se pasó por la bienvenida. Se muestra solo la primera vez. */
 export function bienvenidaPendiente(): boolean {
@@ -45,9 +55,34 @@ function Gota() {
   );
 }
 
-export function Welcome({ onEmpezar }: { onEmpezar: () => void }) {
+export function Welcome({ primeraVez, onEmpezar }: { primeraVez: boolean; onEmpezar: () => void }) {
+  const [saliendo, setSaliendo] = useState(false);
+
+  // La primera vez se queda hasta que la persona toque Empezar: es cuando hay
+  // algo para leer. Después es un saludo al pasar y se va sola.
+  useEffect(() => {
+    if (primeraVez) return;
+    const reloj = window.setTimeout(() => {
+      marcarVista();
+      onEmpezar();
+    }, SALUDO_MS);
+    return () => window.clearTimeout(reloj);
+  }, [primeraVez, onEmpezar]);
+
+  function pasar() {
+    if (saliendo) return;
+    setSaliendo(true);
+    marcarVista();
+    onEmpezar();
+  }
+
   return (
-    <div className="welcome">
+    <div
+      className="welcome"
+      // Tocar en cualquier lado la saltea. Quien ya la vio cien veces no tiene
+      // por qué apuntarle al botón.
+      onClick={primeraVez ? undefined : pasar}
+    >
       {/* Las nubes van detrás de todo y no reciben eventos, así nunca tapan ni
           bloquean un control. */}
       <div className="welcome-clouds" aria-hidden="true" />
@@ -81,14 +116,7 @@ export function Welcome({ onEmpezar }: { onEmpezar: () => void }) {
           decoding="async"
         />
 
-        <button
-          type="button"
-          className="welcome-cta"
-          onClick={() => {
-            marcarVista();
-            onEmpezar();
-          }}
-        >
+        <button type="button" className="welcome-cta" onClick={pasar}>
           Empezar
         </button>
       </div>

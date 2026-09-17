@@ -109,6 +109,11 @@ porque una constante no se entera de que cambió el tema. El tema se pinta en un
 `index.html` antes del primer dibujado: si esperara al JavaScript de la app, la pantalla arrancaría
 en claro y saltaría a oscuro de golpe.
 
+**La portada saluda en cada arranque.** La primera vez se queda hasta que la toquen, que es cuando
+hay algo para leer; de ahí en más se va sola a los 1,7 segundos y tocar en cualquier lado la
+saltea. Es un saludo, no una puerta: una app de trabajo se abre varias veces por día y lo que al
+principio es encanto se vuelve una demora.
+
 **La despedida del cierre del día.** Cerrar la jornada termina con un resumen —a cuántas personas
 atendiste, quiénes, cuánto facturaste— y no devolviendo a la pantalla de números. Es la única
 pantalla sin color de toda la app: el día se terminó y la app baja la voz.
