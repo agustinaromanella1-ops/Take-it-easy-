@@ -16,6 +16,7 @@ const SECCIONES: { titulo: string; puntos: string[] }[] = [
       'La frecuencia (semanal, quincenal) sirve para agendar una serie entera de una sola vez.',
       'Si cargás el teléfono, aparece un botón para escribirle por WhatsApp sin salir de la app.',
       'El color es para reconocerla de un vistazo en la agenda.',
+      'El tipo —particular, institución o evaluación— agrupa la lista: cada uno queda en su bloque, con cuántos hay. Si tenés un solo tipo cargado, no aparece ningún rótulo.',
     ],
   },
   {

@@ -321,11 +321,21 @@ check('lo que queda por cobrar se dice con palabras, no con un cero',
 titulo('10. La ficha del paciente dice qué es cada número');
 await page.locator('.tabbar button', { hasText: 'Pacientes' }).click();
 await page.waitForTimeout(500);
-const ficha = (await page.locator('.patient-stats').first().innerText()).replace(/\n/g, ' ');
-check('la ficha muestra lo cobrado', ficha.includes('cobrado'), ficha);
+// Los pacientes se agrupan por tipo. Con un solo tipo cargado no hay rótulo:
+// sería un encabezado que no distingue nada.
+const grupos = await page.locator('.grupo-pacientes').count();
+check('los pacientes se listan agrupados', grupos >= 1, `${grupos} grupo(s)`);
+const rotulos = await page.locator('.grupo-titulo').allInnerTexts();
+check('con un solo tipo no aparece el rótulo', rotulos.length === 0 || grupos > 1, rotulos.join(' | ') || '(sin rótulos)');
+
+// Sin fijarse en cuál ficha es: agrupar por tipo cambia el orden, y una
+// comprobación atada a "la primera" se rompe sola.
+const fichas = (await page.locator('.patient-stats').allInnerTexts()).map((t) => t.replace(/\n/g, ' '));
+check('las fichas muestran lo cobrado', fichas.every((f) => f.includes('cobrado')), fichas.length + ' ficha(s)');
 // El saldo en cero decía "$ 0", que con el paciente al día se lee como si no
 // hubiera contado el cobro.
-check('el saldo en cero se dice con palabras', !ficha.includes('$ 0 al día') && ficha.includes('Al día'), ficha);
+check('ninguna ficha muestra "$ 0" como saldo', !fichas.some((f) => /\$ 0 (al día|sin saldo)/.test(f)), fichas.join(' // '));
+check('el saldo en cero se dice con palabras', fichas.some((f) => f.includes('Al día')), fichas.join(' // '));
 
 titulo('11. El perro del pie');
 await page.locator('.tabbar button', { hasText: 'Inicio' }).click();

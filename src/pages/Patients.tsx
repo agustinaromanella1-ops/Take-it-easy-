@@ -180,6 +180,114 @@ export function PatientsPage({ onOpenPatient }: { onOpenPatient: (id: string) =>
     setEditing(null);
   }
 
+  /**
+   * Los pacientes agrupados por tipo, en orden fijo y salteando los grupos
+   * vacíos. El orden no se calcula: "particular" primero porque es el caso
+   * más común, y así la lista no se reordena sola al cargar a alguien.
+   */
+  const ORDEN_TIPOS: PatientKind[] = ['particular', 'institucion', 'evaluacion'];
+  const grupos = useMemo(
+    () =>
+      ORDEN_TIPOS.map((tipo) => ({ tipo, gente: rows.filter((p) => p.kind === tipo) })).filter(
+        (g) => g.gente.length > 0,
+      ),
+    [rows],
+  );
+
+  /**
+   * La ficha de un paciente. Es una función y no JSX suelto porque ahora se
+   * dibuja una vez por grupo, y repetir ochenta líneas por cada tipo sería
+   * garantizar que se desincronicen.
+   */
+  function ficha(p: Patient, conTipo: boolean) {
+    const b = balances.get(p.id);
+    const balance = b?.balance ?? 0;
+    const color = patientColor(p.colorIndex);
+    const wapp = whatsappLink(p.phone, `Hola ${p.name.split(' ')[0] ?? ''}, ¿cómo estás?`);
+    return (
+      <article
+        key={p.id}
+        className={`patient-card${p.status === 'inactivo' ? ' is-inactive' : ''}`}
+        style={{ ['--pc' as string]: color.solid }}
+      >
+        <div className="patient-top">
+          <button className="patient-name" onClick={() => onOpenPatient(p.id)}>
+            {p.name}
+          </button>
+          <span className="patient-fee">{formatMoney(p.defaultFee, data.settings.currency)}</span>
+        </div>
+        <p className="patient-sub">
+          {/* El tipo solo se repite acá si el grupo no lo dijo ya arriba: con el
+              rótulo puesto, escribirlo de nuevo en cada ficha es ruido. */}
+          {conTipo ? `${KIND_LABEL[p.kind]} · ` : ''}
+          {FREQUENCY_LABEL[p.frequency].toLowerCase()}
+          {p.status === 'inactivo' ? ' · inactivo' : ''}
+        </p>
+
+        {/* Tres números que responden lo que uno mira una ficha para
+            saber: cuántas veces vino, cuánta plata entró, y si queda
+            algo pendiente.
+
+            Antes el tercero era el saldo a secas, y con el paciente
+            al día mostraba "$ 0": se leía como si la app no hubiera
+            contado el cobro, cuando en realidad estaba diciendo la
+            mejor noticia. Ahora lo cobrado tiene su lugar propio y el
+            saldo en cero se dice con palabras.
+
+            El porcentaje de cancelación bajó a la línea de abajo y
+            solo aparece si hay algo que decir: un 0% ocupaba un lugar
+            de los tres para no informar nada. */}
+        <div className="patient-stats">
+          <span>
+            <strong>{b?.sessionsHeld ?? 0}</strong>
+            realizadas
+          </span>
+          <span>
+            <strong>{formatMoney(b?.paid ?? 0, data.settings.currency)}</strong>
+            cobrado
+          </span>
+          <span className={balance > 0 ? 'debt' : balance < 0 ? 'credit' : ''}>
+            <strong>
+              {balance === 0 ? 'Al día' : formatMoney(Math.abs(balance), data.settings.currency)}
+            </strong>
+            {balance > 0 ? 'te debe' : balance < 0 ? 'a favor' : 'sin saldo'}
+          </span>
+        </div>
+        <p className="patient-sub" style={{ marginTop: 0 }}>
+          {p.lastRaise
+            ? `Último aumento: ${formatDateShort(p.lastRaise)}`
+            : 'Sin aumentos registrados'}
+          {b?.lastSessionDate ? ` · última sesión ${formatDateShort(b.lastSessionDate)}` : ''}
+          {(cancelRate.get(p.id) ?? 0) > 0 ? ` · ${cancelRate.get(p.id)}% se cae` : ''}
+        </p>
+
+        <div className="patient-actions">
+          {wapp && (
+            <a
+              className="btn small wapp"
+              href={wapp}
+              target="_blank"
+              rel="noopener noreferrer"
+              title="Escribir por WhatsApp"
+            >
+              Mensaje
+            </a>
+          )}
+          <button className="btn small" onClick={() => openEdit(p)}>
+            Editar
+          </button>
+          <ConfirmButton
+            label="Borrar"
+            confirmLabel={`¿Borrar a ${p.name}? Se eliminan también sus ${
+              data.sessions.filter((s) => s.patientId === p.id).length
+            } sesión(es) y sus pagos. Esta acción no se puede deshacer.`}
+            onConfirm={() => dispatch({ type: 'patient/remove', payload: { id: p.id } })}
+          />
+        </div>
+      </article>
+    );
+  }
+
   return (
     <>
       <div className="page-head">
@@ -215,93 +323,20 @@ export function PatientsPage({ onOpenPatient }: { onOpenPatient: (id: string) =>
               : 'Ningún paciente coincide con la búsqueda.'}
           </Empty>
         ) : (
-          <div className="patient-grid">
-            {rows.map((p) => {
-              const b = balances.get(p.id);
-              const balance = b?.balance ?? 0;
-              const color = patientColor(p.colorIndex);
-              const wapp = whatsappLink(p.phone, `Hola ${p.name.split(' ')[0] ?? ''}, ¿cómo estás?`);
-              return (
-                <article
-                  key={p.id}
-                  className={`patient-card${p.status === 'inactivo' ? ' is-inactive' : ''}`}
-                  style={{ ['--pc' as string]: color.solid }}
-                >
-                  <div className="patient-top">
-                    <button className="patient-name" onClick={() => onOpenPatient(p.id)}>
-                      {p.name}
-                    </button>
-                    <span className="patient-fee">{formatMoney(p.defaultFee, data.settings.currency)}</span>
-                  </div>
-                  <p className="patient-sub">
-                    {KIND_LABEL[p.kind]} · {FREQUENCY_LABEL[p.frequency].toLowerCase()}
-                    {p.status === 'inactivo' ? ' · inactivo' : ''}
-                  </p>
-
-                  {/* Tres números que responden lo que uno mira una ficha para
-                      saber: cuántas veces vino, cuánta plata entró, y si queda
-                      algo pendiente.
-
-                      Antes el tercero era el saldo a secas, y con el paciente
-                      al día mostraba "$ 0": se leía como si la app no hubiera
-                      contado el cobro, cuando en realidad estaba diciendo la
-                      mejor noticia. Ahora lo cobrado tiene su lugar propio y el
-                      saldo en cero se dice con palabras.
-
-                      El porcentaje de cancelación bajó a la línea de abajo y
-                      solo aparece si hay algo que decir: un 0% ocupaba un lugar
-                      de los tres para no informar nada. */}
-                  <div className="patient-stats">
-                    <span>
-                      <strong>{b?.sessionsHeld ?? 0}</strong>
-                      realizadas
-                    </span>
-                    <span>
-                      <strong>{formatMoney(b?.paid ?? 0, data.settings.currency)}</strong>
-                      cobrado
-                    </span>
-                    <span className={balance > 0 ? 'debt' : balance < 0 ? 'credit' : ''}>
-                      <strong>
-                        {balance === 0 ? 'Al día' : formatMoney(Math.abs(balance), data.settings.currency)}
-                      </strong>
-                      {balance > 0 ? 'te debe' : balance < 0 ? 'a favor' : 'sin saldo'}
-                    </span>
-                  </div>
-                  <p className="patient-sub" style={{ marginTop: 0 }}>
-                    {p.lastRaise
-                      ? `Último aumento: ${formatDateShort(p.lastRaise)}`
-                      : 'Sin aumentos registrados'}
-                    {b?.lastSessionDate ? ` · última sesión ${formatDateShort(b.lastSessionDate)}` : ''}
-                    {(cancelRate.get(p.id) ?? 0) > 0 ? ` · ${cancelRate.get(p.id)}% se cae` : ''}
-                  </p>
-
-                  <div className="patient-actions">
-                    {wapp && (
-                      <a
-                        className="btn small wapp"
-                        href={wapp}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        title="Escribir por WhatsApp"
-                      >
-                        Mensaje
-                      </a>
-                    )}
-                    <button className="btn small" onClick={() => openEdit(p)}>
-                      Editar
-                    </button>
-                    <ConfirmButton
-                      label="Borrar"
-                      confirmLabel={`¿Borrar a ${p.name}? Se eliminan también sus ${
-                        data.sessions.filter((s) => s.patientId === p.id).length
-                      } sesión(es) y sus pagos. Esta acción no se puede deshacer.`}
-                      onConfirm={() => dispatch({ type: 'patient/remove', payload: { id: p.id } })}
-                    />
-                  </div>
-                </article>
-              );
-            })}
-          </div>
+          grupos.map((g) => (
+            <section key={g.tipo} className="grupo-pacientes">
+              {/* El encabezado del grupo solo aparece si hay más de un tipo
+                  cargado: con todos particulares sería un rótulo que no
+                  distingue nada de nada. */}
+              {grupos.length > 1 && (
+                <h3 className="grupo-titulo">
+                  {KIND_LABEL[g.tipo]}
+                  <span className="grupo-cuenta">{g.gente.length}</span>
+                </h3>
+              )}
+              <div className="patient-grid">{g.gente.map((p) => ficha(p, grupos.length === 1))}</div>
+            </section>
+          ))
         )}
 
       <button className="fab" onClick={openNew} aria-label="Nuevo paciente">
