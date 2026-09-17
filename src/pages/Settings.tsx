@@ -39,6 +39,19 @@ export function SettingsPage() {
   }
 
   function exportData() {
+    const total = data.patients.length + data.sessions.length + data.payments.length;
+
+    // Una copia vacía es peor que ninguna: uno la guarda, se queda tranquilo, y
+    // se entera de que no tenía nada el día que la necesita. Si no hay qué
+    // guardar, se dice y no se descarga.
+    if (total === 0) {
+      setMessage({
+        text: 'Todavía no hay nada para exportar: la copia saldría vacía. Cargá al menos un paciente.',
+        ok: false,
+      });
+      return;
+    }
+
     const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
@@ -46,6 +59,13 @@ export function SettingsPage() {
     a.download = `pipi-cucu-${today()}.json`;
     a.click();
     URL.revokeObjectURL(url);
+
+    // Decir qué se llevó: así se puede comprobar de un vistazo que la copia
+    // tiene lo que tenía que tener, sin abrir el archivo.
+    setMessage({
+      text: `Copia guardada: ${data.patients.length} paciente(s), ${data.sessions.length} sesión(es) y ${data.payments.length} pago(s).`,
+      ok: true,
+    });
   }
 
   async function importData(file: File) {

@@ -241,6 +241,11 @@ const descarga = page.waitForEvent('download');
 await page.getByRole('button', { name: /Exportar copia/ }).click();
 const archivo = await descarga;
 const ruta = await archivo.path();
+// Una copia vacía es peor que ninguna: uno la guarda y se entera de que no
+// tenía nada el día que la necesita.
+check('la copia avisa qué se llevó',
+  /Copia guardada: \d+ paciente/.test(await page.locator('.card', { hasText: 'Copia de seguridad' }).locator('p.small').last().innerText()),
+  await page.locator('.card', { hasText: 'Copia de seguridad' }).locator('p.small').last().innerText());
 check('descarga el archivo de respaldo', archivo.suggestedFilename().startsWith('pipi-cucu-'), archivo.suggestedFilename());
 
 await page.evaluate(() => localStorage.clear());
