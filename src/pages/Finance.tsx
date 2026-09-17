@@ -4,7 +4,7 @@ import { useStore } from '../store/StoreContext';
 import { emptyMonthSummary, monthlySummaries, patientBalances } from '../store/selectors';
 import { formatMoney, parseMoney } from '../lib/money';
 import { addMonths, formatDateShort, formatMonthKey, isValidISODate, monthKey, today } from '../lib/dates';
-import { Card, ConfirmButton, Empty, Field, Modal, Stat } from '../components/ui';
+import { Card, ConfirmButton, Empty, Field, Modal, SinPacientes, Stat } from '../components/ui';
 import { MonthlyGoal } from '../components/MonthlyGoal';
 import { RateCalculator } from '../components/RateCalculator';
 import { Monitoring } from '../components/Monitoring';
@@ -12,7 +12,7 @@ import { Billing } from '../components/Billing';
 
 const METHODS: Payment['method'][] = ['efectivo', 'transferencia', 'tarjeta', 'otro'];
 
-export function FinancePage() {
+export function FinancePage({ onGo }: { onGo: (page: 'pacientes') => void }) {
   const { data, dispatch } = useStore();
   const [month, setMonth] = useState(() => monthKey(today()));
   const [view, setView] = useState<'resumen' | 'monitoreo' | 'facturacion'>('resumen');
@@ -84,8 +84,23 @@ export function FinancePage() {
 
   const pendingThisMonth = summary.billed - summary.collected;
 
+  /** Si se intentó registrar un pago sin tener pacientes todavía. */
+  const [faltanPacientes, setFaltanPacientes] = useState(false);
+
+  function nuevoPago() {
+    if (data.patients.length === 0) {
+      setFaltanPacientes(true);
+      return;
+    }
+    openAdd();
+  }
+
   return (
     <>
+      {faltanPacientes && (
+        <SinPacientes onClose={() => setFaltanPacientes(false)} onIr={() => onGo('pacientes')} />
+      )}
+
       <div className="page-head">
         <h1>Finanzas</h1>
         {/* El navegador de mes es del resumen; monitoreo y facturación tienen
@@ -102,8 +117,7 @@ export function FinancePage() {
           </button>
           <button
             className="btn primary hide-mobile"
-            onClick={() => openAdd()}
-            disabled={data.patients.length === 0}
+            onClick={nuevoPago}
           >
             + Registrar pago
           </button>
@@ -126,11 +140,27 @@ export function FinancePage() {
       <div className="stat-grid">
         <Stat label="Facturado del mes" value={formatMoney(summary.billed, currency)} hint={`${summary.sessionsHeld} sesión(es) realizada(s)`} />
         <Stat label="Cobrado del mes" value={formatMoney(summary.collected, currency)} tone="ok" hint={`${monthPayments.length} pago(s)`} />
+        {/* Decía "Diferencia del mes" y mostraba $ 0 justo cuando estaba todo
+            cobrado, que es la mejor noticia posible: se leía como si no hubiera
+            registrado el pago. Ahora dice qué queda por cobrar, y cuando no
+            queda nada lo dice con palabras en vez de con un cero. */}
         <Stat
-          label="Diferencia del mes"
-          value={formatMoney(pendingThisMonth, currency)}
-          tone={pendingThisMonth > 0 ? 'warn' : undefined}
-          hint={pendingThisMonth > 0 ? 'Facturado sin cobrar' : 'Al día'}
+          label="Por cobrar del mes"
+          value={
+            summary.billed === 0
+              ? '—'
+              : pendingThisMonth > 0
+                ? formatMoney(pendingThisMonth, currency)
+                : 'Todo cobrado'
+          }
+          tone={pendingThisMonth > 0 ? 'warn' : summary.billed === 0 ? undefined : 'ok'}
+          hint={
+            summary.billed === 0
+              ? 'Todavía sin sesiones este mes'
+              : pendingThisMonth > 0
+                ? 'Facturado y todavía sin cobrar'
+                : 'No te queda nada pendiente'
+          }
         />
         <Stat
           label="Deuda acumulada"
@@ -254,8 +284,7 @@ export function FinancePage() {
       {view === 'resumen' && (
         <button
           className="fab"
-          onClick={() => openAdd()}
-          disabled={data.patients.length === 0}
+          onClick={nuevoPago}
           aria-label="Registrar pago"
         >
           +

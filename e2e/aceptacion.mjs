@@ -69,7 +69,37 @@ await saltarBienvenida();
 titulo('1. Arranque limpio');
 check('la app abre vacía', await page.locator('.empty strong', { hasText: 'Tu agenda, pipí cucú.' }).isVisible());
 
-titulo('2. Alta de paciente con TODOS los campos');
+titulo('2. Sin pacientes, los botones explican en vez de no hacer nada');
+await page.locator('.tabbar button', { hasText: 'Agenda' }).click();
+await page.waitForTimeout(400);
+check('el + de la agenda no está muerto', !(await page.locator('.fab').isDisabled()));
+await page.locator('.fab').click();
+await page.waitForTimeout(400);
+check('explica qué falta', (await page.locator('.modal-head h2').innerText()) === 'Primero cargá un paciente');
+await page.locator('.modal').getByRole('button', { name: 'Ir a Pacientes' }).click();
+await page.waitForTimeout(500);
+check('y lleva a Pacientes', (await page.locator('h1').first().innerText()) === 'Pacientes');
+
+await page.locator('.tabbar button', { hasText: 'Finanzas' }).click();
+await page.waitForTimeout(400);
+await page.locator('.fab').click();
+await page.waitForTimeout(400);
+check('lo mismo al registrar un pago', (await page.locator('.modal-head h2').innerText()) === 'Primero cargá un paciente');
+await page.locator('.modal').getByRole('button', { name: 'Ahora no' }).click();
+await page.waitForTimeout(300);
+
+await page.locator('.tabbar button', { hasText: 'Agenda' }).click();
+await page.waitForTimeout(300);
+await page.locator('.tabs button', { hasText: 'Mes' }).click();
+await page.waitForTimeout(400);
+const pista = await page.locator('.pista').innerText();
+check('el calendario avisa que sirve para días pasados', pista.includes('ya pasó'), pista.slice(0, 44) + '…');
+
+// Se vuelve al inicio, que es donde arranca el recorrido de más abajo.
+await page.locator('.tabbar button', { hasText: 'Inicio' }).click();
+await page.waitForTimeout(400);
+
+titulo('3. Alta de paciente con TODOS los campos');
 await page.getByRole('button', { name: 'Cargar primer paciente' }).click();
 await page.waitForTimeout(400);
 await page.locator('.fab').click();
@@ -109,7 +139,7 @@ await page.getByRole('button', { name: 'Guardar' }).click();
 await page.waitForTimeout(500);
 check('se cargan dos pacientes', (await page.locator('.patient-card').count()) === 2);
 
-titulo('3. Agenda: sesión suelta y serie recurrente');
+titulo('4. Agenda: sesión suelta y serie recurrente');
 await page.locator('.tabbar button', { hasText: 'Agenda' }).click();
 await page.waitForTimeout(400);
 await page.locator('.fab').click();
@@ -135,7 +165,7 @@ await page.waitForTimeout(600);
 const totalSesiones = await page.evaluate(() => JSON.parse(localStorage.getItem('pipicucu:data')).sessions.length);
 check('quedan 5 sesiones (1 suelta + serie de 4)', totalSesiones === 5, `hay ${totalSesiones}`);
 
-titulo('4. Cierre del día');
+titulo('5. Cierre del día');
 // Se cierra desde Inicio, que es donde se entra al terminar de atender, en vez
 // de ir a buscar el día de hoy en el calendario.
 await page.locator('.tabbar button', { hasText: 'Inicio' }).click();
@@ -169,7 +199,7 @@ check('el cobro usa el honorario con centavos', trasCierre.importe === 4250050, 
 check('cerrado el día, el cartel baja la voz', (await page.locator('.close-day-btn.is-quiet').count()) === 1);
 check('y dice que el día está cerrado', (await page.locator('.close-day-btn').innerText()).includes('Día cerrado'));
 
-titulo('5. Persistencia tras recargar');
+titulo('6. Persistencia tras recargar');
 await page.reload({ waitUntil: 'networkidle' });
 await page.waitForTimeout(400);
 await saltarBienvenida();
@@ -202,7 +232,7 @@ for (const [k, esperado] of Object.entries({ ...P1, estado: undefined })) {
 await page.getByRole('button', { name: 'Cancelar' }).click();
 await page.waitForTimeout(300);
 
-titulo('6. Exportar, borrar todo, importar');
+titulo('7. Exportar, borrar todo, importar');
 const antes = await page.evaluate(() => localStorage.getItem('pipicucu:data'));
 await page.locator('.tabbar button', { hasText: 'Ajustes' }).click();
 await page.waitForTimeout(400);
@@ -234,7 +264,7 @@ check('las sesiones son idénticas', mismosDatos(a.sessions, b.sessions));
 check('los pagos son idénticos', mismosDatos(a.payments, b.payments));
 check('los ajustes son idénticos', mismosDatos(a.settings, b.settings));
 
-titulo('7. Las pantallas muestran los datos recuperados');
+titulo('8. Las pantallas muestran los datos recuperados');
 await page.locator('.tabbar button', { hasText: 'Inicio' }).click();
 await page.waitForTimeout(600);
 const heroe = await page.locator('.hero-value').textContent();
@@ -254,7 +284,24 @@ const texto = await page.locator('.bill-text').inputValue();
 check('el texto de factura usa el nombre completo', texto.includes('Ana Laura Gómez Sosa'));
 check('el texto de factura usa el afiliado', texto.includes('SM-99/04'));
 
-titulo('8. El perro del pie');
+await page.locator('.tabs button', { hasText: 'Resumen' }).click();
+await page.waitForTimeout(500);
+// Decía "Diferencia del mes: $ 0", que con todo cobrado se lee como si no
+// hubiera registrado el pago.
+const porCobrar = await page.locator('.stat').filter({ hasText: 'Por cobrar del mes' }).innerText();
+check('lo que queda por cobrar se dice con palabras, no con un cero',
+  !porCobrar.includes('$ 0'), porCobrar.replace(/\n/g, ' | '));
+
+titulo('9. La ficha del paciente dice qué es cada número');
+await page.locator('.tabbar button', { hasText: 'Pacientes' }).click();
+await page.waitForTimeout(500);
+const ficha = (await page.locator('.patient-stats').first().innerText()).replace(/\n/g, ' ');
+check('la ficha muestra lo cobrado', ficha.includes('cobrado'), ficha);
+// El saldo en cero decía "$ 0", que con el paciente al día se lee como si no
+// hubiera contado el cobro.
+check('el saldo en cero se dice con palabras', !ficha.includes('$ 0 al día') && ficha.includes('Al día'), ficha);
+
+titulo('10. El perro del pie');
 await page.locator('.tabbar button', { hasText: 'Inicio' }).click();
 await page.waitForTimeout(400);
 const perro = page.locator('.footer-dog img').first();
@@ -285,7 +332,7 @@ check('hay variedad de frases', new Set(frases).size >= 12, `${new Set(frases).s
 await page.waitForTimeout(2800);
 check('después se queda quieto de nuevo', (await perro.getAttribute('src')) === '/pipi-cucu-dog-static.png');
 
-titulo('9. La guía y los carteles');
+titulo('11. La guía y los carteles');
 await page.locator('.tabbar button', { hasText: 'Ajustes' }).click();
 await page.waitForTimeout(300);
 check('el pie dice el eslogan', (await page.locator('.footer-slogan').innerText()) === 'Tu agenda, Pipí Cucú');
@@ -315,7 +362,7 @@ await page.reload({ waitUntil: 'networkidle' });
 await page.waitForTimeout(600);
 check('los carteles no vuelven solos', (await page.locator('.tour').count()) === 0);
 
-titulo('10. Sin conexión');
+titulo('12. Sin conexión');
 await ctx.setOffline(true);
 await page.reload({ waitUntil: 'load' });
 await page.waitForTimeout(1200);

@@ -144,3 +144,30 @@ export function ConfirmButton({
     </button>
   );
 }
+
+/**
+ * Lo que aparece cuando se intenta agendar o cobrar sin tener pacientes.
+ *
+ * Antes esos botones estaban apagados y listo. Un botón apagado no explica
+ * nada: quien lo toca no sabe si la app se colgó, si le falta un permiso o si
+ * hizo algo mal. Decirle qué falta —y llevarlo ahí— es la diferencia entre una
+ * traba y una instrucción.
+ */
+export function SinPacientes({ onClose, onIr }: { onClose: () => void; onIr: () => void }) {
+  return (
+    <Modal title="Primero cargá un paciente" onClose={onClose}>
+      <p style={{ marginTop: 0 }}>
+        Las sesiones y los cobros van siempre asociados a un paciente, así que hace falta tener al
+        menos uno cargado. Se hace en un minuto: alcanza con el nombre.
+      </p>
+      <div className="actions" style={{ justifyContent: 'flex-end' }}>
+        <button className="btn" onClick={onClose}>
+          Ahora no
+        </button>
+        <button className="btn primary" onClick={onIr}>
+          Ir a Pacientes
+        </button>
+      </div>
+    </Modal>
+  );
+}

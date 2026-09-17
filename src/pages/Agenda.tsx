@@ -16,7 +16,7 @@ import {
   timeToMinutes,
   today,
 } from '../lib/dates';
-import { Card, ConfirmButton, Empty, Field, Modal, Section } from '../components/ui';
+import { Card, ConfirmButton, Empty, Field, Modal, Section, SinPacientes } from '../components/ui';
 import { MonthCalendar } from '../components/MonthCalendar';
 import { DayClose } from '../components/DayClose';
 import { IconBell } from '../components/icons';
@@ -45,7 +45,7 @@ interface FormState {
   repeatCount: string;
 }
 
-export function AgendaPage() {
+export function AgendaPage({ onGo }: { onGo: (page: 'pacientes') => void }) {
   const { data, dispatch } = useStore();
   const [view, setView] = useState<'dia' | 'semana' | 'mes'>('dia');
   const [weekStart, setWeekStart] = useState(() => startOfWeek(today()));
@@ -217,6 +217,18 @@ export function AgendaPage() {
 
   const todayISO = today();
 
+  /** Si se intentó agendar sin tener pacientes todavía. */
+  const [faltanPacientes, setFaltanPacientes] = useState(false);
+
+  /** Agendar necesita un paciente. Si no hay, se explica en vez de no hacer nada. */
+  function nuevaSesion(fecha: string) {
+    if (data.patients.length === 0) {
+      setFaltanPacientes(true);
+      return;
+    }
+    openNew(fecha);
+  }
+
   /** Vuelve al día de hoy en las tres vistas de una sola vez. */
   function goToday() {
     const hoy = today();
@@ -252,8 +264,7 @@ export function AgendaPage() {
           </button>
           <button
             className="btn primary hide-mobile"
-            onClick={() => openNew(selectedDay)}
-            disabled={data.patients.length === 0}
+            onClick={() => nuevaSesion(selectedDay)}
           >
             + Sesión
           </button>
@@ -293,6 +304,13 @@ export function AgendaPage() {
               }}
               onMonthChange={setMonth}
             />
+            {/* La agenda sirve para las dos direcciones y eso no se adivina:
+                el calendario invita a planear, no a registrar. Sin esta línea
+                queda la duda de dónde se anota lo que ya pasó. */}
+            <p className="pista">
+              Tocá cualquier día —también uno que ya pasó— para agendar o registrar una sesión.
+              Sirve tanto para planear la semana como para anotar lo que ya atendiste.
+            </p>
             {monthPatients.length > 0 && (
               <div className="legend">
                 {monthPatients.map((p) => (
@@ -335,8 +353,7 @@ export function AgendaPage() {
                     </span>
                     <button
                       className="slot-add"
-                      onClick={() => openNew(date)}
-                      disabled={data.patients.length === 0}
+                      onClick={() => nuevaSesion(date)}
                       aria-label={`Agregar turno el ${formatDateLong(date)}`}
                       title="Agregar turno"
                     >
@@ -387,7 +404,10 @@ export function AgendaPage() {
       >
         <Card>
           {daySessions.length === 0 ? (
-            <Empty>No hay sesiones este día. Tocá “+ Sesión” para agregar una.</Empty>
+            <Empty>
+              No hay sesiones este día. Tocá “+ Sesión” para agregar una, ya sea porque la vas a
+              atender o porque ya la atendiste.
+            </Empty>
           ) : (
             <div className="day-list">
               {daySessions.map((s) => {
@@ -452,12 +472,15 @@ export function AgendaPage() {
 
       <button
         className="fab"
-        onClick={() => openNew(selectedDay)}
-        disabled={data.patients.length === 0}
+        onClick={() => nuevaSesion(selectedDay)}
         aria-label="Nueva sesión"
       >
         +
       </button>
+
+      {faltanPacientes && (
+        <SinPacientes onClose={() => setFaltanPacientes(false)} onIr={() => onGo('pacientes')} />
+      )}
 
       {closingDay && (
         <DayClose

@@ -140,8 +140,8 @@ export default function App() {
               ) : (
                 <PatientsPage onOpenPatient={setOpenPatientId} />
               ))}
-            {page === 'agenda' && <AgendaPage />}
-            {page === 'finanzas' && <FinancePage />}
+            {page === 'agenda' && <AgendaPage onGo={go} />}
+            {page === 'finanzas' && <FinancePage onGo={go} />}
             {page === 'ajustes' && <SettingsPage />}
           </ErrorBoundary>
           <Footer />

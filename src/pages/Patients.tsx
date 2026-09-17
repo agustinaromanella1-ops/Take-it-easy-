@@ -238,18 +238,33 @@ export function PatientsPage({ onOpenPatient }: { onOpenPatient: (id: string) =>
                     {p.status === 'inactivo' ? ' · inactivo' : ''}
                   </p>
 
+                  {/* Tres números que responden lo que uno mira una ficha para
+                      saber: cuántas veces vino, cuánta plata entró, y si queda
+                      algo pendiente.
+
+                      Antes el tercero era el saldo a secas, y con el paciente
+                      al día mostraba "$ 0": se leía como si la app no hubiera
+                      contado el cobro, cuando en realidad estaba diciendo la
+                      mejor noticia. Ahora lo cobrado tiene su lugar propio y el
+                      saldo en cero se dice con palabras.
+
+                      El porcentaje de cancelación bajó a la línea de abajo y
+                      solo aparece si hay algo que decir: un 0% ocupaba un lugar
+                      de los tres para no informar nada. */}
                   <div className="patient-stats">
                     <span>
                       <strong>{b?.sessionsHeld ?? 0}</strong>
                       realizadas
                     </span>
                     <span>
-                      <strong>{cancelRate.get(p.id) ?? 0}%</strong>
-                      cancelación
+                      <strong>{formatMoney(b?.paid ?? 0, data.settings.currency)}</strong>
+                      cobrado
                     </span>
                     <span className={balance > 0 ? 'debt' : balance < 0 ? 'credit' : ''}>
-                      <strong>{formatMoney(balance, data.settings.currency)}</strong>
-                      {balance > 0 ? 'debe' : balance < 0 ? 'a favor' : 'al día'}
+                      <strong>
+                        {balance === 0 ? 'Al día' : formatMoney(Math.abs(balance), data.settings.currency)}
+                      </strong>
+                      {balance > 0 ? 'te debe' : balance < 0 ? 'a favor' : 'sin saldo'}
                     </span>
                   </div>
                   <p className="patient-sub" style={{ marginTop: 0 }}>
@@ -257,6 +272,7 @@ export function PatientsPage({ onOpenPatient }: { onOpenPatient: (id: string) =>
                       ? `Último aumento: ${formatDateShort(p.lastRaise)}`
                       : 'Sin aumentos registrados'}
                     {b?.lastSessionDate ? ` · última sesión ${formatDateShort(b.lastSessionDate)}` : ''}
+                    {(cancelRate.get(p.id) ?? 0) > 0 ? ` · ${cancelRate.get(p.id)}% se cae` : ''}
                   </p>
 
                   <div className="patient-actions">
