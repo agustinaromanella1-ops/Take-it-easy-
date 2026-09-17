@@ -1,0 +1,17 @@
+{
+  // Configuración para publicar en Cloudflare Workers.
+  //
+  // La app no tiene servidor: es HTML, CSS y JavaScript sueltos. Por eso acá
+  // no hay "main" ni código de Worker, solo la carpeta compilada.
+  "name": "pipi-cucu",
+  "compatibility_date": "2026-09-17",
+  "assets": {
+    "directory": "./dist",
+
+    // La app es de una sola página: cualquier dirección que no coincida con un
+    // archivo la resuelve el index. Sin esto, recargar dentro de la app daría
+    // 404. Los archivos que sí existen —privacidad.html, los íconos— se sirven
+    // tal cual, así que esto no los pisa.
+    "not_found_handling": "single-page-application"
+  }
+}

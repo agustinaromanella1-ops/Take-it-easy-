@@ -14,7 +14,24 @@ se vuelve a Netlify, sigue estando.
 
 `.node-version` fija Node 22, que es con lo que se compila acá.
 
-## Los pasos
+## Dos caminos, según lo que ofrezca el panel
+
+Cloudflare unificó Pages y Workers, así que el panel puede llevar a cualquiera de los dos.
+Los dos sirven; lo único que cambia es qué hay que completar.
+
+### Si dice "Worker" y `npx wrangler deploy`
+
+Ese es el camino nuevo. `wrangler.jsonc` en la raíz ya tiene todo:
+la carpeta compilada (`dist`) y el `not_found_handling` que hace que recargar dentro de la
+app no dé 404. Alcanza con dejar el nombre del proyecto en `pipi-cucu` —igual que en el
+archivo— y el comando de compilación en `npm run build`.
+
+**No activar "Protect with Cloudflare Access"**: pone un inicio de sesión delante de la app
+y nadie podría entrar sin cuenta de Cloudflare.
+
+### Si ofrece "Pages"
+
+## Los pasos de Pages
 
 1. Entrar a [dash.cloudflare.com](https://dash.cloudflare.com) y crear una cuenta gratis.
 2. **Workers & Pages** → **Create** → pestaña **Pages** → **Connect to Git**.
