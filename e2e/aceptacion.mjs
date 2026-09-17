@@ -269,6 +269,19 @@ const mensajeAntes = await page.locator('.footer-bubble').first().innerText();
 await page.locator('.footer-dog').first().click();
 await page.waitForTimeout(300);
 check('al tocarlo de nuevo cambia el mensaje', (await page.locator('.footer-bubble').first().innerText()) !== mensajeAntes);
+// Que no repita dos veces seguidas es lo que hace que valga la pena seguir
+// tocándolo; que haya variedad es lo que lo hace un hallazgo y no un cartel.
+const frases = [];
+let repitioSeguida = false;
+for (let i = 0; i < 30; i++) {
+  await page.locator('.footer-dog').first().click();
+  await page.waitForTimeout(60);
+  const f = await page.locator('.footer-bubble').first().innerText();
+  if (f === frases[frases.length - 1]) repitioSeguida = true;
+  frases.push(f);
+}
+check('nunca repite la misma dos veces seguidas', !repitioSeguida);
+check('hay variedad de frases', new Set(frases).size >= 12, `${new Set(frases).size} distintas en 30 toques`);
 await page.waitForTimeout(2800);
 check('después se queda quieto de nuevo', (await perro.getAttribute('src')) === '/pipi-cucu-dog-static.png');
 

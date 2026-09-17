@@ -95,7 +95,8 @@ ambiguo.
 
 **El pie con el perrito** cierra todas las secciones. Es el mismo perro de la portada —el dibujo
 aprobado, sin redibujar— y ahí está quieto y callado: es el primer fotograma, sin mensaje. Al
-tocarlo sale un mensaje y vuela un par de segundos. Arranca callado a propósito: si el mensaje ya
+tocarlo sale un mensaje —de diecinueve, y nunca el mismo dos veces seguidas— y vuela un par de
+segundos. Arranca callado a propósito: si el mensaje ya
 estuviera ahí, dejaría de ser un hallazgo y sería un cartel más compitiendo por la atención justo
 cuando entrás a ver tus números.
 

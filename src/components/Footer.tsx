@@ -16,24 +16,53 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 const VUELO_MS = 2600;
 
 const MENSAJES = [
+  // Cuidarse mientras se trabaja
+  'Acordate de tomar agua 💧',
+  '¿Ya comiste algo hoy? 🍅',
+  'Relaja los hombros, afloja la mandíbula 💆🏻',
+  '¿Te tomaste un break hoy? ⭐',
+  'Desconectá después de completar 🌸',
+  'Acordate de descansar entre sesiones ☕',
+  'Estirá la espalda, que el sillón no perdona 🪑',
+  'Tomate cinco minutos entre paciente y paciente ⏳',
+
+  // Bajarle el precio a la exigencia
   'Tus números no definen tu valor ✨',
   'Un paciente a la vez 🌱',
-  'Cobrar tu trabajo también es cuidarte 💙',
   'Los meses flojos también son parte 🍃',
-  'Acordate de descansar entre sesiones ☕',
+  'Hoy también hiciste suficiente 🌾',
+  'El cansancio no se factura, pero existe 😮‍💨',
+  '¿Cuándo fue la última vez que no hiciste nada? 🛋️',
+
+  // Cobrar sin culpa
+  'Cobrar tu trabajo también es cuidarte 💙',
+  'Tu tiempo vale lo que cobrás 💫',
   'Lo que no se registra, no se cobra 📝',
+
+  // Sin más pretensión que hacer reír
+  'Manifestando vacaciones 🏞️',
+  '🤑🤑🤑',
 ];
 
+/* Algunos días piden lo suyo. Los que no están acá sacan una del montón. */
 const POR_DIA: Record<number, string> = {
   1: '¡Arranca la semana! 💪',
-  5: 'Casi es viernes 😛',
+  4: 'Casi es viernes 😛',
+  5: '¡Viernes! 🎉',
   6: 'Buen fin de semana 🌿',
   0: 'Domingo de recargar 🌙',
 };
 
+function alAzar(excepto?: string | null): string {
+  const otros = excepto ? MENSAJES.filter((m) => m !== excepto) : MENSAJES;
+  return otros[Math.floor(Math.random() * otros.length)] ?? MENSAJES[0]!;
+}
+
 export function Footer() {
-  // El primero es el del día de la semana; los siguientes salen al azar.
-  const primero = useMemo(() => POR_DIA[new Date().getDay()] ?? MENSAJES[0]!, []);
+  // El primero es el del día de la semana si ese día tiene el suyo; si no,
+  // sale una al azar. Antes, los días sin mensaje propio caían siempre en la
+  // misma frase, que era la primera de la lista.
+  const primero = useMemo(() => POR_DIA[new Date().getDay()] ?? alAzar(), []);
   const [mensaje, setMensaje] = useState<string | null>(null);
   const [volando, setVolando] = useState(false);
   const reloj = useRef<number | undefined>(undefined);
@@ -46,11 +75,7 @@ export function Footer() {
     // vuela: el movimiento es adorno y no vale la distracción.
     const quieto = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
-    setMensaje((actual) => {
-      if (actual === null) return primero;
-      const otros = MENSAJES.filter((m) => m !== actual);
-      return otros[Math.floor(Math.random() * otros.length)] ?? actual;
-    });
+    setMensaje((actual) => (actual === null ? primero : alAzar(actual)));
 
     if (quieto) return;
     // El contador remonta la imagen, así el GIF arranca de nuevo aunque ya
