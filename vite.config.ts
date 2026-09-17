@@ -6,9 +6,11 @@ export default defineConfig({
   plugins: [
     react(),
     VitePWA({
-      // La app se actualiza sola cuando se publica una versión nueva: nadie
-      // tiene que acordarse de vaciar la caché del navegador.
-      registerType: 'autoUpdate',
+      // 'prompt' y no 'autoUpdate': con autoUpdate la librería ignora el
+      // onNeedRefresh de src/pwa.ts y recarga la página sola, que es
+      // justamente lo que se quiso sacar. Con 'prompt' el aviso llega a la app
+      // y aparece la barra de "hay una versión nueva".
+      registerType: 'prompt',
       includeAssets: ['apple-touch-icon.png', 'favicon-48.png', 'fonts/*.woff2', 'pipi-cucu-dog-flying.gif', 'pipi-cucu-dog-static.png', 'pipi-cucu-clouds.webp'],
       manifest: {
         name: 'Pipí Cucú — tu agenda, pipí cucú',

@@ -1,10 +1,10 @@
-import { useEffect, useRef, useState } from 'react';
+import { useRef, useState } from 'react';
 import { useStore } from '../store/StoreContext';
 import { parseAppData } from '../lib/storage';
 import { today } from '../lib/dates';
 import { downloadText } from '../lib/download';
 import { cobrosCSV, sesionesCSV } from '../lib/csv';
-import { guardarTema, leerTema, seguirAlSistema, type Tema } from '../lib/tema';
+import { guardarTema, leerTema, type Tema } from '../lib/tema';
 import { guardarAnimaciones, leerAnimaciones, type Animaciones } from '../lib/movimiento';
 import { Card, Field } from '../components/ui';
 
@@ -18,10 +18,9 @@ export function SettingsPage() {
   const fileRef = useRef<HTMLInputElement>(null);
   const [message, setMessage] = useState<{ text: string; ok: boolean } | null>(null);
 
+  // Seguir al sistema mientras esté en "automático" lo hace App, que no se
+  // desmonta: acá solo se elige.
   const [tema, setTema] = useState<Tema>(leerTema);
-
-  // Mientras esté en automático, acompañar al sistema sin recargar.
-  useEffect(() => seguirAlSistema(leerTema), []);
 
   function cambiarTema(nuevo: Tema) {
     setTema(nuevo);

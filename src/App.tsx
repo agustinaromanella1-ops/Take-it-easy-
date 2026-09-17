@@ -12,6 +12,7 @@ import { Tour, cartelesPendientes } from './components/Tour';
 import { Guia } from './components/Guia';
 import { Footer } from './components/Footer';
 import { alHaberVersionNueva } from './pwa';
+import { leerTema, seguirAlSistema } from './lib/tema';
 
 type Page = 'inicio' | 'pacientes' | 'agenda' | 'finanzas' | 'ajustes';
 
@@ -76,6 +77,11 @@ export default function App() {
     // llamaría creyendo que es un actualizador de estado.
     alHaberVersionNueva((aplicar) => setAplicarVersion(() => aplicar));
   }, []);
+
+  // Seguir al sistema mientras el tema esté en "automático". Va acá y no en
+  // Ajustes porque Ajustes se desmonta al cambiar de pestaña: si el teléfono se
+  // oscurecía estando en Agenda, la app se quedaba clara hasta recargar.
+  useEffect(() => seguirAlSistema(leerTema), []);
 
   function go(next: Page) {
     setOpenPatientId(null);

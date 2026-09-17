@@ -16,9 +16,16 @@
 # El service worker y el index NO se cachean: son los que avisan que hay una
 # versión nueva. Si el navegador los guarda, la app queda congelada en la
 # versión vieja aunque se publique una nueva.
-/sw.js
+#
+# "/" va aparte de "/index.html" porque la app se sirve en la raíz: quien entra
+# a pipi-cucu.workers.dev pide "/", no "/index.html", y esa ruta no coincide con
+# la regla del archivo. Sin esta línea la cáscara de la app se cachea con el
+# valor por omisión y la barra de "hay una versión nueva" no aparece nunca.
+/
   Cache-Control: public, max-age=0, must-revalidate
 /index.html
+  Cache-Control: public, max-age=0, must-revalidate
+/sw.js
   Cache-Control: public, max-age=0, must-revalidate
 
 /*

@@ -75,6 +75,28 @@ describe('planillas', () => {
     expect(sesionesCSV(conComillas)).toContain('"Dijo ""basta"""');
   });
 
+  it('no dejan que una nota se ejecute como fórmula en Excel', () => {
+    const conFormula = {
+      ...base,
+      sessions: [{ ...base.sessions[0]!, notes: '=1+1' }],
+    };
+    expect(sesionesCSV(conFormula)).toContain(";'=1+1");
+  });
+
+  it('marcan también el + y el @, que también encabezan fórmulas', () => {
+    const mas = { ...base, sessions: [{ ...base.sessions[0]!, notes: '+34;4' }] };
+    const arroba = { ...base, sessions: [{ ...base.sessions[0]!, notes: '@SUM(A1)' }] };
+    expect(sesionesCSV(mas)).toContain('"\'+34;4"');
+    expect(sesionesCSV(arroba)).toContain(";'@SUM(A1)");
+  });
+
+  it('dejan los importes negativos como números', () => {
+    expect(importeCSV(-1250)).toBe('-12,50');
+    const devolucion = { ...base, payments: [{ ...base.payments[0]!, amount: -1250 }] };
+    expect(cobrosCSV(devolucion)).toContain(';-12,50');
+    expect(cobrosCSV(devolucion)).not.toContain("'-12,50");
+  });
+
   it('no pierden la fila si el paciente ya no está', () => {
     const huerfana = { ...base, patients: [] };
     expect(cobrosCSV(huerfana)).toContain('Paciente borrado');

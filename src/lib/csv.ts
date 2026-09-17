@@ -20,9 +20,27 @@ import type { AppData, PaymentMethod, Session } from '../types';
 const BOM = '﻿';
 const SEP = ';';
 
+/**
+ * Un texto que Excel va a tomar como fórmula en vez de como texto.
+ *
+ * Una nota que arranca con `=`, `+`, `@`, un tabulador o un retorno de carro se
+ * ejecuta al abrir la planilla: `=1+1` muestra 2, y hay fórmulas que llegan a
+ * abrir otros archivos. El `-` también encabeza fórmulas, pero es además el
+ * signo de los importes negativos, así que solo se considera peligroso cuando
+ * lo que sigue no es un número (`-35000,50` es una cifra, `-1+1` no).
+ */
+function pareceFormula(s: string): boolean {
+  if (s === '') return false;
+  if (/^[=+@\t\r]/.test(s)) return true;
+  return s.startsWith('-') && !/^-\d+(,\d+)?$/.test(s);
+}
+
 /** Un valor listo para meter en una celda, con las comillas que haga falta. */
 function celda(valor: string | number): string {
-  const s = String(valor);
+  let s = String(valor);
+  // El apóstrofo al principio es la marca de "esto es texto" de Excel: sin él,
+  // una nota del paciente se evalúa como fórmula al abrir el archivo.
+  if (pareceFormula(s)) s = `'${s}`;
   // Comillas dobles adentro se escriben duplicadas, y el campo entero va entre
   // comillas si trae el separador, comillas o un salto de línea.
   if (/[";\n\r]/.test(s)) return `"${s.replace(/"/g, '""')}"`;

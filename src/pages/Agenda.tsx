@@ -22,7 +22,13 @@ import { DayClose } from '../components/DayClose';
 import { IconBell } from '../components/icons';
 import { patientColor } from '../lib/palette';
 import { MAX_OCCURRENCES, occurrences, REPEAT_LABEL, type Repeat } from '../lib/recurrence';
-import { PLANTILLAS, textoPlantilla, whatsappLink, type PlantillaId } from '../lib/contact';
+import {
+  PLANTILLAS,
+  normalizePhone,
+  textoPlantilla,
+  whatsappLink,
+  type PlantillaId,
+} from '../lib/contact';
 import { icsFileName, sessionToICS } from '../lib/calendar';
 import { downloadText } from '../lib/download';
 
@@ -464,7 +470,10 @@ export function AgendaPage({ onGo }: { onGo: (page: 'pacientes') => void }) {
                           </option>
                         ))}
                       </select>
-                      {s.status === 'programada' && patient?.phone.trim() !== '' && (
+                      {/* El mismo criterio que usa `whatsappLink`: un teléfono de menos de
+                          seis dígitos no arma un enlace, y el botón no tiene que ofrecerse
+                          si al tocarlo no va a pasar nada. */}
+                      {s.status === 'programada' && normalizePhone(patient?.phone ?? '') !== null && (
                         <button
                           className="btn small wapp"
                           onClick={() => setEscribiendo(s)}

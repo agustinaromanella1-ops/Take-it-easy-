@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react';
-import type { Patient, PaymentMethod, Session } from '../types';
+import type { Patient, Payment, PaymentMethod, Session } from '../types';
 import { useStore } from '../store/StoreContext';
 import {
   buildDayClose,
@@ -46,9 +46,11 @@ function armarDespedida(
   decisions: Map<string, DayCloseDecision>,
   patientsById: Map<string, Patient>,
   result: DayCloseResult,
+  cobrosPrevios: Payment[],
+  cobrarAusenciasPorDefecto: boolean,
 ): Despedida {
   // Estado final de cada sesión: el que ya tenía, o el que se acaba de elegir.
-  const finales = sessions.map((s) => {
+  const finales: { sesion: Session; estado: Session['status'] }[] = sessions.map((s) => {
     if (s.status !== 'programada') return { sesion: s, estado: s.status };
     const elegido = decisions.get(s.id)?.status;
     return { sesion: s, estado: elegido ?? 'programada' };
@@ -67,11 +69,29 @@ function armarDespedida(
     ),
   ];
 
-  const facturado = finales.reduce(
-    (t, f) => t + (f.estado === 'realizada' ? f.sesion.fee : 0),
-    0,
-  );
-  const cobrado = result.payments.reduce((t, p) => t + p.amount, 0);
+  // Se factura lo realizado Y la ausencia que se cobra, que es la misma regla
+  // que usa el resto de la app. Contar solo lo realizado hacía que cerrar un
+  // día con una ausencia cobrada dijera "Facturado $ 0 / Cobrado $ 35.000".
+  const seFactura = (f: { sesion: Session; estado: Session['status'] }): boolean => {
+    if (f.estado === 'realizada') return true;
+    if (f.estado !== 'ausente') return false;
+    // Para una sesión que se acaba de decidir manda la decisión; para una que
+    // ya estaba cerrada, lo que quedó guardado en ella.
+    const decidida = decisions.get(f.sesion.id);
+    return decidida?.status === 'ausente'
+      ? (decidida.chargeable ?? cobrarAusenciasPorDefecto)
+      : f.sesion.chargeable;
+  };
+
+  const facturado = finales.reduce((t, f) => t + (seFactura(f) ? f.sesion.fee : 0), 0);
+
+  // Lo cobrado del día entero, no solo de este cierre: lo facturado ya abarca
+  // todas las sesiones de la jornada, incluidas las que se cerraron antes. Con
+  // una sola de las dos mirando el día, reabrir un día ya cerrado mostraba
+  // todo lo facturado contra cero cobrado.
+  const cobrado =
+    cobrosPrevios.reduce((t, p) => t + p.amount, 0) +
+    result.payments.reduce((t, p) => t + p.amount, 0);
 
   const titular =
     atendidas.length === 0
@@ -139,7 +159,16 @@ export function DayClose({
     dispatch({ type: 'day/close', payload: result });
     // En vez de cerrar y devolver a la pantalla de números, la jornada termina
     // con su resumen. Es el momento de soltar el trabajo, no de mirar totales.
-    setDespedida(armarDespedida(sessions, decisions, patientsById, result));
+    setDespedida(
+      armarDespedida(
+        sessions,
+        decisions,
+        patientsById,
+        result,
+        data.payments.filter((p) => p.date === date),
+        data.settings.chargeNoShowByDefault,
+      ),
+    );
   }
 
   if (despedida) {
