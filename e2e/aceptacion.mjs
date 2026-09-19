@@ -382,7 +382,13 @@ check('el signo de pregunta abre la guía', (await page.locator('.guia').count()
 // porqué escrito, se lee como lo segundo.
 const textoGuia = await page.locator('.guia').innerText();
 check('la guía explica por qué no se sincroniza', textoGuia.includes('un dispositivo por vez'), '');
-check('la guía tiene todas sus secciones', (await page.locator('.guia-bloque').count()) === 5);
+// Por título y no por cantidad: sumar una sección no tiene por qué romper la
+// prueba, pero perder una sí.
+const titulosGuia = await page.locator('.guia-bloque h3').allInnerTexts();
+for (const t of ['Para no tener que acordarte', 'Pacientes', 'Agenda', 'Finanzas', 'Ajustes y tu copia de seguridad', 'Detalles']) {
+  check(`la guía tiene la sección "${t}"`, titulosGuia.includes(t), titulosGuia.join(' / '));
+}
+check('la guía cuenta que todo se puede deshacer', textoGuia.includes('se puede deshacer'), '');
 const guiaTxt = await page.locator('.guia').innerText();
 check('la guía avisa que hay que hacer copia', guiaTxt.toLowerCase().includes('export'));
 await page.locator('.guia .btn').click();

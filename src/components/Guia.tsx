@@ -9,6 +9,21 @@ import { Modal } from './ui';
  */
 const SECCIONES: { titulo: string; puntos: string[] }[] = [
   {
+    // Esta sección va primera a propósito. Todo lo que explica está pensado
+    // para que la app no dependa de acordarse de nada; si no se sabe que
+    // existe, no sirve de nada. El nombre no diagnostica a nadie: describe
+    // cómo está hecha la app.
+    titulo: 'Para no tener que acordarte',
+    puntos: [
+      'Arriba de Inicio está siempre lo que sigue, y lo más grande es cuánto falta, no la hora: "en 25 minutos" en vez de "15:00". Mientras atendés, cuenta lo que falta para terminar, y avisa cuando quedan cinco minutos.',
+      'Abajo va una sola cosa por vez de lo que quedó abierto, con su botón al lado. La lista completa existe, pero se muestra de a una: no hay que elegir por dónde empezar.',
+      '"Más tarde" corre esa tarjeta y muestra la que sigue. No promete nada: al volver a abrir la app, vuelve.',
+      'Todo lo que tocás se puede deshacer. Abajo aparece qué acaba de pasar y un botón para volver atrás, y se queda medio minuto: si te diste cuenta después de atender el teléfono, todavía está.',
+      'Si estás cargando un paciente y se cierra la pantalla, lo escrito no se pierde: la próxima vez que abras el formulario te ofrece retomarlo.',
+      'Nada está en rojo por no estar hecho. La plata que todavía no entró no es un error, y la app no la trata como si lo fuera.',
+    ],
+  },
+  {
     titulo: 'Pacientes',
     puntos: [
       'Cargá a cada persona con el botón +. Lo único obligatorio es el nombre; todo lo demás lo podés completar después.',

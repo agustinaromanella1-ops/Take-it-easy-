@@ -162,11 +162,13 @@ export function FinancePage({ onGo }: { onGo: (page: 'pacientes') => void }) {
                 : 'No te queda nada pendiente'
           }
         />
+        {/* Este es el acumulado de todos los meses, por eso "en total": al lado
+            del anterior, dos "por cobrar" sin distinguir no se entienden. */}
         <Stat
-          label="Deuda acumulada"
+          label="Por cobrar en total"
           value={formatMoney(totalDebt, currency)}
-          tone={totalDebt > 0 ? 'danger' : 'ok'}
-          hint={`${debtors.length} paciente(s) con saldo`}
+          tone={totalDebt > 0 ? 'warn' : 'ok'}
+          hint={debtors.length === 1 ? '1 paciente con saldo' : `${debtors.length} pacientes con saldo`}
         />
       </div>
 
@@ -202,7 +204,7 @@ export function FinancePage({ onGo }: { onGo: (page: 'pacientes') => void }) {
 
       <Card title="Saldos pendientes">
         {debtors.length === 0 ? (
-          <Empty>No hay deudas pendientes. 🎉</Empty>
+          <Empty>Está todo cobrado. 🎉</Empty>
         ) : (
           <div className="table-wrap">
             <table>

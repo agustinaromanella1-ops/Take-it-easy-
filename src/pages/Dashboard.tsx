@@ -1,21 +1,22 @@
 import { useMemo, useState } from 'react';
 import { useStore } from '../store/StoreContext';
-import { dashboardStats, pendingReview, upcomingSessions } from '../store/selectors';
+import { dashboardStats, upcomingSessions } from '../store/selectors';
 import { formatMoney } from '../lib/money';
-import { formatDateLong, formatDateShort, formatMonthKey, monthKey, today } from '../lib/dates';
+import { formatDateLong, formatMonthKey, monthKey, today } from '../lib/dates';
 import { Card, Empty, Stat } from '../components/ui';
 import { DayClose } from '../components/DayClose';
+import { Ahora } from '../components/Ahora';
+import { Pendientes } from '../components/Pendientes';
 import { goalProgress } from '../lib/pricing';
 import { patientColor } from '../lib/palette';
 
 export function DashboardPage({ onGo }: { onGo: (page: 'agenda' | 'finanzas' | 'pacientes') => void }) {
-  const { data, dispatch } = useStore();
+  const { data } = useStore();
   const currency = data.settings.currency;
 
   const stats = useMemo(() => dashboardStats(data), [data]);
   const patientsById = useMemo(() => new Map(data.patients.map((p) => [p.id, p])), [data.patients]);
   const upcoming = useMemo(() => upcomingSessions(data.sessions, 7).slice(0, 8), [data.sessions]);
-  const overdue = useMemo(() => pendingReview(data.sessions).slice(0, 8), [data.sessions]);
 
   // El cierre del día también vive acá, no solo en la agenda: al terminar de
   // atender se entra al inicio, no se va a buscar el día de hoy en el
@@ -71,6 +72,13 @@ export function DashboardPage({ onGo }: { onGo: (page: 'agenda' | 'finanzas' | '
         </div>
       </div>
 
+      {/* Antes que cualquier número: qué está pasando y cuánto falta. */}
+      <Ahora sessions={data.sessions} patientsById={patientsById} onVerAgenda={() => onGo('agenda')} />
+
+      {/* De todo lo que quedó abierto, una cosa. Reemplaza a la vieja tarjeta
+          de "sesiones sin cerrar": eso ahora es uno de los casos de la lista. */}
+      <Pendientes onGo={onGo} />
+
       {/* El cierre está siempre a la vista, aunque no haya nada que cerrar.
           Escondiéndolo nadie se entera de que existe, y además "¿me quedó algo
           abierto de hoy?" es una pregunta que se responde mirando, no
@@ -124,11 +132,15 @@ export function DashboardPage({ onGo }: { onGo: (page: 'agenda' | 'finanzas' | '
           label={`Facturado ${formatMonthKey(monthKey(today()))}`}
           value={formatMoney(stats.monthBilled, currency)}
         />
+        {/* "Por cobrar" y no "deuda pendiente", y en tono cálido y no en rojo:
+            que la plata del mes todavía no haya entrado es el estado normal de
+            un consultorio, no un error. El rojo queda para lo que sí está mal,
+            si no deja de significar algo. */}
         <Stat
-          label="Deuda pendiente"
+          label="Por cobrar"
           value={formatMoney(stats.outstanding, currency)}
-          tone={stats.outstanding > 0 ? 'danger' : 'ok'}
-          hint={`${stats.debtors.length} paciente(s)`}
+          tone={stats.outstanding > 0 ? 'warn' : 'ok'}
+          hint={stats.debtors.length === 1 ? '1 paciente' : `${stats.debtors.length} pacientes`}
         />
         <Stat
           label="Sesiones de la semana"
@@ -137,59 +149,6 @@ export function DashboardPage({ onGo }: { onGo: (page: 'agenda' | 'finanzas' | '
         />
         <Stat label="Pacientes activos" value={String(stats.activePatients)} />
       </div>
-
-      {overdue.length > 0 && (
-        <Card title="Sesiones sin cerrar">
-          <p className="small muted" style={{ marginTop: 0 }}>
-            Ya pasaron pero siguen marcadas como “programada”. Hasta cerrarlas no cuentan en la facturación.
-          </p>
-          <div className="table-wrap">
-            <table>
-              <thead>
-                <tr>
-                  <th>Fecha</th>
-                  <th>Paciente</th>
-                  <th className="num">Honorario</th>
-                  <th>Cerrar como</th>
-                </tr>
-              </thead>
-              <tbody>
-                {overdue.map((s) => (
-                  <tr key={s.id}>
-                    <td className="small">
-                      {formatDateShort(s.date)} {s.time}
-                    </td>
-                    <td>{patientsById.get(s.patientId)?.name ?? '—'}</td>
-                    <td className="num">{formatMoney(s.fee, currency)}</td>
-                    <td>
-                      <div className="actions">
-                        <button
-                          className="btn small"
-                          onClick={() => dispatch({ type: 'session/setStatus', payload: { id: s.id, status: 'realizada' } })}
-                        >
-                          Realizada
-                        </button>
-                        <button
-                          className="btn small"
-                          onClick={() => dispatch({ type: 'session/setStatus', payload: { id: s.id, status: 'ausente' } })}
-                        >
-                          Ausente
-                        </button>
-                        <button
-                          className="btn small"
-                          onClick={() => dispatch({ type: 'session/setStatus', payload: { id: s.id, status: 'cancelada' } })}
-                        >
-                          Cancelada
-                        </button>
-                      </div>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        </Card>
-      )}
 
       <Card
         title="Próximos turnos"
@@ -235,7 +194,7 @@ export function DashboardPage({ onGo }: { onGo: (page: 'agenda' | 'finanzas' | '
 
       {stats.debtors.length > 0 && (
         <Card
-          title="Quiénes deben"
+          title="Por cobrar"
           action={
             <button className="btn small" onClick={() => onGo('finanzas')}>
               Ir a finanzas

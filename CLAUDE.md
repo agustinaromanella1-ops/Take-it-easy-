@@ -74,6 +74,22 @@ principal lleva tinta oscura (`--sobre-claro`, 5,9:1) en los dos temas.
 **Dos temas.** Todo color va como token en `:root` y, si cambia, también en
 `[data-tema='oscuro']`. Un color fijo en una regla deja letra clara sobre fondo claro en oscuro.
 
+**La app está hecha para no depender de la memoria de quien la usa, y eso son
+reglas, no estilo.** Antes de mover algo del inicio o de agregar una pantalla, leer
+`src/components/Ahora.tsx` y `src/lib/pendientes.ts`:
+
+- Arriba de Inicio va **una** cosa y lo grande es la distancia de tiempo, no la hora.
+- De lo que quedó abierto se muestra **una** tarjeta con su botón. La lista entera
+  existe en `pendientes()`; mostrarla completa es volver al problema.
+- Toda acción que toca los datos pasa por el `dispatch` de `StoreContext`, que guarda
+  el estado anterior y ofrece deshacer. Si se agrega una acción al reducer, va también
+  su etiqueta en `etiquetaDe()`; sin etiqueta no se ofrece deshacer y el cambio queda
+  sin confirmación visible.
+- Los formularios largos guardan borrador con `src/lib/borrador.ts`. Lo escrito no se
+  pierde nunca por cerrar una pantalla.
+- Nada está en rojo por no estar hecho. El rojo (`tone='danger'`) es para errores; la
+  plata que todavía no entró va en `'warn'`.
+
 **Para el movimiento usá `sinMovimiento()` de `src/lib/movimiento.ts`**, no `matchMedia` directo:
 la preferencia del sistema se puede pisar desde Ajustes y tiene que haber una sola respuesta.
 

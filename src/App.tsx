@@ -11,6 +11,7 @@ import { Welcome, bienvenidaPendiente } from './components/Welcome';
 import { Tour, cartelesPendientes } from './components/Tour';
 import { Guia } from './components/Guia';
 import { Footer } from './components/Footer';
+import { Deshacer } from './components/Deshacer';
 import { alHaberVersionNueva } from './pwa';
 import { leerTema, seguirAlSistema } from './lib/tema';
 
@@ -156,6 +157,10 @@ export default function App() {
           </ErrorBoundary>
           <Footer />
         </main>
+
+        {/* Arriba de la barra de pestañas: queda al alcance del pulgar, que es
+            donde acaba de tocarse el botón que uno quiere deshacer. */}
+        <Deshacer />
 
         {/* Navegación inferior: en celular es lo que queda al alcance del pulgar. */}
         <nav className="tabbar" aria-label="Secciones">

@@ -55,6 +55,9 @@
   --warm-soft: var(--naranja-soft);
 
   --ok: #2f7d5d;
+  /* El verde que puede ser TEXTO sobre menta claro: 5,9:1. El --ok de arriba
+     alcanza sobre blanco pero no sobre --menta-soft. */
+  --verde-ink: #27674e;
   --warn: var(--naranja-ink);
   --danger: #b33a4a;
   --danger-soft: #fde6ea;
@@ -144,6 +147,7 @@
   --warm-soft: var(--naranja-soft);
 
   --ok: #86d3ae;
+  --verde-ink: #86d3ae;
   --warn: var(--naranja-ink);
   --danger: #ff8a9b;
   --danger-soft: #45222c;
@@ -309,6 +313,46 @@ h3 { font-size: 1.05rem; }
   color: var(--accent-ink);
   font-size: 0.95rem;
 }
+
+/* ---------- Lo que sigue ---------- */
+/* El primer bloque de la pantalla: una sola cosa, y lo más grande es cuánto
+   falta. Ver el comentario de Ahora.tsx. */
+.ahora {
+  border: var(--borde) solid var(--border);
+  border-radius: 26px;
+  padding: 20px 22px;
+  margin-bottom: 18px;
+  box-shadow: var(--shadow);
+  background: var(--surface);
+}
+.ahora-titulo {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-weight: 800;
+  font-size: 0.95rem;
+  color: var(--body);
+}
+.ahora-grande {
+  font-family: var(--serif);
+  font-size: clamp(1.9rem, 7vw, 2.6rem);
+  font-weight: 700;
+  line-height: 1.1;
+  margin: 4px 0 2px;
+  color: var(--text);
+}
+.ahora-pie { color: var(--muted); font-size: 0.95rem; }
+.ahora-link { margin-top: 14px; }
+
+/* Los tonos solo cambian el ánimo del bloque. Ninguno es de alarma: que algo
+   esté por empezar no es un error de nadie. Cada par de texto y fondo está
+   medido contra WCAG AA. */
+.ahora-aviso { background: var(--naranja-soft); }
+.ahora-aviso .ahora-grande { color: var(--naranja-ink); }
+.ahora-curso { background: var(--menta-soft); }
+.ahora-curso .ahora-grande { color: var(--verde-ink); }
+.ahora-fin { background: var(--lila-soft); }
+.ahora-fin .ahora-grande { color: var(--accent-ink); }
 
 /* ---------- Métricas ---------- */
 .stat-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: 16px; }
@@ -1561,6 +1605,80 @@ a.btn {
   color: var(--ink);
   font-weight: 700;
   padding: 11px 16px;
+}
+
+/* ---------- Borrador recuperado ---------- */
+/* Adentro del formulario, antes del primer campo: es donde se mira al abrir. */
+.borrador-aviso {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  background: var(--celeste-soft);
+  border: var(--borde) solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 12px 14px;
+  margin-bottom: 18px;
+  font-size: 0.92rem;
+  font-weight: 600;
+  color: var(--text);
+}
+
+/* ---------- Lo que quedó abierto ---------- */
+.pendientes {
+  background: var(--surface);
+  border: var(--borde) solid var(--border);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  padding: 18px 20px;
+  margin-bottom: 18px;
+}
+.pendientes-rotulo {
+  font-size: 0.74rem;
+  font-weight: 800;
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+  color: var(--accent-ink);
+}
+.pendientes-texto { margin: 8px 0 4px; font-size: 1.08rem; font-weight: 700; color: var(--text); }
+.pendientes-nota { margin: 0; color: var(--muted); font-size: 0.9rem; }
+.pendientes-acciones { margin-top: 14px; }
+.pendientes-resto { margin: 12px 0 0; color: var(--muted); font-size: 0.86rem; }
+/* Cuando no queda nada, una línea y no una tarjeta vacía. */
+.pendientes-vacio { margin: 0 0 18px; color: var(--muted); font-size: 0.92rem; }
+
+/* ---------- Barra de deshacer ---------- */
+/* Fija abajo, centrada y angosta: confirma lo que pasó y ofrece volver atrás.
+   No tapa la barra de pestañas; se apoya arriba de ella. */
+.deshacer {
+  position: fixed;
+  /* Los dos lados puestos y `margin: 0 auto` la centran sin achicarla. Con
+     `left: 50%` el ancho disponible es medio viewport y el texto sale
+     partido en una palabra por renglón. */
+  left: 14px;
+  right: 14px;
+  margin: 0 auto;
+  width: fit-content;
+  bottom: calc(18px + env(safe-area-inset-bottom, 0px));
+  z-index: 45;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  max-width: min(92vw, 460px);
+  background: var(--surface);
+  border: var(--borde) solid var(--border);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  padding: 11px 14px 11px 18px;
+}
+.deshacer-texto { font-weight: 700; color: var(--text); font-size: 0.93rem; }
+.deshacer .btn { flex-shrink: 0; }
+
+@media (max-width: 780px) {
+  /* En celular la barra de pestañas está fija abajo: hay que subirse arriba
+     de ella o queda tapada justo cuando hace falta. */
+  .deshacer { bottom: calc(80px + env(safe-area-inset-bottom, 0px)); }
 }
 
 /* Una línea que explica algo que no se adivina mirando. Va apagada: ayuda a

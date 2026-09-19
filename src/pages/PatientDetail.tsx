@@ -88,7 +88,7 @@ export function PatientDetailPage({ patientId, onBack }: { patientId: string; on
         <Stat
           label={saldo >= 0 ? 'Saldo pendiente' : 'Saldo a favor'}
           value={formatMoney(Math.abs(saldo), currency)}
-          tone={saldo > 0 ? 'danger' : 'ok'}
+          tone={saldo > 0 ? 'warn' : 'ok'}
         />
       </div>
 

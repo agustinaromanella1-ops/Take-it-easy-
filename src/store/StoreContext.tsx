@@ -1,4 +1,14 @@
-import { createContext, useContext, useEffect, useMemo, useReducer, useRef, type ReactNode } from 'react';
+import {
+  createContext,
+  useCallback,
+  useContext,
+  useEffect,
+  useMemo,
+  useReducer,
+  useRef,
+  useState,
+  type ReactNode,
+} from 'react';
 import type { AppData } from '../types';
 import { loadData, saveData } from '../lib/storage';
 import { reducer, type Action } from './reducer';
@@ -6,7 +16,62 @@ import { reducer, type Action } from './reducer';
 interface StoreValue {
   data: AppData;
   dispatch: React.Dispatch<Action>;
+  /** Lo último que se puede deshacer, o `null` si no hay nada. */
+  deshacer: { etiqueta: string; hacer: () => void } | null;
 }
+
+/**
+ * Cómo se nombra cada cambio en la barra de deshacer, o `null` si no se
+ * ofrece deshacerlo.
+ *
+ * Poder deshacer cambia cómo se usa una app: sin red, cada botón es una
+ * decisión y hay que estar seguro antes de tocar. Con red, se toca y se mira
+ * qué pasó. Eso importa siempre y más todavía cuando la atención va y viene:
+ * la duda "¿toqué el botón que no era?" deja de costar el trabajo de
+ * reconstruir a mano lo que se rompió.
+ *
+ * Ajustes queda afuera a propósito: se edita escribiendo, y ofrecer deshacer
+ * en cada tecla sería ruido.
+ */
+function etiquetaDe(action: Action): string | null {
+  switch (action.type) {
+    case 'patient/add':
+      return 'Guardaste un paciente';
+    case 'patient/update':
+      return 'Editaste un paciente';
+    case 'patient/remove':
+      return 'Borraste un paciente';
+    case 'session/add':
+      return 'Agendaste una sesión';
+    case 'session/addMany':
+      return 'Agendaste varias sesiones';
+    case 'session/update':
+      return 'Editaste una sesión';
+    case 'session/remove':
+      return 'Borraste una sesión';
+    case 'session/setStatus':
+      return 'Marcaste una sesión';
+    case 'payment/add':
+      return 'Registraste un cobro';
+    case 'payment/remove':
+      return 'Borraste un cobro';
+    case 'day/close':
+      return 'Cerraste el día';
+    case 'data/replace':
+      return 'Importaste una copia';
+    default:
+      return null;
+  }
+}
+
+/**
+ * Cuánto se queda la barra de deshacer.
+ *
+ * Es larga a propósito. Los diez segundos habituales alcanzan para quien se
+ * dio cuenta en el acto; acá el error se nota al volver a mirar la pantalla,
+ * que puede ser después de atender el teléfono.
+ */
+const DESHACER_MS = 30000;
 
 const StoreContext = createContext<StoreValue | null>(null);
 
@@ -60,7 +125,46 @@ export function StoreProvider({ children }: { children: ReactNode }) {
     };
   }, []);
 
-  const value = useMemo(() => ({ data, dispatch }), [data]);
+  /**
+   * El estado de antes del último cambio. Se guarda entero: son pocos kilobytes
+   * y así deshacer no depende de saber invertir cada acción una por una.
+   */
+  const [undo, setUndo] = useState<{ etiqueta: string; estado: AppData } | null>(null);
+
+  const despachar = useCallback((action: Action) => {
+    const etiqueta = etiquetaDe(action);
+    // Todo cambio pisa el punto de retorno, tenga etiqueta o no: si no, deshacer
+    // volvería más atrás de lo que la barra promete y se llevaría puesto lo que
+    // se hizo después.
+    setUndo(etiqueta ? { etiqueta, estado: latest.current } : null);
+    dispatch(action);
+  }, []);
+
+  // La barra se va sola. El temporizador se rearma con cada cambio nuevo.
+  useEffect(() => {
+    if (!undo) return;
+    const t = window.setTimeout(() => setUndo(null), DESHACER_MS);
+    return () => window.clearTimeout(t);
+  }, [undo]);
+
+  const value = useMemo<StoreValue>(
+    () => ({
+      data,
+      dispatch: despachar,
+      deshacer: undo
+        ? {
+            etiqueta: undo.etiqueta,
+            hacer: () => {
+              // `dispatch` crudo, no `despachar`: volver atrás no es un cambio
+              // nuevo que se pueda deshacer otra vez.
+              dispatch({ type: 'data/replace', payload: undo.estado });
+              setUndo(null);
+            },
+          }
+        : null,
+    }),
+    [data, despachar, undo],
+  );
   return <StoreContext.Provider value={value}>{children}</StoreContext.Provider>;
 }
 
