@@ -19,9 +19,14 @@ Las pruebas de punta a punta necesitan la app compilada y servida:
 
 ```bash
 npx vite build && npx vite preview --port 4173 &
-node e2e/aceptacion.mjs     # 102 verificaciones sobre la app entera
+node e2e/aceptacion.mjs     # 118 verificaciones sobre la app entera
 node e2e/bienvenida.mjs     # 43: la portada contra el diseño aprobado
+node e2e/actualizacion.mjs  # 15: la barra de "hay una versión nueva"
 ```
+
+`e2e/actualizacion.mjs` tarda unos minutos porque vuelve a compilar dos veces con la app
+abierta: es la única forma de reproducir una publicación en vivo. Corrélo cuando toques
+`src/pwa.ts`, `vite.config.ts` o `public/_headers`.
 
 **Playwright no es una dependencia del proyecto**: se resuelve desde la instalación global. Si
 `import { chromium } from 'playwright'` falla, enlazalo con
@@ -94,6 +99,21 @@ reglas, no estilo.** Antes de mover algo del inicio o de agregar una pantalla, l
   campos de una. Los plegables se abren solos al editar a alguien que ya tiene esos datos.
 - El inicio tiene modo enfoque (`src/lib/enfoque.ts`): lo que se agregue abajo del cierre del
   día queda adentro del `{!enfoque && ...}`, porque es contexto del mes y no algo para hacer ahora.
+
+**La barra de actualizar tiene tres piezas y las tres hacen falta.** Ya se rompió dos veces,
+y ninguna de las dos se veía leyendo el código:
+
+1. `registerType: 'prompt'` en `vite.config.ts`. Con `'autoUpdate'` la librería ignora
+   `onNeedRefresh` y recarga sola.
+2. Alguien tiene que *pedirle* al navegador que busque. Sin eso la busca al navegar y, como
+   mucho, una vez por día; una app instalada casi no navega. `src/pwa.ts` la pide cuando la app
+   vuelve a la pantalla y cada hora, y Ajustes tiene un botón para pedirla a mano.
+3. El botón de la barra recarga por su cuenta si el service worker nuevo no toma el control en
+   unos segundos. La librería recarga con un evento que no llega si la pestaña nunca estuvo
+   controlada, y ahí el botón quedaba mudo.
+
+Y en `public/_headers`, `/` y `/sw.js` van sin caché. Sin la regla de `/` —que es distinta de la
+de `/index.html`, porque la app se sirve en la raíz— la cáscara vieja se sirve igual.
 
 **El aviso de turno de `src/lib/aviso.ts` solo suena con la app abierta.** No es una
 notificación del sistema: no hay servidor que las mande y un navegador en segundo plano se

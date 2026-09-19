@@ -5,6 +5,7 @@ import { today } from '../lib/dates';
 import { downloadText } from '../lib/download';
 import { cobrosCSV, sesionesCSV } from '../lib/csv';
 import { guardarTema, leerTema, type Tema } from '../lib/tema';
+import { buscarVersionNueva } from '../pwa';
 import { guardarAnimaciones, leerAnimaciones, type Animaciones } from '../lib/movimiento';
 import { Card, Field } from '../components/ui';
 
@@ -35,6 +36,26 @@ export function SettingsPage() {
   }
 
   const [avisoEstado, setAvisoEstado] = useState<string | null>(null);
+  const [versionEstado, setVersionEstado] = useState<string | null>(null);
+
+  /**
+   * Busca una versión nueva a pedido.
+   *
+   * El navegador busca solo, pero con la app instalada puede tardar horas en
+   * hacerlo. Poder tocar un botón y que conteste algo convierte "no sé si estoy
+   * actualizada" en una pregunta con respuesta.
+   */
+  async function revisarVersion() {
+    setVersionEstado('Buscando…');
+    const r = await buscarVersionNueva();
+    setVersionEstado(
+      r === 'nueva'
+        ? 'Hay una versión nueva. En unos segundos aparece arriba la barra para actualizar.'
+        : r === 'al-dia'
+          ? 'Ya tenés la última versión.'
+          : 'No se pudo buscar. Probá con internet conectado.',
+    );
+  }
 
   /**
    * Prende o apaga el aviso, pidiendo permiso al navegador si hace falta.
@@ -337,6 +358,24 @@ export function SettingsPage() {
         </a>
       </Card>
 
+      <Card title="Versión">
+        <p className="small muted" style={{ marginTop: 0 }}>
+          Esta copia es del {fechaDeCompilacion()}. Las versiones nuevas se buscan solas cada tanto y
+          se avisan con una barra arriba de todo; acá podés buscarla ahora.
+        </p>
+        <button className="btn small" onClick={revisarVersion}>
+          Buscar una versión nueva
+        </button>
+        {versionEstado && <p className="small muted">{versionEstado}</p>}
+      </Card>
+
     </>
   );
+}
+
+/** "19/9/2026, 21:40" a partir del sello que pone vite.config.ts. */
+function fechaDeCompilacion(): string {
+  const d = new Date(__COMPILADA__);
+  if (Number.isNaN(d.getTime())) return 'fecha desconocida';
+  return d.toLocaleString('es-AR', { dateStyle: 'short', timeStyle: 'medium' });
 }

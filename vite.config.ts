@@ -46,6 +46,9 @@ export default defineConfig({
       devOptions: { enabled: false },
     }),
   ],
+  // La fecha de compilación, para mostrarla en Ajustes. Sin un dato visible,
+  // "¿se actualizó?" solo se puede responder buscando alguna pantalla nueva.
+  define: { __COMPILADA__: JSON.stringify(new Date().toISOString()) },
   base: '/',
   test: {
     globals: true,
