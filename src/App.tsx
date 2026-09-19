@@ -12,6 +12,7 @@ import { Tour, cartelesPendientes } from './components/Tour';
 import { Guia } from './components/Guia';
 import { Footer } from './components/Footer';
 import { Deshacer } from './components/Deshacer';
+import { AvisoDeTurno } from './components/AvisoDeTurno';
 import { alHaberVersionNueva } from './pwa';
 import { leerTema, seguirAlSistema } from './lib/tema';
 
@@ -157,6 +158,9 @@ export default function App() {
           </ErrorBoundary>
           <Footer />
         </main>
+
+        {/* No dibuja nada: solo avisa cuando se viene un turno. */}
+        <AvisoDeTurno />
 
         {/* Arriba de la barra de pestañas: queda al alcance del pulgar, que es
             donde acaba de tocarse el botón que uno quiere deshacer. */}

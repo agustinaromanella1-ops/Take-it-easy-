@@ -61,6 +61,13 @@ async function saltarBienvenida() {
 
 const campo = (etiqueta) => page.locator('.modal .field').filter({ hasText: etiqueta }).locator('input, select, textarea').first();
 
+/** Abre los bloques plegados del formulario. El alta arranca corta a propósito:
+ *  lo que no hace falta para empezar está adentro de un <details> cerrado. */
+async function abrirPlegables() {
+  await page.locator('.modal details.plegable:not([open]) > summary').evaluateAll((s) => s.forEach((e) => e.click()));
+  await page.waitForTimeout(150);
+}
+
 await page.goto(process.env.URL ?? 'http://localhost:4173/', { waitUntil: 'networkidle' });
 await page.evaluate(() => localStorage.clear());
 await page.reload({ waitUntil: 'networkidle' });
@@ -132,6 +139,14 @@ const P1 = {
   completo: 'Ana Laura Gómez Sosa', dni: '30111222', cuit: '27301112223',
   iva: 'monotributo', os: 'Swiss Medical', afiliado: 'SM-99/04', notas: 'Prefiere los martes.',
 };
+// El alta arranca con lo mínimo: cargar a alguien no puede ser un trámite de
+// quince campos. Lo demás está plegado y no es obligatorio.
+const camposALaVista = await page.locator('.modal > .field, .modal > .field-row > .field').count();
+check('el alta arranca corta', camposALaVista <= 4, `${camposALaVista} campos a la vista`);
+check('y el resto está plegado', (await page.locator('.modal details.plegable').count()) === 2);
+check('los plegables arrancan cerrados en un alta', (await page.locator('.modal details.plegable[open]').count()) === 0);
+
+await abrirPlegables();
 await campo('Nombre y apellido').fill(P1.nombre);
 await campo('Email').fill(P1.email);
 await campo('Teléfono').fill(P1.tel);
@@ -230,6 +245,14 @@ await page.waitForTimeout(500);
 await page.locator('.patient-card').filter({ has: page.locator('.patient-name', { hasText: 'Ana Gómez' }) })
   .getByRole('button', { name: 'Editar' }).click();
 await page.waitForTimeout(400);
+
+// Al editar a alguien que ya tiene esos datos, los bloques se abren solos:
+// esconder justo lo que se vino a cambiar sería peor que mostrarlo de más.
+check(
+  'al editar, los plegables con datos ya vienen abiertos',
+  (await page.locator('.modal details.plegable[open]').count()) === 2,
+  `${await page.locator('.modal details.plegable[open]').count()} de 2`,
+);
 
 const leido = {
   nombre: await campo('Nombre y apellido').inputValue(),

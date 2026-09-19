@@ -89,6 +89,17 @@ reglas, no estilo.** Antes de mover algo del inicio o de agregar una pantalla, l
   pierde nunca por cerrar una pantalla.
 - Nada está en rojo por no estar hecho. El rojo (`tone='danger'`) es para errores; la
   plata que todavía no entró va en `'warn'`.
+- Los formularios largos muestran lo mínimo y pliegan el resto en un `<details class="plegable">`.
+  Si agregás un campo, decidí de qué lado va; el alta de paciente no vuelve a tener quince
+  campos de una. Los plegables se abren solos al editar a alguien que ya tiene esos datos.
+- El inicio tiene modo enfoque (`src/lib/enfoque.ts`): lo que se agregue abajo del cierre del
+  día queda adentro del `{!enfoque && ...}`, porque es contexto del mes y no algo para hacer ahora.
+
+**El aviso de turno de `src/lib/aviso.ts` solo suena con la app abierta.** No es una
+notificación del sistema: no hay servidor que las mande y un navegador en segundo plano se
+congela. El texto de Ajustes lo dice y no se suaviza: el que sí funciona con todo cerrado es
+el `.ics` que se manda al calendario del teléfono, que usa `reminderMinutes`. Son dos ajustes
+distintos y se llaman distinto a propósito.
 
 **Para el movimiento usá `sinMovimiento()` de `src/lib/movimiento.ts`**, no `matchMedia` directo:
 la preferencia del sistema se puede pisar desde Ajustes y tiene que haber una sola respuesta.

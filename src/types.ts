@@ -154,6 +154,14 @@ export interface Settings {
   monthlyGoal: Cents;
   /** Minutos de antelación de la alarma al mandar un turno al calendario. */
   reminderMinutes: number;
+  /**
+   * Minutos de antelación del aviso dentro de la app. Cero es apagado.
+   *
+   * Es distinto de `reminderMinutes`: ese viaja en el archivo que se manda al
+   * calendario del teléfono y lo dispara el calendario. Este lo dispara la app
+   * y solo mientras está abierta. Ver `src/lib/aviso.ts`.
+   */
+  avisarAntesMin: number;
   rateInputs: RateInputs;
 }
 

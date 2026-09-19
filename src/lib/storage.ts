@@ -37,6 +37,9 @@ export const DEFAULT_SETTINGS: Settings = {
   profession: 'psicología',
   monthlyGoal: 0,
   reminderMinutes: 30,
+  // Apagado por omisión: necesita permiso del navegador y nadie pidió que la
+  // app avise. Se prende desde Ajustes.
+  avisarAntesMin: 0,
   rateInputs: {
     targetIncome: 0,
     fixedCosts: 0,
@@ -234,6 +237,7 @@ function parseSettings(raw: Record<string, unknown>): Settings {
     profession: str(raw.profession, d.profession) || d.profession,
     monthlyGoal: Math.max(0, int(raw.monthlyGoal, d.monthlyGoal)),
     reminderMinutes: clamp(raw.reminderMinutes, 0, 1440, d.reminderMinutes),
+    avisarAntesMin: clamp(raw.avisarAntesMin, 0, 120, d.avisarAntesMin),
     rateInputs: {
       targetIncome: Math.max(0, int(rawRate.targetIncome, d.rateInputs.targetIncome)),
       fixedCosts: Math.max(0, int(rawRate.fixedCosts, d.rateInputs.fixedCosts)),

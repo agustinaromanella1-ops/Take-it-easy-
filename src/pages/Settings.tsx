@@ -34,6 +34,39 @@ export function SettingsPage() {
     guardarAnimaciones(nuevo);
   }
 
+  const [avisoEstado, setAvisoEstado] = useState<string | null>(null);
+
+  /**
+   * Prende o apaga el aviso, pidiendo permiso al navegador si hace falta.
+   *
+   * Se guarda el minuto elegido aunque el permiso se niegue: así el desplegable
+   * muestra lo que la persona quiso, y el cartel de abajo explica por qué
+   * todavía no suena en vez de dejar la elección sin efecto y sin motivo.
+   */
+  async function pedirAvisos(minutos: number) {
+    dispatch({ type: 'settings/update', payload: { avisarAntesMin: minutos } });
+    if (minutos === 0) {
+      setAvisoEstado(null);
+      return;
+    }
+    if (typeof Notification === 'undefined') {
+      setAvisoEstado('Este navegador no sabe mostrar avisos.');
+      return;
+    }
+    if (Notification.permission === 'granted') {
+      setAvisoEstado(null);
+      return;
+    }
+    if (Notification.permission === 'denied') {
+      setAvisoEstado('Los avisos están bloqueados para este sitio. Se habilitan desde los permisos del navegador.');
+      return;
+    }
+    const respuesta = await Notification.requestPermission();
+    setAvisoEstado(
+      respuesta === 'granted' ? null : 'Sin permiso no hay aviso. Podés volver a intentarlo cuando quieras.',
+    );
+  }
+
   /** Planillas para abrir en Excel. No reemplazan la copia de seguridad: la
       copia sirve para volver atrás, la planilla para mirar y compartir. */
   function exportarPlanilla(que: 'sesiones' | 'cobros') {
@@ -124,7 +157,7 @@ export function SettingsPage() {
           </Field>
         </div>
         <div className="field-row">
-          <Field label="Alarma del recordatorio (min antes)">
+          <Field label="Alarma del calendario (min antes)">
             <input
               type="number"
               min={0}
@@ -140,6 +173,28 @@ export function SettingsPage() {
             />
           </Field>
         </div>
+        {/* El aviso adentro de la app. Va con su explicación pegada porque la
+            diferencia con la alarma del calendario no se adivina, y prometer un
+            aviso que a veces no llega es peor que no prometerlo. */}
+        <Field label="Avisarme antes de cada sesión">
+          <select
+            value={data.settings.avisarAntesMin}
+            onChange={(e) => pedirAvisos(Number(e.target.value))}
+          >
+            <option value={0}>No avisar</option>
+            <option value={5}>5 minutos antes</option>
+            <option value={10}>10 minutos antes</option>
+            <option value={15}>15 minutos antes</option>
+            <option value={30}>30 minutos antes</option>
+          </select>
+        </Field>
+        <p className="small muted" style={{ marginTop: -6 }}>
+          Este aviso lo da la app y solo suena si está abierta —aunque sea en otra pestaña—. No es un
+          despertador: con la app cerrada no llega. El que sí funciona con todo cerrado es la alarma
+          del calendario del teléfono, que se manda con cada turno desde la Agenda.
+        </p>
+        {avisoEstado && <p className="small muted">{avisoEstado}</p>}
+
         <label style={{ display: 'flex', alignItems: 'center', gap: 8, cursor: 'pointer' }}>
           <input
             type="checkbox"

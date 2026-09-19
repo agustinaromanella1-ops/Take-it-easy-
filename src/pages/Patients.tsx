@@ -239,6 +239,7 @@ export function PatientsPage({ onOpenPatient }: { onOpenPatient: (id: string) =>
     const balance = b?.balance ?? 0;
     const color = patientColor(p.colorIndex);
     const wapp = whatsappLink(p.phone, `Hola ${p.name.split(' ')[0] ?? ''}, ¿cómo estás?`);
+
     return (
       <article
         key={p.id}
@@ -323,6 +324,26 @@ export function PatientsPage({ onOpenPatient }: { onOpenPatient: (id: string) =>
     );
   }
 
+  /**
+   * Si los bloques plegados arrancan abiertos.
+   *
+   * Al dar de alta están cerrados: el formulario corto es el punto. Al editar a
+   * alguien que ya tiene esos datos cargados, se abren solos, porque esconder
+   * lo que la persona vino a cambiar sería peor que mostrarlo de más.
+   */
+  const hayMasDatos =
+    form.email.trim() !== '' ||
+    form.notes.trim() !== '' ||
+    form.kind !== EN_BLANCO.kind ||
+    form.status !== EN_BLANCO.status;
+  const hayFacturacion =
+    [form.legalName, form.document, form.taxId, form.insurer, form.memberNumber].some(
+      (v) => v.trim() !== '',
+    ) || form.taxCondition !== EN_BLANCO.taxCondition;
+  /* `<details>` recuerda solo si está abierto, así que al pasar de una ficha a
+     otra hay que volver a montarlo para que la decisión se recalcule. */
+  const claveFicha = editing === 'new' ? 'nuevo' : (editing?.id ?? '');
+
   return (
     <>
       <div className="page-head">
@@ -401,21 +422,14 @@ export function PatientsPage({ onOpenPatient }: { onOpenPatient: (id: string) =>
               </button>
             </div>
           )}
+          {/* Lo mínimo para que un paciente exista: cómo se llama, cuánto cobra y
+              cada cuánto viene. Todo lo demás está abajo, plegado. Quince campos
+              de una sola vez convierten "cargar a alguien" en un trámite, y un
+              trámite se posterga; con cuatro se empieza y listo. Nada de lo que
+              se pliega es obligatorio, y se puede completar cuando aparezca. */}
           <Field label="Nombre y apellido *" error={errors.name}>
             <input value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} autoFocus />
           </Field>
-          <div className="field-row">
-            <Field label="Email" error={errors.email}>
-              <input
-                type="email"
-                value={form.email}
-                onChange={(e) => setForm({ ...form, email: e.target.value })}
-              />
-            </Field>
-            <Field label="Teléfono">
-              <input value={form.phone} onChange={(e) => setForm({ ...form, phone: e.target.value })} />
-            </Field>
-          </div>
           <div className="field-row">
             <Field label="Honorario por sesión" error={errors.fee}>
               <input
@@ -424,18 +438,6 @@ export function PatientsPage({ onOpenPatient }: { onOpenPatient: (id: string) =>
                 onChange={(e) => setForm({ ...form, fee: e.target.value })}
                 placeholder="0,00"
               />
-            </Field>
-            <Field label="Tipo">
-              <select
-                value={form.kind}
-                onChange={(e) => setForm({ ...form, kind: e.target.value as PatientKind })}
-              >
-                {(Object.keys(KIND_LABEL) as PatientKind[]).map((k) => (
-                  <option key={k} value={k}>
-                    {KIND_LABEL[k]}
-                  </option>
-                ))}
-              </select>
             </Field>
             <Field label="Frecuencia">
               <select
@@ -449,90 +451,122 @@ export function PatientsPage({ onOpenPatient }: { onOpenPatient: (id: string) =>
                 ))}
               </select>
             </Field>
-            <Field label="Estado">
+          </div>
+          {/* El teléfono queda arriba aunque no sea obligatorio: es lo que
+              habilita escribirle por WhatsApp desde la agenda. */}
+          <Field label="Teléfono">
+            <input value={form.phone} onChange={(e) => setForm({ ...form, phone: e.target.value })} />
+          </Field>
+
+          <details className="plegable" key={`mas-${claveFicha}`} open={hayMasDatos}>
+            <summary>Más datos</summary>
+            <div className="field-row">
+              <Field label="Email" error={errors.email}>
+                <input
+                  type="email"
+                  value={form.email}
+                  onChange={(e) => setForm({ ...form, email: e.target.value })}
+                />
+              </Field>
+              <Field label="Tipo">
+                <select
+                  value={form.kind}
+                  onChange={(e) => setForm({ ...form, kind: e.target.value as PatientKind })}
+                >
+                  {(Object.keys(KIND_LABEL) as PatientKind[]).map((k) => (
+                    <option key={k} value={k}>
+                      {KIND_LABEL[k]}
+                    </option>
+                  ))}
+                </select>
+              </Field>
+              <Field label="Estado">
+                <select
+                  value={form.status}
+                  onChange={(e) => setForm({ ...form, status: e.target.value as Patient['status'] })}
+                >
+                  <option value="activo">Activo</option>
+                  <option value="inactivo">Inactivo</option>
+                </select>
+              </Field>
+            </div>
+
+            <div className="field">
+              <label id="color-label">Color</label>
+              <div className="swatches" role="radiogroup" aria-labelledby="color-label">
+                {PATIENT_COLORS.map((c, i) => (
+                  <button
+                    key={c.name}
+                    type="button"
+                    role="radio"
+                    aria-checked={form.colorIndex === i}
+                    aria-label={c.name}
+                    title={c.name}
+                    className={`swatch${form.colorIndex === i ? ' is-selected' : ''}`}
+                    style={{ background: c.solid }}
+                    onClick={() => setForm({ ...form, colorIndex: i })}
+                  />
+                ))}
+              </div>
+            </div>
+
+            <Field label="Notas">
+              <textarea value={form.notes} onChange={(e) => setForm({ ...form, notes: e.target.value })} />
+            </Field>
+          </details>
+
+          <details className="plegable" key={`factura-${claveFicha}`} open={hayFacturacion}>
+            <summary>Datos para facturar</summary>
+            <Field label="Nombre completo">
+              <input
+                value={form.legalName}
+                onChange={(e) => setForm({ ...form, legalName: e.target.value })}
+                placeholder={form.name.trim() === '' ? 'Como figura en el documento' : form.name}
+              />
+            </Field>
+
+            <div className="field-row">
+              <Field label="DNI">
+                <input
+                  inputMode="numeric"
+                  value={form.document}
+                  onChange={(e) => setForm({ ...form, document: e.target.value })}
+                />
+              </Field>
+              <Field label="CUIT / CUIL">
+                <input
+                  inputMode="numeric"
+                  value={form.taxId}
+                  onChange={(e) => setForm({ ...form, taxId: e.target.value })}
+                />
+              </Field>
+            </div>
+
+            <Field label="Condición frente al IVA">
               <select
-                value={form.status}
-                onChange={(e) => setForm({ ...form, status: e.target.value as Patient['status'] })}
+                value={form.taxCondition}
+                onChange={(e) => setForm({ ...form, taxCondition: e.target.value as TaxCondition })}
               >
-                <option value="activo">Activo</option>
-                <option value="inactivo">Inactivo</option>
+                {(Object.keys(TAX_CONDITION_LABEL) as TaxCondition[]).map((c) => (
+                  <option key={c} value={c}>
+                    {TAX_CONDITION_LABEL[c]}
+                  </option>
+                ))}
               </select>
             </Field>
-          </div>
 
-          <div className="field">
-            <label id="color-label">Color</label>
-            <div className="swatches" role="radiogroup" aria-labelledby="color-label">
-              {PATIENT_COLORS.map((c, i) => (
-                <button
-                  key={c.name}
-                  type="button"
-                  role="radio"
-                  aria-checked={form.colorIndex === i}
-                  aria-label={c.name}
-                  title={c.name}
-                  className={`swatch${form.colorIndex === i ? ' is-selected' : ''}`}
-                  style={{ background: c.solid }}
-                  onClick={() => setForm({ ...form, colorIndex: i })}
+            <div className="field-row">
+              <Field label="Obra social / prepaga">
+                <input value={form.insurer} onChange={(e) => setForm({ ...form, insurer: e.target.value })} />
+              </Field>
+              <Field label="N.º de afiliado">
+                <input
+                  value={form.memberNumber}
+                  onChange={(e) => setForm({ ...form, memberNumber: e.target.value })}
                 />
-              ))}
+              </Field>
             </div>
-          </div>
-          <h3 className="form-section">Datos para facturar</h3>
-
-          <Field label="Nombre completo">
-            <input
-              value={form.legalName}
-              onChange={(e) => setForm({ ...form, legalName: e.target.value })}
-              placeholder={form.name.trim() === '' ? 'Como figura en el documento' : form.name}
-            />
-          </Field>
-
-          <div className="field-row">
-            <Field label="DNI">
-              <input
-                inputMode="numeric"
-                value={form.document}
-                onChange={(e) => setForm({ ...form, document: e.target.value })}
-              />
-            </Field>
-            <Field label="CUIT / CUIL">
-              <input
-                inputMode="numeric"
-                value={form.taxId}
-                onChange={(e) => setForm({ ...form, taxId: e.target.value })}
-              />
-            </Field>
-          </div>
-
-          <Field label="Condición frente al IVA">
-            <select
-              value={form.taxCondition}
-              onChange={(e) => setForm({ ...form, taxCondition: e.target.value as TaxCondition })}
-            >
-              {(Object.keys(TAX_CONDITION_LABEL) as TaxCondition[]).map((c) => (
-                <option key={c} value={c}>
-                  {TAX_CONDITION_LABEL[c]}
-                </option>
-              ))}
-            </select>
-          </Field>
-
-          <div className="field-row">
-            <Field label="Obra social / prepaga">
-              <input value={form.insurer} onChange={(e) => setForm({ ...form, insurer: e.target.value })} />
-            </Field>
-            <Field label="N.º de afiliado">
-              <input
-                value={form.memberNumber}
-                onChange={(e) => setForm({ ...form, memberNumber: e.target.value })}
-              />
-            </Field>
-          </div>
-
-          <Field label="Notas">
-            <textarea value={form.notes} onChange={(e) => setForm({ ...form, notes: e.target.value })} />
-          </Field>
+          </details>
           <div className="modal-foot">
             <button className="btn" onClick={() => setEditing(null)}>
               Cancelar

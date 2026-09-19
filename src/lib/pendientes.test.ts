@@ -64,6 +64,7 @@ const datos = (p: Partial<AppData>): AppData => ({
     chargeNoShowByDefault: true,
     monthlyGoal: 0,
     reminderMinutes: 30,
+    avisarAntesMin: 0,
     rateInputs: {} as AppData['settings']['rateInputs'],
   },
   ...p,
