@@ -22,6 +22,7 @@ npx vite build && npx vite preview --port 4173 &
 node e2e/aceptacion.mjs     # 118 verificaciones sobre la app entera
 node e2e/bienvenida.mjs     # 43: la portada contra el diseño aprobado
 node e2e/actualizacion.mjs  # 15: la barra de "hay una versión nueva"
+node e2e/borradores.mjs     # 22: que lo escrito no se pierda al cerrar una pantalla
 ```
 
 `e2e/actualizacion.mjs` tarda unos minutos porque vuelve a compilar dos veces con la app
@@ -90,8 +91,11 @@ reglas, no estilo.** Antes de mover algo del inicio o de agregar una pantalla, l
   el estado anterior y ofrece deshacer. Si se agrega una acción al reducer, va también
   su etiqueta en `etiquetaDe()`; sin etiqueta no se ofrece deshacer y el cambio queda
   sin confirmación visible.
-- Los formularios largos guardan borrador con `src/lib/borrador.ts`. Lo escrito no se
-  pierde nunca por cerrar una pantalla.
+- Los formularios largos guardan borrador con el hook `src/lib/useBorrador.ts` y muestran
+  `<AvisoBorrador>`. Lo escrito no se pierde nunca por cerrar una pantalla. Lo usan el alta
+  de paciente, el turno y el cobro; si se agrega otro formulario largo, va por ahí y no con
+  una copia de la máquina de estados. Mientras el cartel está en `'ofrecido'` no se guarda
+  nada: escribir antes de decidir pisaría lo que el cartel promete devolver.
 - Nada está en rojo por no estar hecho. El rojo (`tone='danger'`) es para errores; la
   plata que todavía no entró va en `'warn'`.
 - Los formularios largos muestran lo mínimo y pliegan el resto en un `<details class="plegable">`.

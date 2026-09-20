@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import type { Session } from '../types';
 import { useStore } from '../store/StoreContext';
 import { conflictingSessionIds, pendingReview, sessionsInRange } from '../store/selectors';
@@ -32,6 +32,8 @@ import {
 import { icsFileName, sessionToICS } from '../lib/calendar';
 import { downloadText } from '../lib/download';
 import { ESTADO } from '../lib/etiquetas';
+import { useBorrador } from '../lib/useBorrador';
+import { AvisoBorrador } from '../components/AvisoBorrador';
 
 
 
@@ -47,6 +49,23 @@ interface FormState {
   repeat: Repeat;
   repeatCount: string;
 }
+
+/** Clave del borrador del turno. Ver `src/lib/borrador.ts`. */
+const BORRADOR_SESION = 'sesion';
+
+/** Solo como respaldo: la referencia de verdad es el formulario recién abierto. */
+const VACIO_SESION: FormState = {
+  patientId: '',
+  date: '',
+  time: '',
+  durationMin: '',
+  fee: '',
+  status: 'programada',
+  chargeable: false,
+  notes: '',
+  repeat: 'ninguna',
+  repeatCount: '',
+};
 
 export function AgendaPage({
   onGo,
@@ -121,10 +140,37 @@ export function AgendaPage({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [abrirPara]);
 
+  /**
+   * Cómo quedó el formulario al abrirse.
+   *
+   * Es la referencia contra la que se decide si hay algo escrito. No sirve un
+   * formulario "en blanco" fijo: el turno nuevo nace con fecha, hora, duración
+   * y honorario ya puestos, así que compararlo contra vacío daría que siempre
+   * hay contenido y guardaría un borrador que nadie escribió.
+   */
+  const reciénAbierto = useRef<FormState>(VACIO_SESION);
+  const borrador = useBorrador(
+    BORRADOR_SESION,
+    reciénAbierto.current,
+    form ?? reciénAbierto.current,
+    editing === 'new',
+  );
+
+  /** Al retomar, lo guardado reemplaza lo que haya en pantalla. */
+  function retomar() {
+    const guardado = borrador.retomar();
+    if (guardado) setForm(guardado);
+  }
+
+  function descartarBorrador() {
+    borrador.descartar();
+    setForm(reciénAbierto.current);
+  }
+
   function openNew(date: string, patientId?: string) {
     const pedido = patientId ? activePatients.find((p) => p.id === patientId) : undefined;
     const first = pedido ?? activePatients.find((p) => p.status === 'activo') ?? activePatients[0];
-    setForm({
+    const inicial: FormState = {
       patientId: first?.id ?? '',
       date,
       time: '09:00',
@@ -139,8 +185,14 @@ export function AgendaPage({
       // al de elegir la repetición cuando de verdad se quiere una serie.
       repeat: 'ninguna',
       repeatCount: '4',
-    });
+    };
+    reciénAbierto.current = inicial;
+    setForm(inicial);
     setErrors({});
+    // Con paciente puesto venimos de una tarjeta de pendientes: se vino a
+    // agendarle a esa persona, no a retomar otra cosa.
+    if (patientId) borrador.callar();
+    else borrador.ofrecerSiHay();
     setEditing('new');
   }
 
@@ -160,6 +212,7 @@ export function AgendaPage({
       repeatCount: '1',
     });
     setErrors({});
+    borrador.callar();
     setEditing(s);
   }
 
@@ -603,6 +656,7 @@ export function AgendaPage({
             setForm(null);
           }}
         >
+          <AvisoBorrador estado={borrador.estado} onRetomar={retomar} onDescartar={descartarBorrador} />
           <Field label="Paciente *" error={errors.patientId}>
             <select value={form.patientId} onChange={(e) => onPatientChange(e.target.value)}>
               <option value="">— Elegir —</option>

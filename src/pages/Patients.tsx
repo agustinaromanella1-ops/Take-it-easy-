@@ -1,11 +1,12 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useMemo, useState } from 'react';
 import type { Frequency, Patient, PatientKind, TaxCondition } from '../types';
 import { useStore } from '../store/StoreContext';
 import { patientBalances } from '../store/selectors';
 import { centsToInput, formatMoney, parseMoney } from '../lib/money';
 import { formatDateShort, today } from '../lib/dates';
 import { ConfirmButton, Empty, Field, Modal } from '../components/ui';
-import { guardarBorrador, leerBorrador, limpiarBorrador, tieneContenido } from '../lib/borrador';
+import { useBorrador } from '../lib/useBorrador';
+import { AvisoBorrador } from '../components/AvisoBorrador';
 import { nextFreeColor, PATIENT_COLORS, patientColor } from '../lib/palette';
 import { whatsappLink } from '../lib/contact';
 import { TAX_CONDITION_LABEL } from '../lib/billing';
@@ -90,11 +91,7 @@ export function PatientsPage({ onOpenPatient }: { onOpenPatient: (id: string) =>
   // antes de que el formulario se muestre.
   const [form, setForm] = useState<FormState>(EN_BLANCO);
   const [errors, setErrors] = useState<Partial<Record<keyof FormState, string>>>({});
-  /**
-   * El cartel del borrador: 'no' cuando no hay nada que ofrecer, 'ofrecido'
-   * mientras se pregunta, 'recuperado' una vez que se retomó.
-   */
-  const [borrador, setBorrador] = useState<'no' | 'ofrecido' | 'recuperado'>('no');
+  const borrador = useBorrador(BORRADOR, EN_BLANCO, form, editing === 'new');
   /**
    * Si los bloques plegados arrancan abiertos.
    *
@@ -144,8 +141,7 @@ export function PatientsPage({ onOpenPatient }: { onOpenPatient: (id: string) =>
     setErrors({});
     // Si quedó algo a medias de la vez anterior, se ofrece; no se aplica solo,
     // que sería peor: el formulario aparecería lleno sin que nadie lo pidiera.
-    const guardado = leerBorrador<FormState>(BORRADOR);
-    setBorrador(guardado && tieneContenido({ ...EN_BLANCO, ...guardado }, EN_BLANCO) ? 'ofrecido' : 'no');
+    borrador.ofrecerSiHay();
     setAbiertos({ mas: false, factura: false });
     setEditing('new');
   }
@@ -153,7 +149,7 @@ export function PatientsPage({ onOpenPatient }: { onOpenPatient: (id: string) =>
   function openEdit(p: Patient) {
     setForm(toForm(p));
     setErrors({});
-    setBorrador('no');
+    borrador.callar();
     // Se abre lo que esa persona ya tiene cargado: esconder justo lo que se
     // vino a cambiar sería peor que mostrarlo de más.
     setAbiertos({
@@ -165,39 +161,16 @@ export function PatientsPage({ onOpenPatient }: { onOpenPatient: (id: string) =>
     setEditing(p);
   }
 
-  /**
-   * El borrador del alta.
-   *
-   * Solo se guarda al cargar a alguien nuevo: editar una ficha que ya existe
-   * no necesita red —lo guardado sigue estando— y ofrecer un borrador viejo
-   * encima de un paciente real sería peor que no ofrecer nada.
-   */
-  useEffect(() => {
-    if (editing !== 'new') return;
-    // Mientras el cartel ofrece retomar lo de la vez pasada, no se pisa nada:
-    // si alguien escribe una letra antes de decidir, el borrador viejo se
-    // perdería y "Retomarlo" devolvería esa letra. Es justo la pérdida que
-    // esta función viene a evitar.
-    if (borrador === 'ofrecido') return;
-    if (!tieneContenido(form, EN_BLANCO)) return;
-    guardarBorrador(BORRADOR, form);
-  }, [editing, form, borrador]);
-
-  /** Al abrir el alta, ofrecer lo que había quedado a medias. */
+  /** Al retomar, lo guardado reemplaza lo que haya en pantalla. */
   function retomar() {
-    const guardado = leerBorrador<Partial<FormState>>(BORRADOR);
-    if (!guardado) return;
-    // Se mezcla con el formulario en blanco: si el borrador viene de una
-    // versión vieja y le falta un campo, el campo aparece vacío y no roto.
-    setForm({ ...EN_BLANCO, ...guardado });
-    setBorrador('recuperado');
+    const guardado = borrador.retomar();
+    if (guardado) setForm(guardado);
   }
 
   function descartarBorrador() {
-    limpiarBorrador(BORRADOR);
+    borrador.descartar();
     setForm({ ...EN_BLANCO, colorIndex: nextFreeColor(data.patients.map((p) => p.colorIndex)) });
     setAbiertos({ mas: false, factura: false });
-    setBorrador('no');
   }
 
   function submit() {
@@ -240,8 +213,7 @@ export function PatientsPage({ onOpenPatient }: { onOpenPatient: (id: string) =>
       dispatch({ type: 'patient/add', payload: { ...fields, lastRaise: fields.defaultFee > 0 ? today() : null } });
     }
     else if (editing) dispatch({ type: 'patient/update', payload: { ...editing, ...fields } });
-    limpiarBorrador(BORRADOR);
-    setBorrador('no');
+    borrador.listo();
     setEditing(null);
   }
 
@@ -422,32 +394,7 @@ export function PatientsPage({ onOpenPatient }: { onOpenPatient: (id: string) =>
 
       {editing && (
         <Modal title={editing === 'new' ? 'Nuevo paciente' : 'Editar paciente'} onClose={() => setEditing(null)}>
-          {borrador === 'ofrecido' && (
-            <div className="borrador-aviso">
-              <span>Quedó algo a medio cargar la última vez.</span>
-              <div className="actions">
-                <button className="btn small primary" onClick={retomar}>
-                  Retomarlo
-                </button>
-                <button className="btn small ghost" onClick={descartarBorrador}>
-                  Empezar de cero
-                </button>
-              </div>
-            </div>
-          )}
-          {borrador === 'recuperado' && (
-            <div className="borrador-aviso">
-              <span>Esto es lo que habías empezado a cargar.</span>
-              <button className="btn small ghost" onClick={descartarBorrador}>
-                Empezar de cero
-              </button>
-            </div>
-          )}
-          {/* Lo mínimo para que un paciente exista: cómo se llama, cuánto cobra y
-              cada cuánto viene. Todo lo demás está abajo, plegado. Quince campos
-              de una sola vez convierten "cargar a alguien" en un trámite, y un
-              trámite se posterga; con cuatro se empieza y listo. Nada de lo que
-              se pliega es obligatorio, y se puede completar cuando aparezca. */}
+          <AvisoBorrador estado={borrador.estado} onRetomar={retomar} onDescartar={descartarBorrador} />
           <Field label="Nombre y apellido *" error={errors.name}>
             <input value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} autoFocus />
           </Field>

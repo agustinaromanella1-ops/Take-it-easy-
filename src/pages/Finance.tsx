@@ -10,8 +10,31 @@ import { RateCalculator } from '../components/RateCalculator';
 import { Monitoring } from '../components/Monitoring';
 import { Billing } from '../components/Billing';
 import { plural } from '../lib/plural';
+import { useBorrador } from '../lib/useBorrador';
+import { AvisoBorrador } from '../components/AvisoBorrador';
 
 const METHODS: Payment['method'][] = ['efectivo', 'transferencia', 'tarjeta', 'otro'];
+
+/** Clave del borrador del cobro. Ver `src/lib/borrador.ts`. */
+const BORRADOR_COBRO = 'cobro';
+
+interface FormCobro {
+  patientId: string;
+  date: string;
+  amount: string;
+  method: Payment['method'];
+  notes: string;
+}
+
+/** El formulario recién abierto. La fecha se calcula al abrirlo, no al cargar
+ *  el módulo: una pestaña abierta desde ayer proponía la fecha de ayer. */
+const enBlanco = (): FormCobro => ({
+  patientId: '',
+  date: today(),
+  amount: '',
+  method: 'efectivo',
+  notes: '',
+});
 
 export function FinancePage({
   onGo,
@@ -27,7 +50,8 @@ export function FinancePage({
   const [month, setMonth] = useState(() => monthKey(today()));
   const [view, setView] = useState<'resumen' | 'monitoreo' | 'facturacion'>('resumen');
   const [adding, setAdding] = useState(false);
-  const [form, setForm] = useState({ patientId: '', date: today(), amount: '', method: 'efectivo' as Payment['method'], notes: '' });
+  const [form, setForm] = useState<FormCobro>(() => enBlanco());
+  const borrador = useBorrador(BORRADOR_COBRO, enBlanco(), form, adding);
   const [errors, setErrors] = useState<Record<string, string>>({});
 
   const currency = data.settings.currency;
@@ -73,9 +97,24 @@ export function FinancePage({
   }, [abrirPara]);
 
   function openAdd(patientId = '') {
-    setForm({ patientId, date: today(), amount: '', method: 'efectivo', notes: '' });
+    setForm({ ...enBlanco(), patientId });
     setErrors({});
+    // Si viene con paciente puesto desde una tarjeta de pendientes, no se
+    // ofrece nada: se vino a cobrarle a esa persona, no a retomar otra cosa.
+    if (patientId) borrador.callar();
+    else borrador.ofrecerSiHay();
     setAdding(true);
+  }
+
+  /** Al retomar, lo guardado reemplaza lo que haya en pantalla. */
+  function retomar() {
+    const guardado = borrador.retomar();
+    if (guardado) setForm(guardado);
+  }
+
+  function descartarBorrador() {
+    borrador.descartar();
+    setForm(enBlanco());
   }
 
   function submit() {
@@ -99,6 +138,7 @@ export function FinancePage({
         notes: form.notes.trim(),
       },
     });
+    borrador.listo();
     setAdding(false);
   }
 
@@ -323,6 +363,7 @@ export function FinancePage({
 
       {adding && (
         <Modal title="Registrar pago" onClose={() => setAdding(false)}>
+          <AvisoBorrador estado={borrador.estado} onRetomar={retomar} onDescartar={descartarBorrador} />
           <Field label="Paciente *" error={errors.patientId}>
             <select value={form.patientId} onChange={(e) => setForm({ ...form, patientId: e.target.value })}>
               <option value="">— Elegir —</option>
