@@ -10,6 +10,7 @@ import type {
   Settings,
   TaxCondition,
 } from '../types';
+import { fusionar } from './fusion';
 import { PATIENT_COLORS } from './palette';
 import { isValidISODate, isValidTime } from './dates';
 
@@ -291,4 +292,36 @@ export function saveData(data: AppData): boolean {
   } catch {
     return false;
   }
+}
+
+/**
+ * Lo que hay guardado ahora mismo, sin migrar ni guardar nada.
+ *
+ * Es para fusionar antes de escribir: hace falta ver qué dejó la otra pestaña.
+ * A diferencia de `loadData`, no persiste la migración —escribir dentro de un
+ * guardado sería morderse la cola— y devuelve `null` si no hay nada.
+ */
+export function leerLoGuardado(): AppData | null {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if (!raw) return null;
+    return parseAppData(JSON.parse(raw));
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * Guarda fusionando con lo que haya quedado de otra pestaña.
+ *
+ * Escribir el bloque entero pisaba lo que la otra pestaña acababa de guardar:
+ * se marcaba una sesión en una, se registraba un cobro en la otra, y lo
+ * primero desaparecía sin que nadie se enterara. Ver `src/lib/fusion.ts`.
+ *
+ * Devuelve lo que quedó escrito, o `null` si no se pudo guardar.
+ */
+export function guardarFusionando(data: AppData): AppData | null {
+  const guardado = leerLoGuardado();
+  const fusionado = guardado ? fusionar(data, guardado) : data;
+  return saveData(fusionado) ? fusionado : null;
 }

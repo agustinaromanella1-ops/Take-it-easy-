@@ -23,6 +23,7 @@ node e2e/aceptacion.mjs     # 118 verificaciones sobre la app entera
 node e2e/bienvenida.mjs     # 43: la portada contra el diseño aprobado
 node e2e/actualizacion.mjs  # 15: la barra de "hay una versión nueva"
 node e2e/borradores.mjs     # 26: que lo escrito no se pierda al cerrar una pantalla
+node e2e/dos-pestanas.mjs   # 8: dos pestañas a la vez, que no se pisen
 ```
 
 `e2e/actualizacion.mjs` tarda unos minutos porque vuelve a compilar dos veces con la app
@@ -58,6 +59,18 @@ quien usó varias versiones tiene datos en varias claves.
 
 **Las fechas locales son texto `YYYY-MM-DD`.** Usá `fromISODate()` de `src/lib/dates.ts`, nunca
 `new Date('2026-03-10')`: eso parsea en UTC y en Argentina devuelve el día anterior.
+
+**Para guardar se usa `guardarFusionando()`, nunca `saveData()` a secas.** Escribir el bloque
+entero pisa lo que otra pestaña acaba de guardar: se marca una sesión en una, se registra un
+cobro en la otra, y lo primero desaparece sin que nadie se entere. `src/lib/fusion.ts` fusiona
+registro por registro —gana el sello más nuevo, y una lápida más nueva que una edición borra—,
+y `StoreContext` además escucha el evento `storage` para enterarse de lo que guardó la otra.
+La regla es la que define `SINCRONIZACION.md`: es la misma pregunta que la sincronización entre
+dispositivos, resuelta primero para el caso chico.
+
+**Deshacer resella.** `src/lib/deshacer.ts` devuelve el estado anterior con `updatedAt` de ahora,
+y deja lápida de lo que el cambio había creado. Reponer la foto tal cual no alcanzaría: con los
+sellos viejos, la fusión contra lo ya guardado elige el cambio y el deshacer no hace nada.
 
 **El sello y las lápidas los pone el reducer, no quien despacha.** Cada registro lleva `updatedAt`
 y borrar deja una `Lapida` con id y fecha —nunca contenido—. Los payloads excluyen `updatedAt` por

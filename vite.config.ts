@@ -5,8 +5,16 @@ import { defineConfig } from 'vitest/config';
 // anterior acá, y una prueba que corriera en UTC no vería la diferencia.
 process.env.TZ = 'America/Argentina/Buenos_Aires';
 
-/** La fecha del último commit. Si no hay git a mano, la de ahora. */
+/**
+ * La fecha del último commit. Si no hay git a mano, la de ahora.
+ *
+ * `PIPI_VERSION` la pisa. Existe para `e2e/actualizacion.mjs`, que necesita
+ * compilar dos veces el MISMO fuente y que la segunda cuente como una versión
+ * nueva; sin esto no podría probar la barra de actualizar, que es justo lo que
+ * ya se rompió dos veces.
+ */
 function fechaDeLaVersion(): string {
+  if (process.env.PIPI_VERSION) return process.env.PIPI_VERSION;
   try {
     return execSync('git log -1 --format=%cI', { encoding: 'utf8' }).trim();
   } catch {

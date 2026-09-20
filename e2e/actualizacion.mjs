@@ -47,9 +47,21 @@ async function pasarPortada(p) {
   await p.locator('.tour-saltar').click().catch(() => {});
 }
 
-/** Compila de nuevo: es lo que hace Cloudflare cuando se publica un commit. */
+/**
+ * Compila de nuevo: es lo que hace Cloudflare cuando se publica un commit.
+ *
+ * `PIPI_VERSION` hace que cuente como una versión distinta. Hace falta porque
+ * la app usa la fecha del último commit como sello: dos compilaciones del
+ * mismo fuente dan el mismo archivo —a propósito, para que un commit que solo
+ * toca el README no le muestre la barra a todo el mundo—, y sin sello distinto
+ * esta prueba no tendría nada nuevo que detectar.
+ */
 function publicarVersionNueva() {
-  execSync('npx vite build', { cwd: process.cwd(), stdio: 'ignore' });
+  execSync('npx vite build', {
+    cwd: process.cwd(),
+    stdio: 'ignore',
+    env: { ...process.env, PIPI_VERSION: new Date().toISOString() },
+  });
 }
 
 /**

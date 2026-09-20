@@ -89,6 +89,21 @@ migrar, y si eso no quedara guardado, cada arranque le inventaría uno nuevo: un
 tocó parecería recién editado cada vez que se abre la app, que es justo lo que el sello viene a
 evitar.
 
+**1 bis. La fusión** — ✅ **hecha, y en uso.** `src/lib/fusion.ts` implementa exactamente la regla
+de arriba, y `src/lib/deshacer.ts` la contraparte que hacía falta: deshacer tiene que devolver el
+estado anterior **con sellos frescos**, porque con los viejos la fusión elige el cambio que se
+quería deshacer y no pasa nada.
+
+No se construyó para el servidor sino para dos pestañas de la misma app abiertas a la vez, que es
+el mismo problema en chico y ya estaba perdiendo datos: la segunda en guardar pisaba a la primera.
+Se usa en cada guardado (`guardarFusionando`) y al escuchar el evento `storage`. Está probada con
+21 pruebas unitarias y 8 de punta a punta con dos pestañas reales (`e2e/dos-pestanas.mjs`).
+
+Lo que **no** resuelve y la etapa 4 va a tener que mirar: los ajustes no llevan sello y se toman
+del lado que guarda; las lápidas se acumulan sin podarse nunca; y dos relojes desfasados entre
+dispositivos pueden dejar un registro con sello futuro, que gana para siempre. Entre pestañas de
+la misma máquina el reloj es uno solo, así que ahí no pasa.
+
 **2. El módulo de cifrado** — derivar, envolver, desenvolver, cifrar, descifrar, generar el código
 de recuperación. Funciones puras, con pruebas: es la parte donde un error se paga caro.
 

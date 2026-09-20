@@ -10,7 +10,9 @@ import {
   type ReactNode,
 } from 'react';
 import type { AppData } from '../types';
-import { loadData, saveData } from '../lib/storage';
+import { guardarFusionando, leerLoGuardado, loadData, STORAGE_KEY } from '../lib/storage';
+import { fusionar } from '../lib/fusion';
+import { volverA } from '../lib/deshacer';
 import { reducer, type Action } from './reducer';
 
 interface StoreValue {
@@ -98,6 +100,17 @@ function etiquetaDe(action: Action): string | null {
  */
 const DESHACER_MS = 10000;
 
+/**
+ * Si dos copias de los datos son la misma cosa.
+ *
+ * Se compara el texto serializado porque alcanza y es barato: lo único que se
+ * necesita saber es si la fusión trajo algo, para no despachar un cambio que
+ * no cambia nada y volver a dibujar la app de gusto.
+ */
+function mismosDatos(a: AppData, b: AppData): boolean {
+  return JSON.stringify(a) === JSON.stringify(b);
+}
+
 const StoreContext = createContext<StoreValue | null>(null);
 
 /** Milisegundos de espera antes de escribir a localStorage. Evita serializar
@@ -132,19 +145,50 @@ export function StoreProvider({ children }: { children: ReactNode }) {
     }
     dirty.current = true;
     const t = setTimeout(() => {
-      const guardó = saveData(latest.current);
-      if (guardó) dirty.current = false;
-      setNoSeGuarda(!guardó);
+      // Fusiona con lo que haya guardado otra pestaña en el ínterin, en vez de
+      // pisarlo. Ver `src/lib/fusion.ts`.
+      const fusionado = guardarFusionando(latest.current);
+      if (fusionado) dirty.current = false;
+      setNoSeGuarda(fusionado === null);
+      // Si la fusión trajo algo que esta pestaña no tenía, se muestra: si no,
+      // la pantalla seguiría mostrando una foto vieja de datos que ya cambiaron.
+      if (fusionado && !mismosDatos(fusionado, latest.current)) {
+        dispatch({ type: 'data/replace', payload: fusionado });
+      }
     }, SAVE_DEBOUNCE_MS);
     return () => clearTimeout(t);
   }, [data]);
+
+  /**
+   * Enterarse de lo que guardó otra pestaña.
+   *
+   * El evento `storage` llega solo a las OTRAS pestañas del mismo origen, así
+   * que no hay eco. Lo que llega se fusiona con lo que esta pestaña tiene en
+   * memoria —puede haber algo escrito y todavía sin guardar—, nunca se
+   * reemplaza a ciegas.
+   */
+  useEffect(() => {
+    const alCambiar = (e: StorageEvent) => {
+      if (e.key !== STORAGE_KEY) return;
+      const deLaOtra = leerLoGuardado();
+      if (!deLaOtra) return;
+      const fusionado = fusionar(latest.current, deLaOtra);
+      if (mismosDatos(fusionado, latest.current)) return;
+      dispatch({ type: 'data/replace', payload: fusionado });
+      // Deshacer se arma sobre una foto que acaba de quedar vieja: ofrecerlo
+      // ahora sería prometer volver a un estado que ya no existe.
+      setUndo(null);
+    };
+    window.addEventListener('storage', alCambiar);
+    return () => window.removeEventListener('storage', alCambiar);
+  }, []);
 
   // Si se cierra la pestaña dentro de la ventana del debounce, el último
   // cambio se perdería. Este flush lo persiste antes de salir.
   useEffect(() => {
     const flush = () => {
       if (!dirty.current) return;
-      if (saveData(latest.current)) dirty.current = false;
+      if (guardarFusionando(latest.current)) dirty.current = false;
     };
     window.addEventListener('pagehide', flush);
     return () => {
@@ -188,7 +232,15 @@ export function StoreProvider({ children }: { children: ReactNode }) {
             hacer: () => {
               // `dispatch` crudo, no `despachar`: volver atrás no es un cambio
               // nuevo que se pueda deshacer otra vez.
-              dispatch({ type: 'data/replace', payload: undo.estado });
+              //
+              // Y no se repone la foto tal cual: `volverA` la devuelve con
+              // sellos frescos. Con los viejos, la fusión contra lo ya
+              // guardado —que tiene el cambio, más nuevo— elegiría el cambio y
+              // el deshacer no haría nada. Ver `src/lib/deshacer.ts`.
+              dispatch({
+                type: 'data/replace',
+                payload: volverA(latest.current, undo.estado, new Date().toISOString()),
+              });
               setUndo(null);
             },
             descartar: () => setUndo(null),
