@@ -104,12 +104,30 @@ async function recorrido(controlada) {
   check('aparece la barra', aparecio);
 
   let recargas = 0;
-  p.on('framenavigated', (f) => { if (f === p.mainFrame()) recargas++; });
+  // El momento exacto de la recarga. Medir con un reloj alrededor del bloque
+  // entero no sirve: los ayudantes de esta prueba esperan lo suyo y el número
+  // sale inflado. Ya pasó.
+  let cuandoRecargo = 0;
+  p.on('framenavigated', (f) => {
+    if (f !== p.mainFrame()) return;
+    recargas++;
+    if (!cuandoRecargo) cuandoRecargo = Date.now();
+  });
+  const t0 = Date.now();
   await p.locator('.update-bar button').click();
   await p.waitForTimeout(6000);
   await pasarPortada(p);
 
   const despues = await bundle(p);
+  // La recarga tiene que salir de que el service worker nuevo llegó a
+  // `activated`, no de un temporizador. Con la red de último recurso en 30 s,
+  // haber recargado muy antes es la señal de que el camino bueno funcionó.
+  const tardo = cuandoRecargo ? cuandoRecargo - t0 : Infinity;
+  check(
+    'recarga por estado y no por temporizador',
+    tardo < 10000,
+    cuandoRecargo ? `${(tardo / 1000).toFixed(1)} s desde el toque` : 'no recargó',
+  );
   check('tocar "Actualizar" deja la app en la versión nueva', antes !== despues, `${antes} → ${despues}`);
   check('y recarga una sola vez', recargas === 1, `recargó ${recargas} vez/veces`);
   check('la barra no queda colgada', (await p.locator('.update-bar').count()) === 0);

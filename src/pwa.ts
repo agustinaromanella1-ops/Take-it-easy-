@@ -57,10 +57,20 @@ export async function buscarVersionNueva(): Promise<'nueva' | 'al-dia' | 'sin-so
 }
 
 /**
- * Cuánto se espera a que el service worker nuevo tome el control antes de
- * recargar por las nuestras.
+ * Cuánto se espera cuando la pestaña NUNCA estuvo controlada por un service
+ * worker. Ahí no hay nada viejo que se pueda servir, así que recargar rápido
+ * es seguro.
  */
-const ESPERA_RECARGA_MS = 3000;
+const ESPERA_SIN_CONTROL_MS = 3000;
+
+/**
+ * La red de último recurso cuando sí hay un service worker al mando.
+ *
+ * Es larga a propósito: lo que se espera es que el nuevo termine de activarse,
+ * y eso puede tardar —al activarse borra la caché anterior, que son casi 900
+ * KB—. Es solo para que el botón no quede mudo si algo se traba.
+ */
+const ESPERA_CON_CONTROL_MS = 30000;
 
 export function setupPWA(): void {
   if (!('serviceWorker' in navigator)) return;
@@ -68,17 +78,40 @@ export function setupPWA(): void {
   /**
    * Lo que hace el botón "Actualizar".
    *
-   * `updateSW(true)` le pide al service worker nuevo que tome el control y
-   * recarga cuando lo toma. Pero si esta pestaña nunca estuvo controlada por
-   * ninguno —pasa en la primera visita, y también la primera vez que se abre
-   * la app instalada—, ese aviso no llega nunca y el botón se queda sin hacer
-   * nada. Un botón que no hace nada es peor que no tener botón, así que si en
-   * unos segundos no pasó, se recarga igual. Si la recarga de la librería
-   * llega primero, este temporizador se muere con la página.
+   * `updateSW(true)` le pide al service worker nuevo que tome el control, y la
+   * librería recarga cuando lo toma. Hay dos casos y NO se resuelven igual:
+   *
+   * **Sin controlador** —primera visita, y también la primera vez que se abre
+   * la app instalada—: ese aviso no llega nunca, porque no hay cambio de
+   * controlador que avisar, y el botón se quedaba sin hacer nada. Acá recargar
+   * por las nuestras es seguro: la página vino de la red, no hay ningún
+   * service worker sirviendo una copia vieja.
+   *
+   * **Con controlador**: recargar a ciegas es peligroso. Si el nuevo todavía
+   * no terminó de activarse, el viejo sigue al mando y sirve su copia
+   * precacheada: la app vuelve a arrancar en la versión vieja, y como ya no
+   * queda ningún worker esperando, la barra no vuelve a aparecer. Quedaría
+   * clavada hasta la próxima publicación. Por eso acá no se cuenta el tiempo:
+   * se espera a que el worker nuevo llegue a `activated`, que es el momento
+   * exacto en que recargar sirve.
    */
   const aplicar = () => {
     void updateSW(true);
-    window.setTimeout(() => window.location.reload(), ESPERA_RECARGA_MS);
+
+    if (!navigator.serviceWorker.controller) {
+      window.setTimeout(() => window.location.reload(), ESPERA_SIN_CONTROL_MS);
+      return;
+    }
+
+    const entrante = registro?.waiting ?? registro?.installing ?? null;
+    if (entrante) {
+      entrante.addEventListener('statechange', () => {
+        if (entrante.state === 'activated') window.location.reload();
+      });
+    }
+    // Red de último recurso, para que el botón nunca quede mudo. Si la recarga
+    // de arriba llega primero, este temporizador se muere con la página.
+    window.setTimeout(() => window.location.reload(), ESPERA_CON_CONTROL_MS);
   };
 
   const updateSW = registerSW({

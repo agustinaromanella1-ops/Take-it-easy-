@@ -21,7 +21,7 @@ Las pruebas de punta a punta necesitan la app compilada y servida:
 npx vite build && npx vite preview --port 4173 &
 node e2e/aceptacion.mjs     # 118 verificaciones sobre la app entera
 node e2e/bienvenida.mjs     # 43: la portada contra el diseño aprobado
-node e2e/actualizacion.mjs  # 15: la barra de "hay una versión nueva"
+node e2e/actualizacion.mjs  # 17: la barra de "hay una versión nueva"
 node e2e/borradores.mjs     # 26: que lo escrito no se pierda al cerrar una pantalla
 node e2e/dos-pestanas.mjs   # 8: dos pestañas a la vez, que no se pisen
 ```
