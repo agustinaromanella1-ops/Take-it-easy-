@@ -18,6 +18,16 @@ interface StoreValue {
   dispatch: React.Dispatch<Action>;
   /** Lo último que se puede deshacer, o `null` si no hay nada. */
   deshacer: { etiqueta: string; hacer: () => void; descartar: () => void } | null;
+  /**
+   * Si el último intento de guardar falló.
+   *
+   * Pasa cuando se llena el almacenamiento del navegador, que con muchos años
+   * de historia es alcanzable. Hasta ahora fallaba en silencio: la app se veía
+   * normal, se seguía trabajando toda la tarde, y al cerrar no quedaba nada.
+   * Son datos de salud, sin servidor y sin otra copia: es el único camino por
+   * el que se pierde trabajo sin que nadie se entere.
+   */
+  noSeGuarda: boolean;
 }
 
 /**
@@ -96,6 +106,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
    */
   const dirty = useRef(false);
   const firstRender = useRef(true);
+  const [noSeGuarda, setNoSeGuarda] = useState(false);
 
   // `data` se lee dentro de los listeners; la ref lo mantiene fresco sin
   // tener que reinstalarlos en cada cambio de estado.
@@ -110,7 +121,9 @@ export function StoreProvider({ children }: { children: ReactNode }) {
     }
     dirty.current = true;
     const t = setTimeout(() => {
-      if (saveData(latest.current)) dirty.current = false;
+      const guardó = saveData(latest.current);
+      if (guardó) dirty.current = false;
+      setNoSeGuarda(!guardó);
     }, SAVE_DEBOUNCE_MS);
     return () => clearTimeout(t);
   }, [data]);
@@ -155,6 +168,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
     () => ({
       data,
       dispatch: despachar,
+      noSeGuarda,
       deshacer: undo
         ? {
             etiqueta: undo.etiqueta,
@@ -168,7 +182,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
           }
         : null,
     }),
-    [data, despachar, undo],
+    [data, despachar, undo, noSeGuarda],
   );
   return <StoreContext.Provider value={value}>{children}</StoreContext.Provider>;
 }

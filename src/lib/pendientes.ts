@@ -74,6 +74,32 @@ export function pendientes(data: AppData, hoy: DateISO, minutos = 24 * 60): Pend
 
   const saldos = patientBalances(data);
 
+  /*
+   * Dos índices armados en UNA pasada por las sesiones y otra por los pagos.
+   *
+   * Antes, cada paciente recorría `data.sessions` entera dos veces: una para
+   * ver si tenía turno futuro y otra para buscar su deuda más vieja. Con 40
+   * pacientes y tres años de historia eso son 9 ms por recálculo, y crece al
+   * cuadrado: el doble de datos costaba cuatro veces más. Esto se recalcula en
+   * cada toque de la tarjeta de pendientes.
+   */
+  const conTurnoFuturo = new Set<string>();
+  const facturablesPorPaciente = new Map<string, Session[]>();
+  for (const s of data.sessions) {
+    if (s.status === 'programada' && s.date >= hoy) conTurnoFuturo.add(s.patientId);
+    if (!esFacturable(s)) continue;
+    const suyas = facturablesPorPaciente.get(s.patientId);
+    if (suyas) suyas.push(s);
+    else facturablesPorPaciente.set(s.patientId, [s]);
+  }
+  for (const suyas of facturablesPorPaciente.values()) {
+    suyas.sort((a, b) => a.date.localeCompare(b.date));
+  }
+  const pagadoPorPaciente = new Map<string, number>();
+  for (const pago of data.payments) {
+    pagadoPorPaciente.set(pago.patientId, (pagadoPorPaciente.get(pago.patientId) ?? 0) + pago.amount);
+  }
+
   for (const p of data.patients) {
     if (p.status !== 'activo') continue;
     const saldo = saldos.get(p.id);
@@ -82,9 +108,7 @@ export function pendientes(data: AppData, hoy: DateISO, minutos = 24 * 60): Pend
     //    olvido más caro de todos: no deja rastro en ninguna pantalla.
     const espera = ESPERA_DIAS[p.frequency];
     if (espera !== undefined) {
-      const tieneProximo = data.sessions.some(
-        (s) => s.patientId === p.id && s.status === 'programada' && s.date >= hoy,
-      );
+      const tieneProximo = conTurnoFuturo.has(p.id);
       const ultima = saldo?.lastSessionDate ?? null;
       const desdeDias = ultima ? daysBetween(ultima, hoy) : daysBetween(fechaLocalDe(p.createdAt), hoy);
       // Recién cuando pasó la espera propia de su frecuencia: agendar con dos
@@ -97,7 +121,11 @@ export function pendientes(data: AppData, hoy: DateISO, minutos = 24 * 60): Pend
     // 3. Deuda vieja. La del mes en curso no se nombra: cobrar a fin de mes es
     //    lo normal y avisarlo antes sería ruido.
     if (saldo && saldo.balance > 0 && saldo.lastSessionDate) {
-      const desdeDias = diasDeLaDeudaMasVieja(data, p.id, hoy);
+      const desdeDias = diasDeLaDeudaMasVieja(
+        facturablesPorPaciente.get(p.id) ?? [],
+        pagadoPorPaciente.get(p.id) ?? 0,
+        hoy,
+      );
       if (desdeDias >= DIAS_PARA_MIRAR_UNA_DEUDA) {
         lista.push({
           clave: `cobrar:${p.id}`,
@@ -128,14 +156,8 @@ export function pendientes(data: AppData, hoy: DateISO, minutos = 24 * 60): Pend
  * último no tiene una deuda vieja, por más que sea paciente desde hace años.
  * Mirar solo la sesión más antigua diría lo contrario y el aviso sería falso.
  */
-function diasDeLaDeudaMasVieja(data: AppData, patientId: string, hoy: DateISO): number {
-  const facturables = data.sessions
-    .filter((s) => s.patientId === patientId && esFacturable(s))
-    .sort((a, b) => a.date.localeCompare(b.date));
-
-  let bolsa = data.payments
-    .filter((p) => p.patientId === patientId)
-    .reduce((t, p) => t + p.amount, 0);
+function diasDeLaDeudaMasVieja(facturables: Session[], pagado: number, hoy: DateISO): number {
+  let bolsa = pagado;
 
   for (const s of facturables) {
     if (bolsa >= s.fee) {

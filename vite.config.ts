@@ -4,8 +4,18 @@ import { defineConfig } from 'vitest/config';
 // reglas del proyecto dependen de eso: un sello UTC de las 01:00 es el día
 // anterior acá, y una prueba que corriera en UTC no vería la diferencia.
 process.env.TZ = 'America/Argentina/Buenos_Aires';
+
+/** La fecha del último commit. Si no hay git a mano, la de ahora. */
+function fechaDeLaVersion(): string {
+  try {
+    return execSync('git log -1 --format=%cI', { encoding: 'utf8' }).trim();
+  } catch {
+    return new Date().toISOString();
+  }
+}
 import react from '@vitejs/plugin-react';
 import { VitePWA } from 'vite-plugin-pwa';
+import { execSync } from 'node:child_process';
 
 export default defineConfig({
   plugins: [
@@ -51,9 +61,15 @@ export default defineConfig({
       devOptions: { enabled: false },
     }),
   ],
-  // La fecha de compilación, para mostrarla en Ajustes. Sin un dato visible,
+  // La fecha de la versión, para mostrarla en Ajustes. Sin un dato visible,
   // "¿se actualizó?" solo se puede responder buscando alguna pantalla nueva.
-  define: { __COMPILADA__: JSON.stringify(new Date().toISOString()) },
+  //
+  // Es la del último commit y NO la de la compilación: con la hora de
+  // compilar, dos compilaciones del mismo fuente daban archivos con distinto
+  // nombre, así que un commit que solo tocara el README le hacía aparecer la
+  // barra de "hay una versión nueva" a todo el mundo, con su descarga al
+  // pedo. La barra tiene que significar "hay algo nuevo para vos".
+  define: { __COMPILADA__: JSON.stringify(fechaDeLaVersion()) },
   base: '/',
   test: {
     globals: true,

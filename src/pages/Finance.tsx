@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import type { Payment } from '../types';
 import { useStore } from '../store/StoreContext';
 import { emptyMonthSummary, monthlySummaries, patientBalances } from '../store/selectors';
@@ -51,7 +51,15 @@ export function FinancePage({
   const [view, setView] = useState<'resumen' | 'monitoreo' | 'facturacion'>('resumen');
   const [adding, setAdding] = useState(false);
   const [form, setForm] = useState<FormCobro>(() => enBlanco());
-  const borrador = useBorrador(BORRADOR_COBRO, enBlanco(), form, adding);
+  /**
+   * Cómo quedó el formulario al abrirse: es la referencia contra la que se
+   * decide si hay algo escrito. Tiene que ser estable entre dibujos. Cuando
+   * acá iba un `enBlanco()` suelto, el objeto era nuevo en cada render, el
+   * efecto del borrador lo veía cambiar y escribía en localStorage sin que
+   * nadie tocara una tecla.
+   */
+  const reciénAbierto = useRef<FormCobro>(enBlanco());
+  const borrador = useBorrador(BORRADOR_COBRO, reciénAbierto.current, form, adding);
   const [errors, setErrors] = useState<Record<string, string>>({});
 
   const currency = data.settings.currency;
@@ -97,7 +105,9 @@ export function FinancePage({
   }, [abrirPara]);
 
   function openAdd(patientId = '') {
-    setForm({ ...enBlanco(), patientId });
+    const inicial = { ...enBlanco(), patientId };
+    reciénAbierto.current = inicial;
+    setForm(inicial);
     setErrors({});
     // Si viene con paciente puesto desde una tarjeta de pendientes, no se
     // ofrece nada: se vino a cobrarle a esa persona, no a retomar otra cosa.
@@ -114,7 +124,7 @@ export function FinancePage({
 
   function descartarBorrador() {
     borrador.descartar();
-    setForm(enBlanco());
+    setForm(reciénAbierto.current);
   }
 
   function submit() {

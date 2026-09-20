@@ -12,6 +12,7 @@ import { Tour, cartelesPendientes } from './components/Tour';
 import { Guia } from './components/Guia';
 import { Footer } from './components/Footer';
 import { Deshacer } from './components/Deshacer';
+import { NoSeGuarda } from './components/NoSeGuarda';
 import { AvisoDeTurno } from './components/AvisoDeTurno';
 import { alHaberVersionNueva } from './pwa';
 import { leerTema, seguirAlSistema } from './lib/tema';
@@ -151,6 +152,10 @@ export default function App() {
         />
       )}
       <div className="app">
+        {/* Antes que cualquier otra cosa: si dejó de guardar, hay que saberlo
+            ahora y no al cerrar la app. */}
+        <NoSeGuarda />
+
         {aplicarVersion && (
           <div className="update-bar" role="status">
             <span>Hay una versión nueva de la app.</span>

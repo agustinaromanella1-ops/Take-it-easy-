@@ -28,7 +28,11 @@ export function Pendientes({
   // La hora hace falta para no dar por terminada una sesión de anoche que
   // todavía está corriendo. Se lee al dibujar: alcanza, porque esto se vuelve
   // a dibujar con cada cambio de datos.
-  const ahoraMin = new Date().getHours() * 60 + new Date().getMinutes();
+  // Un solo `new Date()`: con dos, el primero a las 15:59:59.999 y el segundo
+  // a las 16:00:00.000 daban las 15:00, una hora atrás. Es justo el dato que
+  // decide si una sesión de anoche sigue corriendo.
+  const reloj = new Date();
+  const ahoraMin = reloj.getHours() * 60 + reloj.getMinutes();
   const todas = useMemo(() => pendientes(data, hoy, ahoraMin), [data, hoy, ahoraMin]);
   const visibles = todas.filter((p) => !saltadas.includes(p.clave));
   const primera = visibles[0];
