@@ -17,7 +17,7 @@ interface StoreValue {
   data: AppData;
   dispatch: React.Dispatch<Action>;
   /** Lo último que se puede deshacer, o `null` si no hay nada. */
-  deshacer: { etiqueta: string; hacer: () => void } | null;
+  deshacer: { etiqueta: string; hacer: () => void; descartar: () => void } | null;
 }
 
 /**
@@ -67,11 +67,15 @@ function etiquetaDe(action: Action): string | null {
 /**
  * Cuánto se queda la barra de deshacer.
  *
- * Es larga a propósito. Los diez segundos habituales alcanzan para quien se
- * dio cuenta en el acto; acá el error se nota al volver a mirar la pantalla,
- * que puede ser después de atender el teléfono.
+ * Estuvo en 30 segundos con el argumento de que el error se nota al volver a
+ * mirar la pantalla, después de atender el teléfono. En el teléfono real eso
+ * se ve distinto: la barra flota encima de la app y tapa lo que haya abajo
+ * —en Ajustes tapaba el botón de importar—, y medio minuto así no se lee como
+ * "tenés tiempo", se lee como "esto se colgó". El costo de tapar la pantalla
+ * se paga siempre; el de perder la ventana, casi nunca. Además ahora se puede
+ * cerrar a mano.
  */
-const DESHACER_MS = 30000;
+const DESHACER_MS = 10000;
 
 const StoreContext = createContext<StoreValue | null>(null);
 
@@ -160,6 +164,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
               dispatch({ type: 'data/replace', payload: undo.estado });
               setUndo(null);
             },
+            descartar: () => setUndo(null),
           }
         : null,
     }),

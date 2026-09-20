@@ -62,13 +62,21 @@ describe('sesionesPorAvisar', () => {
 });
 
 describe('textoAviso', () => {
-  it('dice el nombre y cuánto falta', () => {
-    expect(textoAviso('Ana', 10).titulo).toBe('Ana, en 10 minutos');
-    expect(textoAviso('Ana', 1).titulo).toBe('Ana, en 1 minuto');
+  it('dice cuánto falta', () => {
+    expect(textoAviso(10).titulo).toBe('Sesión en 10 minutos');
+    expect(textoAviso(1).titulo).toBe('Sesión en 1 minuto');
   });
 
   it('cuando ya es la hora lo dice de otra forma', () => {
-    expect(textoAviso('Ana', 0).titulo).toBe('Empieza la sesión con Ana');
-    expect(textoAviso('Ana', -1).titulo).toBe('Empieza la sesión con Ana');
+    expect(textoAviso(0).titulo).toBe('Empieza tu sesión');
+    expect(textoAviso(-1).titulo).toBe('Empieza tu sesión');
+  });
+
+  it('NUNCA nombra al paciente: el aviso se ve en la pantalla bloqueada', () => {
+    // Si algún día alguien quiere "personalizarlo", que esta prueba lo frene.
+    const todos = [textoAviso(30), textoAviso(5), textoAviso(0)];
+    for (const t of todos) {
+      expect(`${t.titulo} ${t.cuerpo}`).not.toMatch(/Ana|Gómez|paciente/i);
+    }
   });
 });

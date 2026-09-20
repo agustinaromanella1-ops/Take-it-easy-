@@ -6,6 +6,7 @@ import { formatDateShort, timeToMinutes } from '../lib/dates';
 import { Card, Empty, Stat } from '../components/ui';
 import { patientColor } from '../lib/palette';
 import { whatsappLink } from '../lib/contact';
+import { ESTADO } from '../lib/etiquetas';
 
 /** Logo de WhatsApp, simplificado a una sola silueta. */
 function WhatsAppIcon() {
@@ -119,7 +120,7 @@ export function PatientDetailPage({ patientId, onBack }: { patientId: string; on
                     <td className="small">{formatDateShort(s.date)}</td>
                     <td className="num small">{s.time}</td>
                     <td>
-                      <span className={`tag ${s.status}`}>{s.status}</span>
+                      <span className={`tag ${s.status}`}>{ESTADO[s.status]}</span>
                       {s.status === 'ausente' && !s.chargeable && (
                         <span className="small muted"> sin cargo</span>
                       )}

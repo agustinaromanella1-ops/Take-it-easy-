@@ -6,8 +6,10 @@ import { downloadText } from '../lib/download';
 import { cobrosCSV, sesionesCSV } from '../lib/csv';
 import { guardarTema, leerTema, type Tema } from '../lib/tema';
 import { buscarVersionNueva } from '../pwa';
+import { limpiarTodosLosBorradores } from '../lib/borrador';
 import { guardarAnimaciones, leerAnimaciones, type Animaciones } from '../lib/movimiento';
 import { Card, Field } from '../components/ui';
+import { plural } from '../lib/plural';
 
 /**
  * Los datos viven solo en este navegador. Sin exportar/importar, limpiar la
@@ -124,7 +126,7 @@ export function SettingsPage() {
     // Decir qué se llevó: así se puede comprobar de un vistazo que la copia
     // tiene lo que tenía que tener, sin abrir el archivo.
     setMessage({
-      text: `Copia guardada: ${data.patients.length} paciente(s), ${data.sessions.length} sesión(es) y ${data.payments.length} pago(s).`,
+      text: `Copia guardada: ${plural(data.patients.length, 'paciente', 'pacientes')}, ${plural(data.sessions.length, 'sesión', 'sesiones')} y ${plural(data.payments.length, 'pago', 'pagos')}.`,
       ok: true,
     });
   }
@@ -133,11 +135,15 @@ export function SettingsPage() {
     try {
       const parsed = parseAppData(JSON.parse(await file.text()));
       const ok = window.confirm(
-        `El archivo tiene ${parsed.patients.length} paciente(s), ${parsed.sessions.length} sesión(es) y ` +
-          `${parsed.payments.length} pago(s).\n\nEsto REEMPLAZA todos los datos actuales. ¿Continuar?`,
+        `El archivo tiene ${plural(parsed.patients.length, 'paciente', 'pacientes')}, ` +
+          `${plural(parsed.sessions.length, 'sesión', 'sesiones')} y ${plural(parsed.payments.length, 'pago', 'pagos')}.` +
+          `\n\nEsto REEMPLAZA todos los datos actuales. ¿Continuar?`,
       );
       if (!ok) return;
       dispatch({ type: 'data/replace', payload: parsed });
+      // Un borrador a medias del dispositivo anterior, con el nombre de otra
+      // persona adentro, no tiene por qué sobrevivir a reemplazar los datos.
+      limpiarTodosLosBorradores();
       setMessage({ text: 'Datos importados correctamente.', ok: true });
     } catch {
       setMessage({ text: 'No se pudo leer el archivo. ¿Es una copia de Pipí Cucú?', ok: false });
@@ -162,35 +168,21 @@ export function SettingsPage() {
             />
           </Field>
           <Field label="Duración por defecto (min)">
-            <input
-              type="number"
+            <NumeroAjuste
+              valor={data.settings.defaultDurationMin}
               min={5}
               max={480}
-              step={5}
-              value={data.settings.defaultDurationMin}
-              onChange={(e) => {
-                const n = Number(e.target.value);
-                if (Number.isFinite(n) && n >= 5 && n <= 480) {
-                  dispatch({ type: 'settings/update', payload: { defaultDurationMin: Math.round(n) } });
-                }
-              }}
+              onGuardar={(n) => dispatch({ type: 'settings/update', payload: { defaultDurationMin: n } })}
             />
           </Field>
         </div>
         <div className="field-row">
           <Field label="Alarma del calendario (min antes)">
-            <input
-              type="number"
+            <NumeroAjuste
+              valor={data.settings.reminderMinutes}
               min={0}
               max={1440}
-              step={5}
-              value={data.settings.reminderMinutes}
-              onChange={(e) => {
-                const n = Number(e.target.value);
-                if (Number.isFinite(n) && n >= 0 && n <= 1440) {
-                  dispatch({ type: 'settings/update', payload: { reminderMinutes: Math.round(n) } });
-                }
-              }}
+              onGuardar={(n) => dispatch({ type: 'settings/update', payload: { reminderMinutes: n } })}
             />
           </Field>
         </div>
@@ -265,7 +257,9 @@ export function SettingsPage() {
 
       <Card title="Datos guardados">
         <p className="small muted" style={{ margin: 0 }}>
-          {data.patients.length} paciente(s) · {data.sessions.length} sesión(es) · {data.payments.length} pago(s)
+          {plural(data.patients.length, 'paciente', 'pacientes')} ·{' '}
+          {plural(data.sessions.length, 'sesión', 'sesiones')} ·{' '}
+          {plural(data.payments.length, 'pago', 'pagos')}
         </p>
       </Card>
 
@@ -370,6 +364,63 @@ export function SettingsPage() {
       </Card>
 
     </>
+  );
+}
+
+/**
+ * Un número de ajuste que se puede escribir.
+ *
+ * El campo de antes validaba en cada tecla y descartaba lo que no pasara: con
+ * 50 puesto, seleccionar todo y escribir "45" dejaba 50, porque el "4" solo
+ * quedaba abajo del mínimo y se tiraba. No se podía poner una duración de 45
+ * minutos y la app no decía por qué. Ahora lo escrito se ve mientras se
+ * escribe, y el valor se guarda al salir del campo o al apretar Enter,
+ * acotado al rango. Vacío vuelve a lo que había.
+ */
+function NumeroAjuste({
+  valor,
+  min,
+  max,
+  onGuardar,
+}: {
+  valor: number;
+  min: number;
+  max: number;
+  onGuardar: (n: number) => void;
+}) {
+  const [texto, setTexto] = useState(String(valor));
+  // Si el valor cambia desde afuera (importar una copia), se refleja.
+  const [ultimo, setUltimo] = useState(valor);
+  if (valor !== ultimo) {
+    setUltimo(valor);
+    setTexto(String(valor));
+  }
+
+  function confirmar() {
+    const n = Number(texto);
+    if (texto.trim() === '' || !Number.isFinite(n)) {
+      setTexto(String(valor));
+      return;
+    }
+    const acotado = Math.min(max, Math.max(min, Math.round(n)));
+    setTexto(String(acotado));
+    if (acotado !== valor) onGuardar(acotado);
+  }
+
+  return (
+    <input
+      type="number"
+      inputMode="numeric"
+      min={min}
+      max={max}
+      step={5}
+      value={texto}
+      onChange={(e) => setTexto(e.target.value)}
+      onBlur={confirmar}
+      onKeyDown={(e) => {
+        if (e.key === 'Enter') e.currentTarget.blur();
+      }}
+    />
   );
 }
 

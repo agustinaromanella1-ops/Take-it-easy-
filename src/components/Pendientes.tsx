@@ -16,7 +16,11 @@ import { formatMoney } from '../lib/money';
  * la que sigue, y al recargar vuelve. Es para poder seguir adelante sin tener
  * que resolver algo que ahora no se puede, no para esconderlo.
  */
-export function Pendientes({ onGo }: { onGo: (page: 'agenda' | 'finanzas' | 'pacientes') => void }) {
+export function Pendientes({
+  onGo,
+}: {
+  onGo: (page: 'agenda' | 'finanzas' | 'pacientes', paraPaciente?: string) => void;
+}) {
   const { data, dispatch } = useStore();
   const hoy = today();
   const [saltadas, setSaltadas] = useState<string[]>([]);
@@ -74,12 +78,12 @@ export function Pendientes({ onGo }: { onGo: (page: 'agenda' | 'finanzas' | 'pac
           </>
         )}
         {primera.tipo === 'agendar' && (
-          <button className="btn small primary" onClick={() => onGo('agenda')}>
+          <button className="btn small primary" onClick={() => onGo('agenda', primera.paciente.id)}>
             Agendar
           </button>
         )}
         {primera.tipo === 'cobrar' && (
-          <button className="btn small primary" onClick={() => onGo('finanzas')}>
+          <button className="btn small primary" onClick={() => onGo('finanzas', primera.paciente.id)}>
             Registrar el cobro
           </button>
         )}

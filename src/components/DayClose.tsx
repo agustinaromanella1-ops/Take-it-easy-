@@ -12,6 +12,7 @@ import { formatMoney } from '../lib/money';
 import { formatDateLong } from '../lib/dates';
 import { patientColor } from '../lib/palette';
 import { Modal } from './ui';
+import { plural } from '../lib/plural';
 
 const METHODS: PaymentMethod[] = ['efectivo', 'transferencia', 'tarjeta', 'otro'];
 
@@ -332,7 +333,7 @@ export function DayClose({
 
       {alreadyClosed.length > 0 && (
         <p className="small muted" style={{ marginBottom: 0 }}>
-          {alreadyClosed.length} sesión(es) de este día ya estaban cerradas y no se tocan.
+          {plural(alreadyClosed.length, 'sesión', 'sesiones')} de este día ya estaban cerradas y no se tocan.
         </p>
       )}
 

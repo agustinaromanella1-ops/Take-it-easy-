@@ -17,6 +17,17 @@ export function Deshacer() {
       <button className="btn small" onClick={deshacer.hacer}>
         Deshacer
       </button>
+      {/* La barra flota encima de la app y puede estar tapando justo lo que se
+          quiere tocar. Se va sola, pero poder sacarla ya es distinto de
+          esperar a que se vaya. */}
+      <button
+        className="deshacer-cerrar"
+        onClick={deshacer.descartar}
+        aria-label="Cerrar este aviso"
+        title="Cerrar"
+      >
+        ✕
+      </button>
     </div>
   );
 }

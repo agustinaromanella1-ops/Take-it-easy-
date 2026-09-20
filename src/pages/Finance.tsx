@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import type { Payment } from '../types';
 import { useStore } from '../store/StoreContext';
 import { emptyMonthSummary, monthlySummaries, patientBalances } from '../store/selectors';
@@ -9,10 +9,20 @@ import { MonthlyGoal } from '../components/MonthlyGoal';
 import { RateCalculator } from '../components/RateCalculator';
 import { Monitoring } from '../components/Monitoring';
 import { Billing } from '../components/Billing';
+import { plural } from '../lib/plural';
 
 const METHODS: Payment['method'][] = ['efectivo', 'transferencia', 'tarjeta', 'otro'];
 
-export function FinancePage({ onGo }: { onGo: (page: 'pacientes') => void }) {
+export function FinancePage({
+  onGo,
+  abrirPara,
+  onAbierto,
+}: {
+  onGo: (page: 'pacientes') => void;
+  /** Si venimos de una tarjeta de pendientes, el paciente al que hay que cobrarle. */
+  abrirPara?: string | null;
+  onAbierto?: () => void;
+}) {
   const { data, dispatch } = useStore();
   const [month, setMonth] = useState(() => monthKey(today()));
   const [view, setView] = useState<'resumen' | 'monitoreo' | 'facturacion'>('resumen');
@@ -51,6 +61,16 @@ export function FinancePage({ onGo }: { onGo: (page: 'pacientes') => void }) {
     [balances],
   );
   const totalDebt = useMemo(() => debtors.reduce((n, b) => n + b.balance, 0), [debtors]);
+
+  // Llegar acá desde "Registrar el cobro" tiene que dejar el formulario
+  // abierto con la persona puesta, no en la pantalla de resumen.
+  useEffect(() => {
+    if (!abrirPara) return;
+    openAdd(abrirPara);
+    onAbierto?.();
+    // Solo cuando cambia el pedido: openAdd se redefine en cada dibujo.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [abrirPara]);
 
   function openAdd(patientId = '') {
     setForm({ patientId, date: today(), amount: '', method: 'efectivo', notes: '' });
@@ -138,8 +158,8 @@ export function FinancePage({ onGo }: { onGo: (page: 'pacientes') => void }) {
       {view === 'resumen' && (
       <>
       <div className="stat-grid">
-        <Stat label="Facturado del mes" value={formatMoney(summary.billed, currency)} hint={`${summary.sessionsHeld} sesión(es) realizada(s)`} />
-        <Stat label="Cobrado del mes" value={formatMoney(summary.collected, currency)} tone="ok" hint={`${monthPayments.length} pago(s)`} />
+        <Stat label="Facturado del mes" value={formatMoney(summary.billed, currency)} hint={`${plural(summary.sessionsHeld, 'sesión realizada', 'sesiones realizadas')}`} />
+        <Stat label="Cobrado del mes" value={formatMoney(summary.collected, currency)} tone="ok" hint={plural(monthPayments.length, 'pago', 'pagos')} />
         {/* Decía "Diferencia del mes" y mostraba $ 0 justo cuando estaba todo
             cobrado, que es la mejor noticia posible: se leía como si no hubiera
             registrado el pago. Ahora dice qué queda por cobrar, y cuando no
@@ -174,7 +194,8 @@ export function FinancePage({ onGo }: { onGo: (page: 'pacientes') => void }) {
 
       <MonthlyGoal billed={summary.billed} />
 
-      <Card title="Últimos 6 meses">
+      <details className="plegable" open>
+        <summary>Últimos 6 meses</summary>
         {recentMonths.map((m) => (
           <div key={m.key}>
             <div className="bar-row">
@@ -200,7 +221,7 @@ export function FinancePage({ onGo }: { onGo: (page: 'pacientes') => void }) {
         <p className="small muted" style={{ marginBottom: 0 }}>
           Barra azul: facturado. Barra verde: efectivamente cobrado.
         </p>
-      </Card>
+      </details>
 
       <Card title="Saldos pendientes">
         {debtors.length === 0 ? (
@@ -239,7 +260,14 @@ export function FinancePage({ onGo }: { onGo: (page: 'pacientes') => void }) {
         )}
       </Card>
 
-      <RateCalculator />
+      {/* Plegada: es una herramienta de planificación de una vez por año, y
+          estaba clavada en el medio de la pantalla que se mira todos los días.
+          Lo que se consulta seguido queda arriba y a la vista; lo que se
+          consulta de vez en cuando, a un toque. */}
+      <details className="plegable">
+        <summary>Calculadora de tarifa</summary>
+        <RateCalculator />
+      </details>
 
       <Card title={`Pagos de ${formatMonthKey(month)}`}>
         {monthPayments.length === 0 ? (

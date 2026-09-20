@@ -11,7 +11,11 @@ import { goalProgress } from '../lib/pricing';
 import { patientColor } from '../lib/palette';
 import { guardarEnfoque, leerEnfoque } from '../lib/enfoque';
 
-export function DashboardPage({ onGo }: { onGo: (page: 'agenda' | 'finanzas' | 'pacientes') => void }) {
+export function DashboardPage({
+  onGo,
+}: {
+  onGo: (page: 'agenda' | 'finanzas' | 'pacientes', paraPaciente?: string) => void;
+}) {
   const { data } = useStore();
   const currency = data.settings.currency;
 

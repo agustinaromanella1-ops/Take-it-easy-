@@ -71,6 +71,8 @@ export default function App() {
   const [carteles, setCarteles] = useState(false);
   const [guia, setGuia] = useState(false);
   const [openPatientId, setOpenPatientId] = useState<string | null>(null);
+  /** El paciente cuyo formulario tiene que abrir la pantalla a la que vamos. */
+  const [pedido, setPedido] = useState<string | null>(null);
   /** La función que aplica la versión nueva, cuando hay una esperando. */
   const [aplicarVersion, setAplicarVersion] = useState<(() => void) | null>(null);
 
@@ -80,14 +82,55 @@ export default function App() {
     alHaberVersionNueva((aplicar) => setAplicarVersion(() => aplicar));
   }, []);
 
+  /**
+   * El permiso de avisos, vigilado.
+   *
+   * Ajustes guarda el minuto elegido antes de pedir el permiso, así que el
+   * componente del aviso se rearmaba con el permiso todavía sin conceder y se
+   * quedaba dormido hasta la próxima recarga. Mirando el permiso desde acá,
+   * concederlo lo despierta en el acto.
+   */
+  const [permisoAvisos, setPermisoAvisos] = useState(() =>
+    typeof Notification === 'undefined' ? 'sin-soporte' : Notification.permission,
+  );
+  useEffect(() => {
+    if (typeof Notification === 'undefined') return;
+    const mirar = () => setPermisoAvisos(Notification.permission);
+    let estado: PermissionStatus | null = null;
+    navigator.permissions
+      ?.query({ name: 'notifications' as PermissionName })
+      .then((s) => {
+        estado = s;
+        s.addEventListener('change', mirar);
+      })
+      .catch(() => {
+        /* Si el navegador no sabe consultar permisos, queda el visibilitychange. */
+      });
+    document.addEventListener('visibilitychange', mirar);
+    return () => {
+      estado?.removeEventListener('change', mirar);
+      document.removeEventListener('visibilitychange', mirar);
+    };
+  }, []);
+
   // Seguir al sistema mientras el tema esté en "automático". Va acá y no en
   // Ajustes porque Ajustes se desmonta al cambiar de pestaña: si el teléfono se
   // oscurecía estando en Agenda, la app se quedaba clara hasta recargar.
   useEffect(() => seguirAlSistema(leerTema), []);
 
-  function go(next: Page) {
+  /**
+   * Cambia de pantalla. `paraPaciente` pide, además, que la pantalla destino
+   * abra su formulario ya apuntando a esa persona.
+   *
+   * Existe por la tarjeta de "lo que quedó abierto": decía "Carla tiene
+   * $196.000 sin registrar" y el botón dejaba en el resumen de Finanzas, sin
+   * formulario y sin mención a Carla. Para terminar había que acordarse de a
+   * quién se venía a cobrarle, que es justo lo que la tarjeta hacía por uno.
+   */
+  function go(next: Page, paraPaciente?: string) {
     setOpenPatientId(null);
     setPage(next);
+    setPedido(paraPaciente ?? null);
     window.scrollTo({ top: 0 });
   }
 
@@ -152,15 +195,15 @@ export default function App() {
               ) : (
                 <PatientsPage onOpenPatient={setOpenPatientId} />
               ))}
-            {page === 'agenda' && <AgendaPage onGo={go} />}
-            {page === 'finanzas' && <FinancePage onGo={go} />}
+            {page === 'agenda' && <AgendaPage onGo={go} abrirPara={pedido} onAbierto={() => setPedido(null)} />}
+            {page === 'finanzas' && <FinancePage onGo={go} abrirPara={pedido} onAbierto={() => setPedido(null)} />}
             {page === 'ajustes' && <SettingsPage />}
           </ErrorBoundary>
           <Footer />
         </main>
 
         {/* No dibuja nada: solo avisa cuando se viene un turno. */}
-        <AvisoDeTurno />
+        <AvisoDeTurno permiso={permisoAvisos} />
 
         {/* Arriba de la barra de pestañas: queda al alcance del pulgar, que es
             donde acaba de tocarse el botón que uno quiere deshacer. */}

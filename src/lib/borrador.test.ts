@@ -1,5 +1,11 @@
 import { beforeEach, describe, expect, it } from 'vitest';
-import { guardarBorrador, leerBorrador, limpiarBorrador, tieneContenido } from './borrador';
+import {
+  guardarBorrador,
+  leerBorrador,
+  limpiarBorrador,
+  limpiarTodosLosBorradores,
+  tieneContenido,
+} from './borrador';
 
 // Las pruebas corren en Node, que no tiene localStorage. Con este doble
 // alcanza: el módulo solo usa getItem, setItem, removeItem y clear.
@@ -33,6 +39,36 @@ describe('borrador', () => {
     expect(leerBorrador('paciente')).toBeNull();
   });
 
+  it('un borrador de hace más de una semana no vuelve', () => {
+    // Datos de salud no pueden quedar guardados para siempre porque alguien
+    // dejó un alta a medias.
+    const hace8Dias = Date.now() - 8 * 24 * 60 * 60 * 1000;
+    localStorage.setItem(
+      'pipicucu:borrador:paciente',
+      JSON.stringify({ guardadoEn: hace8Dias, valor: { name: 'Ana' } }),
+    );
+    expect(leerBorrador('paciente')).toBeNull();
+    // Y además se borra, no queda ahí esperando.
+    expect(localStorage.getItem('pipicucu:borrador:paciente')).toBeNull();
+  });
+
+  it('uno de ayer sí vuelve', () => {
+    const ayer = Date.now() - 24 * 60 * 60 * 1000;
+    localStorage.setItem(
+      'pipicucu:borrador:paciente',
+      JSON.stringify({ guardadoEn: ayer, valor: { name: 'Ana' } }),
+    );
+    expect(leerBorrador('paciente')).toEqual({ name: 'Ana' });
+  });
+
+  it('importar una copia se lleva todos los borradores', () => {
+    guardarBorrador('paciente', { name: 'Ana' });
+    guardarBorrador('sesion', { notes: 'algo' });
+    limpiarTodosLosBorradores();
+    expect(leerBorrador('paciente')).toBeNull();
+    expect(leerBorrador('sesion')).toBeNull();
+  });
+
   it('no se cae con un borrador corrupto', () => {
     localStorage.setItem('pipicucu:borrador:paciente', '{roto');
     expect(leerBorrador('paciente')).toBeNull();
@@ -40,6 +76,11 @@ describe('borrador', () => {
 
   it('no confunde un texto suelto con un formulario', () => {
     localStorage.setItem('pipicucu:borrador:paciente', '"hola"');
+    expect(leerBorrador('paciente')).toBeNull();
+  });
+
+  it('descarta un borrador del formato viejo, sin sello', () => {
+    localStorage.setItem('pipicucu:borrador:paciente', JSON.stringify({ name: 'Ana' }));
     expect(leerBorrador('paciente')).toBeNull();
   });
 

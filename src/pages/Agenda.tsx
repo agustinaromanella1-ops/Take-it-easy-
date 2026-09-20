@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import type { Session } from '../types';
 import { useStore } from '../store/StoreContext';
 import { conflictingSessionIds, pendingReview, sessionsInRange } from '../store/selectors';
@@ -31,13 +31,9 @@ import {
 } from '../lib/contact';
 import { icsFileName, sessionToICS } from '../lib/calendar';
 import { downloadText } from '../lib/download';
+import { ESTADO } from '../lib/etiquetas';
 
-const STATUS_LABEL: Record<Session['status'], string> = {
-  programada: 'Programada',
-  realizada: 'Realizada',
-  ausente: 'Ausente',
-  cancelada: 'Cancelada',
-};
+
 
 interface FormState {
   patientId: string;
@@ -52,7 +48,16 @@ interface FormState {
   repeatCount: string;
 }
 
-export function AgendaPage({ onGo }: { onGo: (page: 'pacientes') => void }) {
+export function AgendaPage({
+  onGo,
+  abrirPara,
+  onAbierto,
+}: {
+  onGo: (page: 'pacientes') => void;
+  /** Si venimos de una tarjeta de pendientes, el paciente al que hay que agendarle. */
+  abrirPara?: string | null;
+  onAbierto?: () => void;
+}) {
   const { data, dispatch } = useStore();
   const [view, setView] = useState<'dia' | 'semana' | 'mes'>('dia');
   const [weekStart, setWeekStart] = useState(() => startOfWeek(today()));
@@ -107,8 +112,18 @@ export function AgendaPage({ onGo }: { onGo: (page: 'pacientes') => void }) {
     return map;
   }, [weekSessions, weekStart]);
 
-  function openNew(date: string) {
-    const first = activePatients.find((p) => p.status === 'activo') ?? activePatients[0];
+  // Llegar acá desde "Agendar" tiene que dejar el turno nuevo abierto con la
+  // persona puesta, no en el calendario buscando de nuevo quién era.
+  useEffect(() => {
+    if (!abrirPara) return;
+    openNew(today(), abrirPara);
+    onAbierto?.();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [abrirPara]);
+
+  function openNew(date: string, patientId?: string) {
+    const pedido = patientId ? activePatients.find((p) => p.id === patientId) : undefined;
+    const first = pedido ?? activePatients.find((p) => p.status === 'activo') ?? activePatients[0];
     setForm({
       patientId: first?.id ?? '',
       date,
@@ -302,10 +317,30 @@ export function AgendaPage({ onGo }: { onGo: (page: 'pacientes') => void }) {
         <div className="banner warn">Cargá un paciente antes de agendar turnos.</div>
       )}
 
-      {overdue.length > 0 && (
-        <div className="banner warn">
-          Tenés <strong>{overdue.length}</strong> sesión(es) ya pasadas que siguen como “programadas”.
-          Marcalas como realizadas o ausentes para que la facturación quede correcta.
+      {/* Decía "para que la facturación quede correcta", o sea: ahora está
+          incorrecta, por tu culpa. Y no ofrecía nada: informaba el problema y
+          dejaba buscándolo. Ahora dice qué pasa, sin reproche, y lleva al día
+          de la más vieja, que es donde se resuelve. */}
+      {overdue.length > 0 && overdue[0] && (
+        <div className="banner">
+          <span>
+            {overdue.length === 1
+              ? 'Quedó 1 sesión sin marcar.'
+              : `Quedaron ${overdue.length} sesiones sin marcar.`}{' '}
+            Hasta marcarlas no entran en lo facturado.
+          </span>
+          <button
+            className="btn small"
+            onClick={() => {
+              const primera = overdue[0];
+              if (!primera) return;
+              setSelectedDay(primera.date);
+              setView('dia');
+              window.scrollTo({ top: 0 });
+            }}
+          >
+            Ir a la más vieja
+          </button>
         </div>
       )}
 
@@ -392,7 +427,7 @@ export function AgendaPage({ onGo }: { onGo: (page: 'pacientes') => void }) {
                       key={s.id}
                       className={`slot ${s.status}${conflicts.has(s.id) ? ' conflict' : ''}`}
                       onClick={() => openEdit(s)}
-                      title={conflicts.has(s.id) ? 'Se superpone con otro turno' : STATUS_LABEL[s.status]}
+                      title={conflicts.has(s.id) ? 'Se superpone con otro turno' : ESTADO[s.status]}
                       style={{ borderLeftColor: patientColor(patientsById.get(s.patientId)?.colorIndex ?? 0).solid }}
                     >
                       <span className="slot-time">{s.time}</span>
@@ -464,9 +499,9 @@ export function AgendaPage({ onGo }: { onGo: (page: 'pacientes') => void }) {
                         }
                         aria-label={`Estado de la sesión de ${patient?.name ?? ''}`}
                       >
-                        {(Object.keys(STATUS_LABEL) as Session['status'][]).map((st) => (
+                        {(Object.keys(ESTADO) as Session['status'][]).map((st) => (
                           <option key={st} value={st}>
-                            {STATUS_LABEL[st]}
+                            {ESTADO[st]}
                           </option>
                         ))}
                       </select>
@@ -611,9 +646,9 @@ export function AgendaPage({ onGo }: { onGo: (page: 'pacientes') => void }) {
                 value={form.status}
                 onChange={(e) => setForm({ ...form, status: e.target.value as Session['status'] })}
               >
-                {(Object.keys(STATUS_LABEL) as Session['status'][]).map((st) => (
+                {(Object.keys(ESTADO) as Session['status'][]).map((st) => (
                   <option key={st} value={st}>
-                    {STATUS_LABEL[st]}
+                    {ESTADO[st]}
                   </option>
                 ))}
               </select>

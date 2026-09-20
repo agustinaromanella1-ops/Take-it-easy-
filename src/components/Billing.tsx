@@ -5,6 +5,7 @@ import { formatMoney } from '../lib/money';
 import { addMonths, daysInMonth, formatMonthKey, monthKey, today } from '../lib/dates';
 import { patientColor } from '../lib/palette';
 import { Card, Empty, Field } from './ui';
+import { plural } from '../lib/plural';
 
 /**
  * Facturación: arma el texto de la factura listo para copiar y pegar.
@@ -83,7 +84,7 @@ export function Billing() {
                 <span className="bill-who">
                   <strong>{l.patient.name}</strong>
                   <span>
-                    {l.sessions.length} sesión(es)
+                    {plural(l.sessions.length, 'sesión', 'sesiones')}
                     {l.patient.insurer ? ` · ${l.patient.insurer}` : ''}
                   </span>
                 </span>
@@ -142,15 +143,20 @@ export function Billing() {
             </button>
           }
         >
-          {/* Editable: cada obra social pide el texto a su manera, y retocarlo
-              acá antes de copiar es más rápido que hacerlo en el otro sistema. */}
+          {/* Solo para copiar: el texto se arma con los datos del paciente y
+              se rehace solo si alguno cambia, así que lo escrito a mano se
+              perdería sin aviso. El comentario de antes decía que era
+              editable y el `readOnly` decía que no: se tipeaba y no pasaba
+              nada. Ahora el foco selecciona todo, que es lo que sirve para
+              copiar, y la etiqueta lo dice. */}
           <textarea
             className="bill-text"
             value={text}
             readOnly
             rows={5}
             onFocus={(e) => e.currentTarget.select()}
-            aria-label="Texto sugerido para la factura"
+            aria-label="Texto sugerido para la factura, listo para copiar"
+            title="Se copia con el botón de arriba. Para cambiarlo, editá los datos del paciente."
           />
 
           {(selected.patient.document === '' && selected.patient.memberNumber === '') && (

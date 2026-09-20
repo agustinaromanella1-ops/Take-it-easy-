@@ -2,6 +2,7 @@ import { useMemo } from 'react';
 import type { Patient, Session } from '../types';
 import { addMonths, formatMonthKey, monthGrid, today } from '../lib/dates';
 import { patientColor } from '../lib/palette';
+import { plural } from '../lib/plural';
 
 const WEEKDAY_INITIALS = ['D', 'L', 'M', 'M', 'J', 'V', 'S'];
 
@@ -80,7 +81,7 @@ export function MonthCalendar({
               className={classes}
               onClick={() => onSelect(date)}
               aria-pressed={date === selected}
-              aria-label={`${day}, ${daySessions.length} sesión(es)`}
+              aria-label={`${day}, ${plural(daySessions.length, 'sesión', 'sesiones')}`}
             >
               <span className="month-day-num">{day}</span>
               <span className="month-dots">

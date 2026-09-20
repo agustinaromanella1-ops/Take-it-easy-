@@ -41,7 +41,7 @@ function guardarAvisadas(hoy: string, ids: Set<string>): void {
   }
 }
 
-export function AvisoDeTurno() {
+export function AvisoDeTurno({ permiso }: { permiso: string }) {
   const { data } = useStore();
   const antes = data.settings.avisarAntesMin;
   // Los datos se leen adentro del intervalo; la ref los mantiene frescos sin
@@ -61,10 +61,8 @@ export function AvisoDeTurno() {
       const pendientes = sesionesPorAvisar(ultimos.current.sessions, hoy, minutos, antes, avisadas);
       if (pendientes.length === 0) return;
 
-      const porId = new Map(ultimos.current.patients.map((p) => [p.id, p]));
       for (const s of pendientes) {
-        const nombre = porId.get(s.patientId)?.name ?? 'Tu próxima sesión';
-        const { titulo, cuerpo } = textoAviso(nombre, timeToMinutes(s.time) - minutos);
+        const { titulo, cuerpo } = textoAviso(timeToMinutes(s.time) - minutos);
         try {
           // El ícono es el de la app: el aviso tiene que verse como Pipí Cucú y
           // no como "una página web".
@@ -82,7 +80,12 @@ export function AvisoDeTurno() {
     mirar();
     const t = window.setInterval(mirar, LATIDO_MS);
     return () => window.clearInterval(t);
-  }, [antes]);
+    // `permiso` está entre las dependencias para que conceder el permiso rearme
+    // el intervalo. Ajustes guarda el minuto elegido ANTES de pedir el permiso,
+    // así que sin esto el efecto se rearmaba con el permiso todavía en
+    // 'default', salía por la puerta de arriba, y el aviso no sonaba hasta
+    // recargar la app. Con la app instalada eso puede ser días.
+  }, [antes, permiso]);
 
   return null;
 }

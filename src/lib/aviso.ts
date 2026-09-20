@@ -41,11 +41,20 @@ export function sesionesPorAvisar(
   });
 }
 
-/** El texto del aviso. Dice el nombre y cuánto falta, nada más. */
-export function textoAviso(nombre: string, faltanMin: number): { titulo: string; cuerpo: string } {
+/**
+ * El texto del aviso: cuánto falta, y nada más.
+ *
+ * **No nombra al paciente a propósito.** Un aviso del sistema aparece en la
+ * pantalla bloqueada, queda en el historial de notificaciones del teléfono
+ * aunque se descarte, y se replica al reloj o a la computadora emparejada. El
+ * nombre de un paciente es un dato de salud: ahí ya no lo controla la app, y
+ * lo ve cualquiera que mire el teléfono sobre el escritorio. Quién es se ve
+ * abriendo la app, que es donde corresponde.
+ */
+export function textoAviso(faltanMin: number): { titulo: string; cuerpo: string } {
   const m = Math.max(0, Math.round(faltanMin));
   return {
-    titulo: m <= 0 ? `Empieza la sesión con ${nombre}` : `${nombre}, en ${m === 1 ? '1 minuto' : `${m} minutos`}`,
+    titulo: m <= 0 ? 'Empieza tu sesión' : `Sesión en ${m === 1 ? '1 minuto' : `${m} minutos`}`,
     cuerpo: 'Pipí Cucú',
   };
 }
