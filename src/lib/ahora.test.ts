@@ -69,6 +69,18 @@ describe('queSigue', () => {
     expect(r).toMatchObject({ tipo: 'otro_dia', enDias: 2 });
   });
 
+  it('una sesión de anoche que se pasó de la medianoche sigue siendo la de ahora', () => {
+    // De 23:00 a 01:00, mirado a las 00:10. Antes el inicio decía "día libre"
+    // mientras se estaba atendiendo.
+    const r = queSigue([ses('s1', '2026-09-18', '23:00', { durationMin: 120 })], HOY, 10);
+    expect(r).toMatchObject({ tipo: 'en_sesion', faltanMin: 50 });
+  });
+
+  it('pero una vez que terminó, no', () => {
+    const r = queSigue([ses('s1', '2026-09-18', '23:00', { durationMin: 120 })], HOY, 65);
+    expect(r.tipo).not.toBe('en_sesion');
+  });
+
   it('no mira hacia atrás: una sesión vieja sin cerrar no es lo que sigue', () => {
     const r = queSigue([ses('s1', '2026-09-10', '10:00')], HOY, 8 * 60);
     expect(r).toEqual({ tipo: 'sin_nada' });

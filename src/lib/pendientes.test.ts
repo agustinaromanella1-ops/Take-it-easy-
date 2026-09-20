@@ -205,6 +205,48 @@ describe('pendientes', () => {
     expect(pendientes(d, HOY).some((x) => x.tipo === 'cobrar')).toBe(false);
   });
 
+  it('entre dos sin turno, primero el que hace más que no viene', () => {
+    // Antes desempataba la clave, o sea el id al azar: de dos pacientes sin
+    // turno podía salir primero el de 8 días en vez del de 300.
+    const d = datos({
+      patients: [paciente('zzz'), paciente('aaa')],
+      sessions: [sesion('s1', 'zzz', '2025-11-20'), sesion('s2', 'aaa', '2026-09-05')],
+      payments: [pago('g1', 'zzz', '2025-11-20', 3500000), pago('g2', 'aaa', '2026-09-05', 3500000)],
+    });
+    const r = pendientes(d, HOY).filter((x) => x.tipo === 'agendar');
+    expect(r[0]?.tipo === 'agendar' && r[0].paciente.id).toBe('zzz');
+  });
+
+  it('entre dos deudas, primero la más vieja', () => {
+    const d = datos({
+      patients: [paciente('zzz', { frequency: 'puntual' }), paciente('aaa', { frequency: 'puntual' })],
+      sessions: [sesion('s1', 'zzz', '2025-12-01'), sesion('s2', 'aaa', '2026-07-20')],
+    });
+    const r = pendientes(d, HOY).filter((x) => x.tipo === 'cobrar');
+    expect(r[0]?.tipo === 'cobrar' && r[0].paciente.id).toBe('zzz');
+  });
+
+  it('una sesión de anoche que todavía corre no "quedó sin marcar"', () => {
+    const d = datos({
+      patients: [paciente('p1')],
+      // De 23:00 a 01:00; son las 00:10.
+      sessions: [sesion('s1', 'p1', '2026-09-18', { status: 'programada', time: '23:00', durationMin: 120 })],
+    });
+    expect(pendientes(d, HOY, 10).some((x) => x.tipo === 'cerrar')).toBe(false);
+    // Y una vez terminada, sí.
+    expect(pendientes(d, HOY, 65).some((x) => x.tipo === 'cerrar')).toBe(true);
+  });
+
+  it('cuenta los días desde la fecha local, no desde la UTC', () => {
+    // Cargado un jueves 22:00 en Argentina: el sello UTC ya dice viernes.
+    const d = datos({
+      patients: [paciente('p1', { createdAt: '2026-09-11T01:00:00.000Z' })],
+    });
+    const r = pendientes(d, '2026-09-18').find((x) => x.tipo === 'agendar');
+    // 10 de septiembre local -> 8 días, no 7.
+    expect(r?.tipo === 'agendar' && r.desdeDias).toBe(8);
+  });
+
   it('lo sin cerrar va antes que lo demás', () => {
     const d = datos({
       patients: [paciente('p1'), paciente('p2', { frequency: 'puntual' })],

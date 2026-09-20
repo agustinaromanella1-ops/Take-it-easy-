@@ -48,6 +48,20 @@ export function queSigue(sesiones: Session[], hoy: DateISO, minutos: number): Mo
     return { tipo: 'en_sesion', sesion: enCurso, faltanMin: fin - minutos };
   }
 
+  // Una sesión de anoche que se pasó de la medianoche sigue siendo la de ahora.
+  // Sin esto, a las 00:10 de una sesión de 23:00 a 01:00 el inicio decía "día
+  // libre" mientras se estaba atendiendo.
+  const ayer = addDays(hoy, -1);
+  const cruzando = pendientes.find((s) => {
+    if (s.date !== ayer) return false;
+    const fin = timeToMinutes(s.time) + s.durationMin - 24 * 60;
+    return fin > minutos;
+  });
+  if (cruzando) {
+    const fin = timeToMinutes(cruzando.time) + cruzando.durationMin - 24 * 60;
+    return { tipo: 'en_sesion', sesion: cruzando, faltanMin: fin - minutos };
+  }
+
   const deHoy = pendientes.find((s) => s.date === hoy && timeToMinutes(s.time) > minutos);
   if (deHoy) return { tipo: 'hoy', sesion: deHoy, faltanMin: timeToMinutes(deHoy.time) - minutos };
 

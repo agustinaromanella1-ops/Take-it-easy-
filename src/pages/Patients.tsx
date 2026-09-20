@@ -95,6 +95,16 @@ export function PatientsPage({ onOpenPatient }: { onOpenPatient: (id: string) =>
    * mientras se pregunta, 'recuperado' una vez que se retomó.
    */
   const [borrador, setBorrador] = useState<'no' | 'ofrecido' | 'recuperado'>('no');
+  /**
+   * Si los bloques plegados arrancan abiertos.
+   *
+   * Se decide UNA vez, al abrir la ficha, y después no se toca. Antes salía de
+   * mirar el formulario, que cambia en cada tecla: al editar a alguien cuyo
+   * único dato de facturación era el DNI, borrarlo para reescribirlo hacía que
+   * React volviera a poner `open=false` y el bloque se plegaba con el cursor
+   * adentro. El campo desaparecía a la mitad de la edición.
+   */
+  const [abiertos, setAbiertos] = useState({ mas: false, factura: false });
   const [query, setQuery] = useState('');
   const [showInactive, setShowInactive] = useState(false);
 
@@ -136,6 +146,7 @@ export function PatientsPage({ onOpenPatient }: { onOpenPatient: (id: string) =>
     // que sería peor: el formulario aparecería lleno sin que nadie lo pidiera.
     const guardado = leerBorrador<FormState>(BORRADOR);
     setBorrador(guardado && tieneContenido({ ...EN_BLANCO, ...guardado }, EN_BLANCO) ? 'ofrecido' : 'no');
+    setAbiertos({ mas: false, factura: false });
     setEditing('new');
   }
 
@@ -143,6 +154,14 @@ export function PatientsPage({ onOpenPatient }: { onOpenPatient: (id: string) =>
     setForm(toForm(p));
     setErrors({});
     setBorrador('no');
+    // Se abre lo que esa persona ya tiene cargado: esconder justo lo que se
+    // vino a cambiar sería peor que mostrarlo de más.
+    setAbiertos({
+      mas: p.email.trim() !== '' || p.notes.trim() !== '' || p.kind !== EN_BLANCO.kind || p.status !== EN_BLANCO.status,
+      factura:
+        [p.legalName, p.document, p.taxId, p.insurer, p.memberNumber].some((v) => v.trim() !== '') ||
+        p.taxCondition !== EN_BLANCO.taxCondition,
+    });
     setEditing(p);
   }
 
@@ -155,9 +174,14 @@ export function PatientsPage({ onOpenPatient }: { onOpenPatient: (id: string) =>
    */
   useEffect(() => {
     if (editing !== 'new') return;
+    // Mientras el cartel ofrece retomar lo de la vez pasada, no se pisa nada:
+    // si alguien escribe una letra antes de decidir, el borrador viejo se
+    // perdería y "Retomarlo" devolvería esa letra. Es justo la pérdida que
+    // esta función viene a evitar.
+    if (borrador === 'ofrecido') return;
     if (!tieneContenido(form, EN_BLANCO)) return;
     guardarBorrador(BORRADOR, form);
-  }, [editing, form]);
+  }, [editing, form, borrador]);
 
   /** Al abrir el alta, ofrecer lo que había quedado a medias. */
   function retomar() {
@@ -172,6 +196,7 @@ export function PatientsPage({ onOpenPatient }: { onOpenPatient: (id: string) =>
   function descartarBorrador() {
     limpiarBorrador(BORRADOR);
     setForm({ ...EN_BLANCO, colorIndex: nextFreeColor(data.patients.map((p) => p.colorIndex)) });
+    setAbiertos({ mas: false, factura: false });
     setBorrador('no');
   }
 
@@ -186,7 +211,12 @@ export function PatientsPage({ onOpenPatient }: { onOpenPatient: (id: string) =>
     else if (fee < 0) next.fee = 'El honorario no puede ser negativo.';
 
     setErrors(next);
-    if (Object.keys(next).length > 0) return;
+    if (Object.keys(next).length > 0) {
+      // El email vive adentro de "Más datos". Si está plegado, su error queda
+      // escondido y Guardar parece no hacer nada: se abre para que se vea.
+      if (next.email) setAbiertos((a) => ({ ...a, mas: true }));
+      return;
+    }
 
     const fields = {
       name,
@@ -316,7 +346,7 @@ export function PatientsPage({ onOpenPatient }: { onOpenPatient: (id: string) =>
             label="Borrar"
             confirmLabel={`¿Borrar a ${p.name}? Se eliminan también sus ${
               data.sessions.filter((s) => s.patientId === p.id).length
-            } sesión(es) y sus pagos. Esta acción no se puede deshacer.`}
+            } sesiones y sus pagos.`}
             onConfirm={() => dispatch({ type: 'patient/remove', payload: { id: p.id } })}
           />
         </div>
@@ -331,15 +361,6 @@ export function PatientsPage({ onOpenPatient }: { onOpenPatient: (id: string) =>
    * alguien que ya tiene esos datos cargados, se abren solos, porque esconder
    * lo que la persona vino a cambiar sería peor que mostrarlo de más.
    */
-  const hayMasDatos =
-    form.email.trim() !== '' ||
-    form.notes.trim() !== '' ||
-    form.kind !== EN_BLANCO.kind ||
-    form.status !== EN_BLANCO.status;
-  const hayFacturacion =
-    [form.legalName, form.document, form.taxId, form.insurer, form.memberNumber].some(
-      (v) => v.trim() !== '',
-    ) || form.taxCondition !== EN_BLANCO.taxCondition;
   /* `<details>` recuerda solo si está abierto, así que al pasar de una ficha a
      otra hay que volver a montarlo para que la decisión se recalcule. */
   const claveFicha = editing === 'new' ? 'nuevo' : (editing?.id ?? '');
@@ -458,7 +479,7 @@ export function PatientsPage({ onOpenPatient }: { onOpenPatient: (id: string) =>
             <input value={form.phone} onChange={(e) => setForm({ ...form, phone: e.target.value })} />
           </Field>
 
-          <details className="plegable" key={`mas-${claveFicha}`} open={hayMasDatos}>
+          <details className="plegable" key={`mas-${claveFicha}`} open={abiertos.mas}>
             <summary>Más datos</summary>
             <div className="field-row">
               <Field label="Email" error={errors.email}>
@@ -515,7 +536,7 @@ export function PatientsPage({ onOpenPatient }: { onOpenPatient: (id: string) =>
             </Field>
           </details>
 
-          <details className="plegable" key={`factura-${claveFicha}`} open={hayFacturacion}>
+          <details className="plegable" key={`factura-${claveFicha}`} open={abiertos.factura}>
             <summary>Datos para facturar</summary>
             <Field label="Nombre completo">
               <input

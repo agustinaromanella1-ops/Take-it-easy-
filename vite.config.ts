@@ -1,4 +1,9 @@
 import { defineConfig } from 'vitest/config';
+
+// Las pruebas corren en horario argentino, que es donde corre la app. Varias
+// reglas del proyecto dependen de eso: un sello UTC de las 01:00 es el día
+// anterior acá, y una prueba que corriera en UTC no vería la diferencia.
+process.env.TZ = 'America/Argentina/Buenos_Aires';
 import react from '@vitejs/plugin-react';
 import { VitePWA } from 'vite-plugin-pwa';
 

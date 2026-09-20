@@ -205,8 +205,27 @@ export function DayClose({
     );
   }
 
+  /**
+   * Cerrar el cuadro sin guardar, cuando ya hay sesiones marcadas.
+   *
+   * Un roce fuera del cuadro o un Escape tiraban a la basura quince toques sin
+   * decir nada: las decisiones viven en memoria hasta que se guarda, así que no
+   * había ni barra de deshacer que las trajera de vuelta —no se había
+   * despachado nada—. El cierre del día se usa a la noche y cansada; que se
+   * pierda en silencio es lo peor que puede hacer esta pantalla.
+   */
+  function intentarCerrar() {
+    if (summary.decided === 0) {
+      onClose();
+      return;
+    }
+    const cuantas =
+      summary.decided === 1 ? 'una sesión marcada' : `${summary.decided} sesiones marcadas`;
+    if (window.confirm(`Tenés ${cuantas} sin guardar. ¿Cerrar y perder eso?`)) onClose();
+  }
+
   return (
-    <Modal title="Cierre del día" onClose={onClose}>
+    <Modal title="Cierre del día" onClose={intentarCerrar}>
       <p className="small muted cap-first" style={{ marginTop: 0 }}>
         {formatDateLong(date)}
       </p>

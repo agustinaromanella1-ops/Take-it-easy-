@@ -21,7 +21,11 @@ export function Pendientes({ onGo }: { onGo: (page: 'agenda' | 'finanzas' | 'pac
   const hoy = today();
   const [saltadas, setSaltadas] = useState<string[]>([]);
 
-  const todas = useMemo(() => pendientes(data, hoy), [data, hoy]);
+  // La hora hace falta para no dar por terminada una sesión de anoche que
+  // todavía está corriendo. Se lee al dibujar: alcanza, porque esto se vuelve
+  // a dibujar con cada cambio de datos.
+  const ahoraMin = new Date().getHours() * 60 + new Date().getMinutes();
+  const todas = useMemo(() => pendientes(data, hoy, ahoraMin), [data, hoy, ahoraMin]);
   const visibles = todas.filter((p) => !saltadas.includes(p.clave));
   const primera = visibles[0];
   const restan = visibles.length - 1;
@@ -93,6 +97,19 @@ export function Pendientes({ onGo }: { onGo: (page: 'agenda' | 'finanzas' | 'pac
   );
 }
 
+/**
+ * Cuánto hace, sin exagerar.
+ *
+ * Antes redondeaba a meses con `Math.round(dias / 30)`: como el aviso aparece
+ * a los 45 días, el mensaje más benigno posible ya decía "hace 2 meses" y
+ * nunca podía decir uno. Abajo de dos meses se cuenta en días, que es exacto,
+ * y de ahí en adelante se redondea para abajo.
+ */
+function antiguedad(dias: number): string {
+  if (dias < 60) return `${dias} días`;
+  return `${Math.floor(dias / 30)} meses`;
+}
+
 function texto(p: Pendiente, moneda: string): string {
   switch (p.tipo) {
     case 'cerrar':
@@ -116,6 +133,6 @@ function nota(p: Pendiente): string {
         ? 'La última sesión fue ayer.'
         : `La última sesión fue hace ${p.desdeDias} días.`;
     case 'cobrar':
-      return `Lo más viejo sin saldar es de hace ${Math.round(p.desdeDias / 30)} meses. Si ya te pagó, queda registrarlo.`;
+      return `Lo más viejo sin saldar es de hace ${antiguedad(p.desdeDias)}. Si ya te pagó, queda registrarlo.`;
   }
 }

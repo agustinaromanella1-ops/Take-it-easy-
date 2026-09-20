@@ -1700,7 +1700,12 @@ a.btn {
   margin: 0 auto;
   width: fit-content;
   bottom: calc(18px + env(safe-area-inset-bottom, 0px));
-  z-index: 45;
+  /* Por encima del fondo del modal (50). El cierre del día deja su cuadro
+     abierto mostrando la despedida, y con z-index menor la barra quedaba
+     detrás, borrosa y sin poder tocarse; el dedo que iba al botón de deshacer
+     tocaba el fondo y cerraba el cuadro. Es justo la acción más voluminosa
+     —marca N sesiones y crea N cobros— la que se quedaba sin vuelta atrás. */
+  z-index: 55;
   display: flex;
   align-items: center;
   gap: 14px;
