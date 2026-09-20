@@ -17,7 +17,18 @@ interface StoreValue {
   data: AppData;
   dispatch: React.Dispatch<Action>;
   /** Lo último que se puede deshacer, o `null` si no hay nada. */
-  deshacer: { etiqueta: string; hacer: () => void; descartar: () => void } | null;
+  deshacer: {
+    etiqueta: string;
+    hacer: () => void;
+    descartar: () => void;
+    /**
+     * Frena y reanuda la cuenta regresiva. La barra la frena mientras tenga el
+     * foco adentro: diez segundos alcanzan para ver un cartel, no para llegar
+     * a él tabulando y decidir. Se iba con el foco puesto y lo dejaba en la
+     * nada, así que la tabulación siguiente arrancaba de arriba de todo.
+     */
+    frenar: (frenado: boolean) => void;
+  } | null;
   /**
    * Si el último intento de guardar falló.
    *
@@ -147,6 +158,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
    * y así deshacer no depende de saber invertir cada acción una por una.
    */
   const [undo, setUndo] = useState<{ etiqueta: string; estado: AppData } | null>(null);
+  const [frenado, setFrenado] = useState(false);
 
   const despachar = useCallback((action: Action) => {
     const etiqueta = etiquetaDe(action);
@@ -154,15 +166,16 @@ export function StoreProvider({ children }: { children: ReactNode }) {
     // volvería más atrás de lo que la barra promete y se llevaría puesto lo que
     // se hizo después.
     setUndo(etiqueta ? { etiqueta, estado: latest.current } : null);
+    setFrenado(false);
     dispatch(action);
   }, []);
 
   // La barra se va sola. El temporizador se rearma con cada cambio nuevo.
   useEffect(() => {
-    if (!undo) return;
+    if (!undo || frenado) return;
     const t = window.setTimeout(() => setUndo(null), DESHACER_MS);
     return () => window.clearTimeout(t);
-  }, [undo]);
+  }, [undo, frenado]);
 
   const value = useMemo<StoreValue>(
     () => ({
@@ -179,6 +192,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
               setUndo(null);
             },
             descartar: () => setUndo(null),
+            frenar: setFrenado,
           }
         : null,
     }),

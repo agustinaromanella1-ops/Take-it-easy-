@@ -345,7 +345,7 @@ export function PatientsPage({ onOpenPatient }: { onOpenPatient: (id: string) =>
 
       <div className="filters">
         <div className="field" style={{ marginBottom: 0 }}>
-          <label htmlFor="buscar">Buscar</label>
+          <label className="field-label" htmlFor="buscar">Buscar</label>
           <input
             id="buscar"
             value={query}
@@ -460,7 +460,7 @@ export function PatientsPage({ onOpenPatient }: { onOpenPatient: (id: string) =>
             </div>
 
             <div className="field">
-              <label id="color-label">Color</label>
+              <label className="field-label" id="color-label">Color</label>
               <div className="swatches" role="radiogroup" aria-labelledby="color-label">
                 {PATIENT_COLORS.map((c, i) => (
                   <button

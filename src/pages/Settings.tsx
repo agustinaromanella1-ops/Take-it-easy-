@@ -206,7 +206,13 @@ export function SettingsPage() {
           despertador: con la app cerrada no llega. El que sí funciona con todo cerrado es la alarma
           del calendario del teléfono, que se manda con cada turno desde la Agenda.
         </p>
-        {avisoEstado && <p className="small muted">{avisoEstado}</p>}
+        {/* role="status" para que el resultado llegue a quien no lo ve: es
+            justo la explicación de por qué la elección no tuvo efecto. */}
+        {avisoEstado && (
+          <p className="small muted" role="status">
+            {avisoEstado}
+          </p>
+        )}
 
         <label style={{ display: 'flex', alignItems: 'center', gap: 8, cursor: 'pointer' }}>
           <input
@@ -360,7 +366,11 @@ export function SettingsPage() {
         <button className="btn small" onClick={revisarVersion}>
           Buscar una versión nueva
         </button>
-        {versionEstado && <p className="small muted">{versionEstado}</p>}
+        {versionEstado && (
+          <p className="small muted" role="status">
+            {versionEstado}
+          </p>
+        )}
       </Card>
 
     </>

@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useMemo, useRef, useState } from 'react';
 import { useStore } from '../store/StoreContext';
 import { pendientes, type Pendiente } from '../lib/pendientes';
 import { formatDateLong, today } from '../lib/dates';
@@ -24,6 +24,20 @@ export function Pendientes({
   const { data, dispatch } = useStore();
   const hoy = today();
   const [saltadas, setSaltadas] = useState<string[]>([]);
+  const caja = useRef<HTMLElement>(null);
+
+  /**
+   * Resuelve la tarjeta sin tirar el foco.
+   *
+   * El botón que se toca desaparece —la tarjeta pasa a la cosa siguiente— y
+   * con el teclado el foco se caía al `<body>`: la tabulación siguiente
+   * arrancaba desde arriba de todo, y llegar al botón de deshacer eran siete
+   * tabulaciones. Dejándolo en la tarjeta, lo que sigue queda al lado.
+   */
+  function resolver(accion: () => void) {
+    accion();
+    caja.current?.focus();
+  }
 
   // La hora hace falta para no dar por terminada una sesión de anoche que
   // todavía está corriendo. Se lee al dibujar: alcanza, porque esto se vuelve
@@ -38,16 +52,26 @@ export function Pendientes({
   const primera = visibles[0];
   const restan = visibles.length - 1;
 
+  /*
+   * La caja de afuera está SIEMPRE, con tarjeta o sin ella.
+   *
+   * No es cosmético: al resolver la última cosa pendiente la tarjeta se va, y
+   * si la caja se fuera con ella, el foco que `resolver()` acaba de dejar acá
+   * se caería al `<body>` igual que antes. Quedándose, el foco sobrevive y la
+   * tabulación siguiente arranca de acá.
+   */
   if (!primera) {
     return (
-      <p className="pendientes-vacio">
-        {todas.length > 0 ? '👍 Por ahora no queda nada más.' : '✨ No hay nada abierto.'}
-      </p>
+      <section aria-label="Lo que quedó abierto" ref={caja} tabIndex={-1}>
+        <p className="pendientes-vacio">
+          {todas.length > 0 ? '👍 Por ahora no queda nada más.' : '✨ No hay nada abierto.'}
+        </p>
+      </section>
     );
   }
 
   return (
-    <section className="pendientes" aria-label="Lo que quedó abierto">
+    <section className="pendientes" aria-label="Lo que quedó abierto" ref={caja} tabIndex={-1}>
       <div className="pendientes-rotulo">Lo que quedó abierto</div>
       <p className="pendientes-texto">{texto(primera, data.settings.currency)}</p>
       <p className="pendientes-nota">{nota(primera)}</p>
@@ -58,7 +82,9 @@ export function Pendientes({
             <button
               className="btn small primary"
               onClick={() =>
-                dispatch({ type: 'session/setStatus', payload: { id: primera.sesion.id, status: 'realizada' } })
+                resolver(() =>
+                  dispatch({ type: 'session/setStatus', payload: { id: primera.sesion.id, status: 'realizada' } }),
+                )
               }
             >
               Vino
@@ -66,7 +92,9 @@ export function Pendientes({
             <button
               className="btn small"
               onClick={() =>
-                dispatch({ type: 'session/setStatus', payload: { id: primera.sesion.id, status: 'ausente' } })
+                resolver(() =>
+                  dispatch({ type: 'session/setStatus', payload: { id: primera.sesion.id, status: 'ausente' } }),
+                )
               }
             >
               Faltó
@@ -74,7 +102,9 @@ export function Pendientes({
             <button
               className="btn small"
               onClick={() =>
-                dispatch({ type: 'session/setStatus', payload: { id: primera.sesion.id, status: 'cancelada' } })
+                resolver(() =>
+                  dispatch({ type: 'session/setStatus', payload: { id: primera.sesion.id, status: 'cancelada' } }),
+                )
               }
             >
               Se canceló
@@ -91,7 +121,10 @@ export function Pendientes({
             Registrar el cobro
           </button>
         )}
-        <button className="btn small ghost" onClick={() => setSaltadas([...saltadas, primera.clave])}>
+        <button
+          className="btn small ghost"
+          onClick={() => resolver(() => setSaltadas([...saltadas, primera.clave]))}
+        >
           Más tarde
         </button>
       </div>

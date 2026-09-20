@@ -55,6 +55,15 @@ export function Empty({ children }: { children: ReactNode }) {
   return <p className="empty">{children}</p>;
 }
 
+/**
+ * Un campo con su etiqueta.
+ *
+ * La caja es un `<label>` y el control va ADENTRO. Antes era un `<div>` con la
+ * etiqueta al lado: se veía igual, pero para un lector de pantalla el control
+ * quedaba sin nombre —"cuadro combinado", sin decir de qué— porque nada los
+ * ataba. Anidarlo los ata sin necesidad de inventar un `id` por campo, y de
+ * paso tocar la etiqueta enfoca el control.
+ */
 export function Field({
   label,
   error,
@@ -65,11 +74,11 @@ export function Field({
   children: ReactNode;
 }) {
   return (
-    <div className="field">
-      <label>{label}</label>
+    <label className="field">
+      <span className="field-label">{label}</span>
       {children}
       {error && <span className="error-text">{error}</span>}
-    </div>
+    </label>
   );
 }
 
@@ -78,6 +87,10 @@ export function Field({
  * foco al elemento que lo abrió (si no, el foco queda perdido arriba de todo y
  * la navegación por teclado se vuelve inusable).
  */
+/** Lo que puede recibir el foco adentro de un cuadro. */
+const SELECTOR_FOCOABLE =
+  'a[href], button, input, select, textarea, [tabindex]:not([tabindex="-1"])';
+
 export function Modal({ title, onClose, children }: { title: string; onClose: () => void; children: ReactNode }) {
   const boxRef = useRef<HTMLDivElement>(null);
   const openerRef = useRef<HTMLElement | null>(null);
@@ -98,7 +111,33 @@ export function Modal({ title, onClose, children }: { title: string; onClose: ()
   useEffect(() => {
     openerRef.current = document.activeElement as HTMLElement | null;
     const onKey = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') cerrarRef.current();
+      if (e.key === 'Escape') {
+        cerrarRef.current();
+        return;
+      }
+      if (e.key !== 'Tab') return;
+
+      // El cuadro dice `aria-modal="true"`, o sea "el fondo no existe". Si el
+      // tabulador igual se va al fondo, el teclado y el lector de pantalla
+      // cuentan cosas distintas: uno pasea por botones que el otro considera
+      // inexistentes. Medido antes de esto: de 45 tabulaciones seguidas, 28
+      // caían afuera.
+      const caja = boxRef.current;
+      if (!caja) return;
+      const focoables = [...caja.querySelectorAll<HTMLElement>(SELECTOR_FOCOABLE)].filter(
+        (el) => !el.hasAttribute('disabled') && el.offsetParent !== null,
+      );
+      const primero = focoables[0];
+      const ultimo = focoables[focoables.length - 1];
+      if (!primero || !ultimo) return;
+
+      if (e.shiftKey && document.activeElement === primero) {
+        e.preventDefault();
+        ultimo.focus();
+      } else if (!e.shiftKey && document.activeElement === ultimo) {
+        e.preventDefault();
+        primero.focus();
+      }
     };
     document.addEventListener('keydown', onKey);
     const prevOverflow = document.body.style.overflow;

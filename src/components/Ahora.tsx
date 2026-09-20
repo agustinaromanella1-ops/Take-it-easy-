@@ -56,11 +56,20 @@ export function Ahora({
   const nombre = paciente?.name ?? 'Paciente borrado';
 
   const { titulo, grande, pie, tono } = describir(momento, nombre, reloj.hoy);
+  // El texto del anuncio depende del tono, no de los minutos: cambia cuatro
+  // veces en todo un día en vez de sesenta veces por hora.
+  const anuncio = ANUNCIO[tono];
 
   return (
-    // aria-live cortés: cuando el texto cambie solo, quien use lector de
-    // pantalla se entera al terminar lo que estaba leyendo, sin interrumpirlo.
-    <section className={`ahora ahora-${tono}`} aria-live="polite">
+    /*
+     * Sin `aria-live` en el bloque entero. Lo tenía, y como el texto cambia de
+     * minuto en minuto, un lector de pantalla anunciaba "en 23 minutos", "en
+     * 22 minutos"… una vez por minuto mientras Inicio estuviera abierto: en
+     * una sesión de 50 minutos, cincuenta anuncios de algo que no cambió de
+     * significado. Lo que vale contar es el cambio de situación —empezó, está
+     * por terminar, terminó—, y eso va abajo, en su propia región.
+     */
+    <section className={`ahora ahora-${tono}`}>
       <div className="ahora-titulo">
         {paciente && (
           <span className="dot" style={{ background: patientColor(paciente.colorIndex).solid }} />
@@ -74,9 +83,22 @@ export function Ahora({
           Ver la agenda
         </button>
       )}
+
+      {/* Solo el cambio de situación, y solo para quien escucha. */}
+      <p className="solo-lectores" aria-live="polite">
+        {anuncio}
+      </p>
     </section>
   );
 }
+
+/** Lo que se anuncia al cambiar la situación. Uno por tono, y nada más. */
+const ANUNCIO: Record<Cartel['tono'], string> = {
+  calma: '',
+  aviso: 'La próxima sesión está por empezar.',
+  curso: 'Sesión en curso.',
+  fin: 'La sesión está por terminar.',
+};
 
 interface Cartel {
   titulo: string;
