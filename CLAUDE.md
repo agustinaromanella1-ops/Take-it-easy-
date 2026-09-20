@@ -22,7 +22,7 @@ npx vite build && npx vite preview --port 4173 &
 node e2e/aceptacion.mjs     # 118 verificaciones sobre la app entera
 node e2e/bienvenida.mjs     # 43: la portada contra el diseño aprobado
 node e2e/actualizacion.mjs  # 15: la barra de "hay una versión nueva"
-node e2e/borradores.mjs     # 22: que lo escrito no se pierda al cerrar una pantalla
+node e2e/borradores.mjs     # 26: que lo escrito no se pierda al cerrar una pantalla
 ```
 
 `e2e/actualizacion.mjs` tarda unos minutos porque vuelve a compilar dos veces con la app
@@ -73,6 +73,12 @@ No los cambies a ojo: pasan por el verificador de la skill `dataviz`
 (`node scripts/validate_palette.js "#hex,#hex" --mode light|dark`), con ΔE ≥ 8 en visión con
 daltonismo. Los valores actuales y sus números están en el README.
 
+**Un campo va adentro de su `<label>`, no al lado.** `Field` de `ui.tsx` es un `<label>` que
+envuelve al control: es lo que le da nombre para un lector de pantalla sin inventar un `id`
+por campo. Con la etiqueta como hermana, los cuatro campos de Ajustes se anunciaban como
+"cuadro combinado", sin decir de qué. Si agregás un control suelto fuera de `Field`, atalo
+con `htmlFor` y ponele `className="field-label"` a su etiqueta.
+
 **Todo par de texto y fondo está medido contra WCAG AA (4,5:1).** Si agregás un color, medilo. El
 caso que ya se resolvió: blanco sobre el naranja del botón da 2,7:1 y no pasa, por eso el botón
 principal lleva tinta oscura (`--sobre-claro`, 5,9:1) en los dos temas.
@@ -93,8 +99,9 @@ reglas, no estilo.** Antes de mover algo del inicio o de agregar una pantalla, l
   sin confirmación visible.
 - Los formularios largos guardan borrador con el hook `src/lib/useBorrador.ts` y muestran
   `<AvisoBorrador>`. Lo escrito no se pierde nunca por cerrar una pantalla. Lo usan el alta
-  de paciente, el turno y el cobro; si se agrega otro formulario largo, va por ahí y no con
-  una copia de la máquina de estados. Mientras el cartel está en `'ofrecido'` no se guarda
+  de paciente, el turno, el cobro y el cierre del día; si se agrega otro formulario largo, va
+  por ahí y no con una copia de la máquina de estados. `vacio` tiene que ser estable entre
+  dibujos: uno nuevo por render hace que el efecto escriba sin que nadie toque una tecla. Mientras el cartel está en `'ofrecido'` no se guarda
   nada: escribir antes de decidir pisaría lo que el cartel promete devolver.
 - Nada está en rojo por no estar hecho. El rojo (`tone='danger'`) es para errores; la
   plata que todavía no entró va en `'warn'`.

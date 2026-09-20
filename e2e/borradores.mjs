@@ -111,7 +111,50 @@ await recorrido(
   async () => p.locator('.modal .field').last().locator('input').inputValue(),
 );
 
-titulo('4. Guardar de verdad borra el borrador');
+titulo('4. Cierre del día');
+// Es la pantalla que más trabajo acumula: marcar sesión por sesión. Sus
+// decisiones viven en memoria hasta que se guarda, así que sin borrador un
+// roce fuera del cuadro se llevaba la jornada entera.
+p.on('dialog', async (d) => { await d.accept(); });
+await p.evaluate(() => {
+  const sello = new Date().toISOString();
+  const hoy = new Date().toISOString().slice(0, 10);
+  const datos = JSON.parse(localStorage.getItem('pipicucu:data'));
+  datos.sessions = [
+    { id:'c1', patientId:'p1', updatedAt:sello, date:hoy, time:'09:00', durationMin:50,
+      status:'programada', fee:3500000, chargeable:true, notes:'' },
+    { id:'c2', patientId:'p1', updatedAt:sello, date:hoy, time:'10:00', durationMin:50,
+      status:'programada', fee:3500000, chargeable:true, notes:'' },
+  ];
+  localStorage.setItem('pipicucu:data', JSON.stringify(datos));
+});
+await p.reload();
+await pasar();
+await p.waitForTimeout(700);
+await p.locator('.close-day-btn').click();
+await p.waitForTimeout(600);
+for (let i = 0; i < 2; i++) {
+  await p.locator('.close-row').nth(i).locator('.seg button', { hasText: 'Vino' }).click();
+  await p.waitForTimeout(150);
+}
+await p.locator('.modal-backdrop').click({ position: { x: 5, y: 5 } });
+await p.waitForTimeout(700);
+check('cerrar de un roce cierra el cuadro', (await p.locator('.close-row').count()) === 0);
+await p.locator('.close-day-btn').click();
+await p.waitForTimeout(700);
+check('al volver ofrece retomar el cierre', (await p.locator('.borrador-aviso').count()) === 1);
+await p.getByRole('button', { name: 'Retomarlo' }).click();
+await p.waitForTimeout(400);
+const marcadas = await p.locator('.close-row .seg button[aria-pressed="true"]').count();
+check('vuelven las dos sesiones marcadas', marcadas === 2, `volvieron ${marcadas}`);
+await p.getByRole('button', { name: /Guardar/ }).click();
+await p.waitForTimeout(800);
+check('guardar de verdad borra el borrador del cierre',
+  !(await p.evaluate(() => Object.keys(localStorage).some((k) => k.includes('borrador:cierre')))));
+await p.locator('.modal-foot .btn.primary').click().catch(() => {});
+await p.waitForTimeout(400);
+
+titulo('5. Guardar de verdad borra el borrador');
 await irA('Pacientes');
 await p.locator('.fab').click();
 await p.waitForTimeout(400);

@@ -19,13 +19,32 @@ import { guardarBorrador, leerBorrador, limpiarBorrador, tieneContenido } from '
  */
 export type EstadoBorrador = 'no' | 'ofrecido' | 'recuperado';
 
-export function useBorrador<T extends object>(clave: string, vacio: T, form: T, activo: boolean) {
+/**
+ * `hayAlgo` decide si el formulario tiene algo que valga la pena guardar. Por
+ * omisión compara los campos de texto contra el formulario en blanco, que es
+ * lo que sirve para un formulario común. El cierre del día no tiene campos de
+ * texto —son decisiones por sesión— y pasa el suyo.
+ *
+ * Ojo con `vacio`: tiene que ser estable entre dibujos. Si se arma uno nuevo
+ * en cada render, el efecto lo ve cambiar y escribe en localStorage sin que
+ * nadie toque una tecla. Ya pasó una vez.
+ */
+export function useBorrador<T extends object>(
+  clave: string,
+  vacio: T,
+  form: T,
+  activo: boolean,
+  hayAlgo: (form: T, vacio: T) => boolean = tieneContenido,
+) {
   const [estado, setEstado] = useState<EstadoBorrador>('no');
 
   useEffect(() => {
     if (!activo || estado === 'ofrecido') return;
-    if (!tieneContenido(form, vacio)) return;
+    if (!hayAlgo(form, vacio)) return;
     guardarBorrador(clave, form);
+    // `hayAlgo` puede venir escrita en el JSX y cambiar de identidad en cada
+    // dibujo; lo que importa es el contenido del formulario.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [clave, vacio, form, activo, estado]);
 
   return {
@@ -38,7 +57,7 @@ export function useBorrador<T extends object>(clave: string, vacio: T, form: T, 
      */
     ofrecerSiHay() {
       const guardado = leerBorrador<T>(clave);
-      setEstado(guardado && tieneContenido({ ...vacio, ...guardado }, vacio) ? 'ofrecido' : 'no');
+      setEstado(guardado && hayAlgo({ ...vacio, ...guardado }, vacio) ? 'ofrecido' : 'no');
     },
 
     /** Marca que no hay nada que ofrecer, sin tocar lo guardado. */

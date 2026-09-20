@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import type { Patient, Payment, PaymentMethod, Session } from '../types';
 import { useStore } from '../store/StoreContext';
 import {
@@ -13,6 +13,8 @@ import { formatDateLong } from '../lib/dates';
 import { patientColor } from '../lib/palette';
 import { Modal } from './ui';
 import { plural } from '../lib/plural';
+import { useBorrador } from '../lib/useBorrador';
+import { AvisoBorrador } from './AvisoBorrador';
 
 const METHODS: PaymentMethod[] = ['efectivo', 'transferencia', 'tarjeta', 'otro'];
 
@@ -111,6 +113,24 @@ function armarDespedida(
  * Resuelve el agujero más común de la app: las sesiones que quedan en
  * "programada" para siempre y dejan la facturación por debajo de lo real.
  */
+/**
+ * Lo que se guarda del cierre a medio hacer.
+ *
+ * Un `Map` no sobrevive a `JSON.stringify`, así que va como lista de pares.
+ * La clave lleva la fecha: un cierre a medias del martes no tiene nada que
+ * hacer apareciendo el miércoles.
+ */
+interface BorradorCierre {
+  decisiones: [string, DayCloseDecision][];
+  metodo: PaymentMethod;
+}
+
+/** Referencia estable: si fuera un objeto nuevo por dibujo, guardaría solo. */
+const CIERRE_EN_BLANCO: BorradorCierre = { decisiones: [], metodo: 'efectivo' };
+
+/** Acá no hay campos de texto: lo que cuenta es si se marcó alguna sesión. */
+const hayDecisiones = (b: BorradorCierre) => b.decisiones.length > 0;
+
 export function DayClose({
   date,
   sessions,
@@ -129,6 +149,44 @@ export function DayClose({
   const [method, setMethod] = useState<PaymentMethod>('efectivo');
   /** Lo que se muestra una vez guardado: el resumen de la jornada. */
   const [despedida, setDespedida] = useState<Despedida | null>(null);
+
+  /*
+   * El cierre del día guarda borrador como cualquier formulario largo, y por
+   * el mismo motivo: sus decisiones viven en memoria hasta que se guarda. Un
+   * roce fuera del cuadro, un Escape o una recarga —la app se actualiza sola
+   * en otra pestaña— se llevaban media jornada de marcar sesión por sesión.
+   * Era la única pantalla larga sin red.
+   */
+  const valorBorrador = useMemo<BorradorCierre>(
+    () => ({ decisiones: [...decisions.entries()], metodo: method }),
+    [decisions, method],
+  );
+  const borrador = useBorrador(
+    `cierre:${date}`,
+    CIERRE_EN_BLANCO,
+    valorBorrador,
+    despedida === null,
+    hayDecisiones,
+  );
+
+  // Al abrir: si quedó un cierre a medias de este mismo día, se ofrece.
+  useEffect(() => {
+    borrador.ofrecerSiHay();
+    // Solo al montar: `borrador` se rearma en cada dibujo.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  function retomar() {
+    const guardado = borrador.retomar();
+    if (!guardado) return;
+    setDecisions(new Map(guardado.decisiones));
+    setMethod(guardado.metodo);
+  }
+
+  function descartarBorrador() {
+    borrador.descartar();
+    setDecisions(new Map());
+  }
 
   const pending = useMemo(() => sessions.filter((s) => s.status === 'programada'), [sessions]);
   const alreadyClosed = useMemo(() => sessions.filter((s) => s.status !== 'programada'), [sessions]);
@@ -158,6 +216,7 @@ export function DayClose({
   function confirm() {
     const result = buildDayClose(sessions, decisions, date, method);
     dispatch({ type: 'day/close', payload: result });
+    borrador.listo();
     // En vez de cerrar y devolver a la pantalla de números, la jornada termina
     // con su resumen. Es el momento de soltar el trabajo, no de mirar totales.
     setDespedida(
@@ -209,11 +268,9 @@ export function DayClose({
   /**
    * Cerrar el cuadro sin guardar, cuando ya hay sesiones marcadas.
    *
-   * Un roce fuera del cuadro o un Escape tiraban a la basura quince toques sin
-   * decir nada: las decisiones viven en memoria hasta que se guarda, así que no
-   * había ni barra de deshacer que las trajera de vuelta —no se había
-   * despachado nada—. El cierre del día se usa a la noche y cansada; que se
-   * pierda en silencio es lo peor que puede hacer esta pantalla.
+   * Ya no se pierde nada —queda el borrador— pero el cuadro igual pregunta:
+   * cerrarlo de un roce y tener que volver a abrirlo y retomar es una molestia
+   * evitable. El texto dice la verdad, que lo marcado espera.
    */
   function intentarCerrar() {
     if (summary.decided === 0) {
@@ -222,11 +279,14 @@ export function DayClose({
     }
     const cuantas =
       summary.decided === 1 ? 'una sesión marcada' : `${summary.decided} sesiones marcadas`;
-    if (window.confirm(`Tenés ${cuantas} sin guardar. ¿Cerrar y perder eso?`)) onClose();
+    if (window.confirm(`Tenés ${cuantas} sin guardar. Si cerrás, te la ofrezco al volver. ¿Cerrar?`)) {
+      onClose();
+    }
   }
 
   return (
     <Modal title="Cierre del día" onClose={intentarCerrar}>
+      <AvisoBorrador estado={borrador.estado} onRetomar={retomar} onDescartar={descartarBorrador} />
       <p className="small muted cap-first" style={{ marginTop: 0 }}>
         {formatDateLong(date)}
       </p>
