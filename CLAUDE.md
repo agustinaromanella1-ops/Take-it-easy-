@@ -173,6 +173,10 @@ en silencio: después de tocar JSX, confirmá con `grep`.
 
 Cloudflare Workers desde `main`, con `wrangler.jsonc`. Cada commit se publica solo.
 
+Los pasos para Google Play están en `PLAY.md`. Dos cosas de ahí que afectan al código: la
+dirección y el `background_color` del manifiesto quedan grabados dentro del paquete que se
+sube, así que cambiarlos después pide publicar una versión nueva.
+
 **No agregues un `public/_redirects` con `/* → /index.html`**: `not_found_handling` en
 `wrangler.jsonc` ya hace eso, y Cloudflare rechaza el despliegue entero por bucle infinito.
 `public/_headers` sí va, y lo leen Cloudflare y Netlify igual. Ver `CLOUDFLARE.md`.

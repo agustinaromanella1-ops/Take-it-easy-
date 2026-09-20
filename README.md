@@ -257,19 +257,27 @@ haya señal.
 
 ### Actualizaciones
 
-El service worker descarga la versión nueva en segundo plano y la aplica
-**cuando salís de la app**, no mientras la estás usando: interrumpir la carga de
-una sesión para actualizar sería peor que esperar al próximo arranque.
+Cuando hay una versión nueva aparece una barra arriba de todo que lo dice, con un
+botón para aplicarla. Nunca se aplica sola: interrumpir la carga de una sesión
+para actualizar sería peor que esperar.
+
+Antes sí se aplicaba sola, "cuando salías de la app". Nadie puede adivinar esa
+regla: si no salías y volvías, te quedabas en la versión vieja sin ninguna señal
+de que había otra. Actualizar tiene que ser algo que se ve y se decide.
+
+En Ajustes › Versión dice de cuándo es la copia que estás usando y hay un botón
+para buscar una nueva sin esperar.
 
 ## Publicar como app de Android
 
-La app es una PWA: se puede envolver como app de Play Store con PWABuilder o Bubblewrap. Eso genera
-un archivo `signing.keystore` con su contraseña, que hace falta para publicar **cada actualización**
-futura de la misma ficha de Play.
+Los pasos están en `PLAY.md`: el orden, el archivo que ata la app al sitio, la declaración de
+datos y los textos de la ficha.
 
-Ese keystore y su contraseña no van nunca al repositorio — ya están en `.gitignore`. Quien tenga
-ambos puede publicar actualizaciones haciéndose pasar por la app. Guardalos en un gestor de
-contraseñas, no en una captura de pantalla ni en un chat.
+Lo que no se puede dejar de leer: al envolverla se genera un `signing.keystore` con su
+contraseña, y hace falta para **cada actualización futura** de la misma ficha. Si se pierde, no
+hay forma de actualizar la app. Quien tenga el archivo y la contraseña puede publicar
+actualizaciones haciéndose pasar por la app. No van nunca al repositorio —ya están en
+`.gitignore`—, ni a una captura de pantalla, ni a un chat.
 
 ## Sacar los datos afuera
 

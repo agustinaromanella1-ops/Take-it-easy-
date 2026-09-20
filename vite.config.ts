@@ -45,8 +45,17 @@ export default defineConfig({
         scope: '/',
         display: 'standalone',
         orientation: 'portrait',
-        background_color: '#eef2f7',
-        theme_color: '#eef2f7',
+        /*
+         * El celeste del amanecer de la app, no el gris de la paleta vieja.
+         *
+         * `background_color` es lo que Android pinta en la pantalla de arranque
+         * detrás del ícono, y `theme_color` la barra de estado. Con el valor
+         * viejo, abrir la app instalada empezaba con un destello gris que no es
+         * de ninguna pantalla. Conviene tenerlo bien ANTES de envolverla para
+         * Play: después, cambiarlo pide publicar una versión nueva.
+         */
+        background_color: '#d9ebfb',
+        theme_color: '#d9ebfb',
         categories: ['productivity', 'medical', 'finance'],
         icons: [
           { src: '/icon-192.png', sizes: '192x192', type: 'image/png' },
