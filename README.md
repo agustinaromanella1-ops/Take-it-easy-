@@ -331,21 +331,26 @@ borra el historial**, así que conviene exportar una copia desde Ajustes cada ta
 ## Desarrollo
 
 ```bash
-npm test          # 188 tests unitarios
+npm test          # toda la batería unitaria (315 al escribir esto)
 npm run typecheck # TypeScript en modo strict
 npm run build
 
 # Prueba de aceptación: carga datos por la interfaz real y comprueba que
 # sobrevivan a una recarga, a exportar/borrar/importar y a estar sin conexión.
 npx vite preview --port 4173 &
-npm run test:e2e
+npm run test:e2e          # aceptación, portada, borradores y dos pestañas
+npm run test:actualizacion # aparte: tarda, porque compila dos veces
 ```
 
 ```
 src/
 ├── types.ts            Modelo de datos
 ├── lib/                money, dates, storage, pricing, recurrence, calendar,
-│                       contact, palette, dayclose, billing — lógica pura
+│                       contact, palette, dayclose, billing, csv — lógica pura
+│                       ahora, pendientes, aviso — qué mostrar y cuándo
+│                       fusion, deshacer — fusionar dos copias de los datos
+│                       borrador, useBorrador, enfoque, tema, movimiento —
+│                       preferencias y lo escrito a medias
 ├── store/              reducer, selectores y contexto
 ├── components/ui.tsx   Card, Stat, Modal, Field
 └── pages/              Dashboard, Patients, PatientDetail, Agenda, Finance, Settings

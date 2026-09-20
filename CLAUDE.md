@@ -10,7 +10,7 @@ Seguí en ese idioma.
 ```bash
 npm run dev                          # desarrollo
 npm run build                        # tsc --noEmit && vite build
-npm test                             # las 221 pruebas unitarias
+npm test                             # toda la batería unitaria (315 al escribir esto)
 npx vitest run src/lib/money.test.ts # una sola
 npm run typecheck
 ```
