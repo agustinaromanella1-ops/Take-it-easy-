@@ -1,12 +1,20 @@
 # Plan: sincronizar entre dispositivos sin poder leer los datos
 
-Documento para decidir, no para ejecutar. Nada de esto está construido todavía.
+Documento para decidir, no para ejecutar. **El servidor y el cifrado no están construidos.** Lo
+que sí está, y corriendo, son las dos piezas que no necesitan servidor: el modelo con sellos y
+lápidas (etapa 1) y la fusión registro por registro (etapa 1 bis), que hoy resuelve el caso de
+dos pestañas abiertas a la vez. Las etapas 2 a 5 siguen siendo una decisión sin tomar.
 
 ## El problema
 
 Hoy cada dispositivo es independiente: los datos viven en el navegador y no salen de ahí.
 Exportar e importar sirve para mudarse, no para trabajar en dos lados, porque **importar
 reemplaza todo**. Quien cargue en el celular y en la computadora va a perder lo de uno de los dos.
+
+Ojo con no confundir esto con lo de las dos pestañas, que era el mismo problema en chico y **ya
+está resuelto**: dos pestañas del mismo navegador comparten el almacenamiento, así que alcanzó
+con fusionar al guardar. Dos dispositivos no comparten nada, y ahí es donde hace falta un
+servidor en el medio.
 
 ## La forma elegida, y por qué
 
@@ -113,8 +121,9 @@ acceso, validarlo, traer el bloque, subir el bloque comprobando la versión para
 **4. La sincronización en la app** — el ciclo de subir y bajar, la fusión, y la pantalla de
 Ajustes: activar, escribir la contraseña, ver el código de recuperación una única vez.
 
-**5. Lo legal y la ficha de Play** — reescribir la política de privacidad y rehacer la
-declaración de datos.
+**5. Lo legal y la ficha de Play** — está desarrollado abajo, en "Lo que cambia en Play". No es
+una etapa de programar: es rehacer lo que se declaró, y una declaración vieja que dejó de ser
+cierta es de las cosas que hacen bajar una ficha.
 
 Las etapas 1 y 2 no tienen vuelta atrás peligrosa y se pueden probar solas. De la 3 en adelante
 hay un servidor que mantener.
@@ -133,24 +142,45 @@ que hay que actualizar y del que hay que hacer copias.
 
 ## Lo que cambia en Play
 
-Aunque los datos sean ilegibles, **viajan y se guardan en un servidor**. La declaración de
-seguridad de datos deja de poder decir "no se recopilan datos": hay que declarar que se
-transmiten y se almacenan, aclarando que van cifrados y que quien opera la app no puede leerlos.
+`PLAY.md` tiene los pasos y los textos para publicar, **y describe la app como es hoy**: todo en
+el dispositivo, nada que viaje. Esta sección no los repite: dice qué de ahí deja de ser cierto el
+día que la app sincronice. Quien vaya a publicar con sincronización tiene que leer las dos cosas,
+en este orden.
 
-Sobre lo legal —en Argentina, datos de salud son datos sensibles bajo la Ley 25.326— el cifrado
-de punta a punta reduce mucho la exposición pero no borra la figura de responsable de la base.
-**Esto no es asesoramiento legal**: antes de publicar con sincronización conviene consultarlo con
-alguien que sí lo sea.
+Aunque los datos sean ilegibles para nosotros, **viajan y se guardan en un servidor**. Eso da
+vuelta tres respuestas de la declaración de seguridad de datos:
+
+| Respuesta en `PLAY.md` | Pasa a ser | Por qué |
+|---|---|---|
+| ¿Recopila o comparte datos? **No** | **Sí** | Play cuenta como "recopilado" todo lo que sale del equipo, esté cifrado o no. Hay que declarar qué tipos de datos, y marcar que van cifrados en tránsito. |
+| ¿Se procesan solo en el dispositivo? **Sí** | **No** | Deja de ser cierto en cuanto hay un servidor. |
+| ¿Se pueden borrar? **Sí, desinstalando** | **Sí, y hace falta un camino propio** | Una app con acceso por mail es una app con cuenta. Play pide entonces una forma de pedir el borrado de los datos del servidor, con una dirección web pública para pedirlo **sin instalar la app**. Eso hay que construirlo, no solo declararlo. |
+
+Y agrega una obligación que hoy no existe: la **declaración de apps de salud** —que ya hay que
+completar igual, porque la app guarda notas de sesión— pasa a describir datos de salud de terceros
+que además se transmiten y se almacenan. Es un escalón distinto.
+
+Sobre lo legal: en Argentina los datos de salud son datos sensibles bajo la Ley 25.326. Hoy la
+psicóloga es la única que tiene los datos de sus pacientes y la app no cambia eso. Con
+sincronización aparece alguien más en el medio —quien opere el servidor—, y el cifrado de punta a
+punta reduce mucho la exposición pero no borra esa figura. **Esto no es asesoramiento legal**:
+antes de publicar con sincronización conviene consultarlo con alguien que sí lo sea.
 
 ## Los riesgos, dichos sin vueltas
 
 - **Perder los dos secretos es perder los datos.** Sin excepción y sin rescate.
-- **Un error en la fusión borra trabajo real.** Es la parte que más pruebas necesita.
+- **Un error en la fusión borra trabajo real.** Es la parte que más pruebas necesita, y por eso
+  se construyó primero y aparte: hoy tiene 21 pruebas unitarias y 8 de punta a punta con dos
+  pestañas reales. Lo que falta probar no es la regla sino lo que la rodea —relojes desfasados
+  entre dispositivos, un envío a medias, dos subidas a la vez—.
 - **Un servidor propio es una superficie nueva:** hay que mantenerlo y vigilarlo.
 
 ## La recomendación
 
-**La etapa 1 ya está hecha.** Sirve igual, no compromete nada y deja la puerta abierta.
+**Las etapas 1 y 1 bis ya están hechas.** No se construyeron para esto: el modelo con sellos
+vino de la etapa 1, y la fusión salió de arreglar las dos pestañas, que era un problema real y
+presente. Sirven solas, no comprometen nada y dejan la puerta abierta. Lo que queda por decidir
+empieza en la etapa 2, que es donde aparece el servidor.
 
 **No publicar la sincronización en la primera versión de Play.** Salir con la app local, ver si
 las usuarias efectivamente la piden y con qué urgencia, y recién entonces construir las etapas 2 a

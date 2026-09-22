@@ -74,7 +74,13 @@ el JSON, no el index de la app.
 
 ## La declaración de seguridad de datos
 
-Play pregunta qué datos recopila la app. Las respuestas, con el porqué:
+Play pregunta qué datos recopila la app. Las respuestas de abajo valen para **la app como es
+hoy**: todo se queda en el dispositivo y no hay nada que viaje. Si alguna vez se publica con
+sincronización entre dispositivos, tres de estas respuestas dejan de ser ciertas y hay que
+rehacer la declaración: está detallado en `SINCRONIZACION.md`, en "Lo que cambia en Play".
+Presentar la declaración vieja sería declarar algo falso.
+
+Las respuestas, con el porqué:
 
 | Pregunta | Respuesta | Por qué |
 |---|---|---|
