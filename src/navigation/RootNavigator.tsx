@@ -1,5 +1,4 @@
 import React from 'react';
-import { Text } from 'react-native';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { ScheduledListScreen } from '../screens/ScheduledListScreen';
@@ -11,8 +10,9 @@ import { TemplatesScreen } from '../screens/TemplatesScreen';
 import { OnboardingScreen } from '../screens/OnboardingScreen';
 import { PrivacyScreen } from '../screens/PrivacyScreen';
 import { useMessages } from '../state/MessagesContext';
-import { usePalette } from '../theme';
+import { BORDER_WIDTH, fonts, usePalette } from '../theme';
 import type { RootStackParamList, TabsParamList } from './types';
+import { Txt } from '../components/ui';
 
 const Tab = createBottomTabNavigator<TabsParamList>();
 const Stack = createNativeStackNavigator<RootStackParamList>();
@@ -20,7 +20,7 @@ const Stack = createNativeStackNavigator<RootStackParamList>();
 const icon =
   (glyph: string) =>
   ({ color }: { color: string }) => (
-    <Text style={{ fontSize: 20, color }}>{glyph}</Text>
+    <Txt style={{ fontSize: 20, color }}>{glyph}</Txt>
   );
 
 function Tabs(): React.ReactElement {
@@ -29,9 +29,15 @@ function Tabs(): React.ReactElement {
     <Tab.Navigator
       screenOptions={{
         headerShown: false,
-        tabBarActiveTintColor: p.accent,
+        tabBarActiveTintColor: p.accentInk,
         tabBarInactiveTintColor: p.textMuted,
-        tabBarStyle: { backgroundColor: p.surface, borderTopColor: p.border },
+        tabBarLabelStyle: { fontFamily: fonts.bodyBold, fontSize: 12 },
+        tabBarStyle: {
+          backgroundColor: p.surface,
+          // El contorno es parte del dibujo, también acá.
+          borderTopColor: p.border,
+          borderTopWidth: BORDER_WIDTH,
+        },
       }}
     >
       <Tab.Screen
@@ -65,10 +71,11 @@ export function RootNavigator(): React.ReactElement | null {
   return (
     <Stack.Navigator
       screenOptions={{
-        headerStyle: { backgroundColor: p.bg },
-        headerTintColor: p.text,
+        headerStyle: { backgroundColor: 'transparent' },
+        headerTintColor: p.ink,
+        headerTitleStyle: { fontFamily: fonts.serif, fontSize: 19 },
         headerShadowVisible: false,
-        contentStyle: { backgroundColor: p.bg },
+        contentStyle: { backgroundColor: 'transparent' },
       }}
     >
       <Stack.Screen

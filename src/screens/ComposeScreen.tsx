@@ -5,7 +5,6 @@ import {
   Platform,
   Pressable,
   ScrollView,
-  Text,
   TextInput,
   View,
 } from 'react-native';
@@ -29,8 +28,8 @@ import {
 import type { WallClock } from '../domain/time';
 import { isPast } from '../domain/time';
 import { useMessages } from '../state/MessagesContext';
-import { radius, spacing, usePalette } from '../theme';
-import { Button, Chip, Label } from '../components/ui';
+import { BORDER_WIDTH, radius, spacing, usePalette } from '../theme';
+import { Button, Chip, Label, Txt } from '../components/ui';
 import { ChatBubblePreview } from '../components/ChatBubblePreview';
 import { PromptModal } from '../components/PromptModal';
 import { RecipientPicker, type Recipient } from '../components/RecipientPicker';
@@ -180,7 +179,7 @@ export function ComposeScreen({
 
   return (
     <KeyboardAvoidingView
-      style={{ flex: 1, backgroundColor: p.bg }}
+      style={{ flex: 1, backgroundColor: 'transparent' }}
       behavior={Platform.OS === 'ios' ? 'padding' : undefined}
       keyboardVerticalOffset={insets.top + spacing(6)}
     >
@@ -198,10 +197,10 @@ export function ComposeScreen({
         />
 
         {recipients.length > 1 ? (
-          <Text style={{ color: p.textMuted, fontSize: 13, marginTop: -spacing(2) }}>
+          <Txt style={{ color: p.textMuted, fontSize: 13, marginTop: -spacing(2) }}>
             Se va a crear un mensaje individual para cada persona. No es una
             difusión: nadie ve a los demás.
-          </Text>
+          </Txt>
         ) : null}
 
         {templates.length > 0 && !editingId ? (
@@ -237,7 +236,7 @@ export function ComposeScreen({
             accessibilityLabel="Texto del mensaje"
             style={{
               minHeight: 140,
-              borderWidth: 1,
+              borderWidth: BORDER_WIDTH,
               borderColor: p.border,
               backgroundColor: p.surface,
               borderRadius: radius.md,
@@ -253,9 +252,9 @@ export function ComposeScreen({
               onPress={offerToSaveTemplate}
               style={{ marginTop: spacing(1) }}
             >
-              <Text style={{ color: p.accent, fontSize: 14, fontWeight: '700' }}>
+              <Txt style={{ color: p.accent, fontSize: 14, fontWeight: '700' }}>
                 Guardar como plantilla
-              </Text>
+              </Txt>
             </Pressable>
           ) : null}
         </View>
@@ -265,7 +264,7 @@ export function ComposeScreen({
             <Label>Completar</Label>
             {variables.map((name) => (
               <View key={name} style={{ marginBottom: spacing(1) }}>
-                <Text
+                <Txt
                   style={{
                     color: p.textMuted,
                     fontSize: 13,
@@ -273,7 +272,7 @@ export function ComposeScreen({
                   }}
                 >
                   {`{${name}}`}
-                </Text>
+                </Txt>
                 <TextInput
                   value={values[name] ?? ''}
                   onChangeText={(text) =>
@@ -283,7 +282,7 @@ export function ComposeScreen({
                   placeholderTextColor={p.textMuted}
                   accessibilityLabel={`Valor para ${name}`}
                   style={{
-                    borderWidth: 1,
+                    borderWidth: BORDER_WIDTH,
                     borderColor: p.border,
                     backgroundColor: p.surface,
                     borderRadius: radius.md,
@@ -305,24 +304,24 @@ export function ComposeScreen({
             style={{
               backgroundColor: p.warningSoft,
               borderColor: p.warning,
-              borderWidth: 1,
+              borderWidth: BORDER_WIDTH,
               borderRadius: radius.md,
               padding: spacing(1.75),
             }}
           >
-            <Text style={{ color: p.text, fontSize: 14, lineHeight: 20 }}>
+            <Txt style={{ color: p.text, fontSize: 14, lineHeight: 20 }}>
               Esa hora queda fuera de la franja que elegiste para mandar
               mensajes.
-            </Text>
+            </Txt>
             <Pressable
               accessibilityRole="button"
               onPress={() => setWhen(nextAllowed(when, quietHours))}
               style={{ marginTop: spacing(1) }}
             >
-              <Text style={{ color: p.accent, fontSize: 15, fontWeight: '700' }}>
+              <Txt style={{ color: p.accent, fontSize: 15, fontWeight: '700' }}>
                 Mover a las{' '}
                 {timeLabel(nextAllowed(when, quietHours))}
-              </Text>
+              </Txt>
             </Pressable>
           </View>
         ) : null}
@@ -365,7 +364,7 @@ export function ComposeScreen({
           paddingBottom: insets.bottom + spacing(2),
           borderTopWidth: 1,
           borderTopColor: p.border,
-          backgroundColor: p.bg,
+          backgroundColor: 'transparent',
         }}
       >
         <Button

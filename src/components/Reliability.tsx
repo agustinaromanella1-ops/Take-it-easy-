@@ -1,5 +1,5 @@
 import React from 'react';
-import { Platform, Text, View } from 'react-native';
+import { Platform, View } from 'react-native';
 import {
   describeReliability,
   type Reliability,
@@ -10,8 +10,8 @@ import {
   supportsBatterySettings,
   supportsExactAlarmSettings,
 } from '../notifications/androidSetup';
-import { radius, spacing, usePalette } from '../theme';
-import { Button } from './ui';
+import { BORDER_WIDTH, radius, spacing, usePalette } from '../theme';
+import { Button, Txt } from './ui';
 
 /**
  * Los dos ajustes del sistema que deciden si un aviso llega puntual en Android.
@@ -55,16 +55,16 @@ export function ReliabilityBanner({
       style={{
         backgroundColor: p.warningSoft,
         borderColor: p.warning,
-        borderWidth: 1,
+        borderWidth: BORDER_WIDTH,
         borderRadius: radius.md,
         padding: spacing(2),
         marginTop: spacing(2),
       }}
     >
-      <Text style={{ color: p.text, fontSize: 15, fontWeight: '700' }}>
+      <Txt style={{ color: p.text, fontSize: 15, fontWeight: '700' }}>
         Tus avisos están llegando tarde
-      </Text>
-      <Text
+      </Txt>
+      <Txt
         style={{
           color: p.text,
           fontSize: 14,
@@ -76,7 +76,7 @@ export function ReliabilityBanner({
         {Platform.OS === 'android'
           ? 'Suele ser el ahorro de batería del teléfono. Se arregla desde los ajustes del sistema.'
           : 'Revisá que la app tenga permitido avisarte incluso en modo concentración.'}
-      </Text>
+      </Txt>
       <View style={{ marginTop: spacing(1.5) }}>
         <AndroidReliabilityActions />
       </View>

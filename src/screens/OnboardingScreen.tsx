@@ -1,9 +1,9 @@
 import React, { useState } from 'react';
-import { Platform, Pressable, ScrollView, Text, View } from 'react-native';
+import { Platform, Pressable, ScrollView, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useMessages } from '../state/MessagesContext';
 import { radius, spacing, usePalette } from '../theme';
-import { Button } from '../components/ui';
+import { Button, Title, Txt } from '../components/ui';
 import { AndroidReliabilityActions } from '../components/Reliability';
 
 interface Step {
@@ -56,14 +56,14 @@ export function OnboardingScreen(): React.ReactElement {
     <View
       style={{
         flex: 1,
-        backgroundColor: p.bg,
+        backgroundColor: 'transparent',
         paddingTop: insets.top + spacing(4),
         paddingBottom: insets.bottom + spacing(2),
         paddingHorizontal: spacing(3),
       }}
     >
       <ScrollView contentContainerStyle={{ flexGrow: 1, justifyContent: 'center' }}>
-        <Text
+        <Txt
           style={{
             color: p.accent,
             fontSize: 14,
@@ -74,19 +74,9 @@ export function OnboardingScreen(): React.ReactElement {
           }}
         >
           Listo para enviar
-        </Text>
-        <Text
-          style={{
-            color: p.text,
-            fontSize: 30,
-            fontWeight: '800',
-            letterSpacing: -0.5,
-            lineHeight: 36,
-          }}
-        >
-          {step?.title}
-        </Text>
-        <Text
+        </Txt>
+        <Title>{step?.title}</Title>
+        <Txt
           style={{
             color: p.textMuted,
             fontSize: 17,
@@ -95,7 +85,7 @@ export function OnboardingScreen(): React.ReactElement {
           }}
         >
           {step?.body}
-        </Text>
+        </Txt>
 
         {isLast && Platform.OS === 'android' ? (
           <View
@@ -106,10 +96,10 @@ export function OnboardingScreen(): React.ReactElement {
               padding: spacing(2),
             }}
           >
-            <Text style={{ color: p.text, fontSize: 15, fontWeight: '700' }}>
+            <Txt style={{ color: p.text, fontSize: 15, fontWeight: '700' }}>
               Una cosa más, para que los avisos lleguen puntuales
-            </Text>
-            <Text
+            </Txt>
+            <Txt
               style={{
                 color: p.textMuted,
                 fontSize: 14,
@@ -119,7 +109,7 @@ export function OnboardingScreen(): React.ReactElement {
             >
               Android demora los avisos para ahorrar batería. Podés arreglarlo
               ahora o más tarde desde Ajustes.
-            </Text>
+            </Txt>
             <View style={{ marginTop: spacing(1.5) }}>
               <AndroidReliabilityActions />
             </View>
@@ -162,7 +152,7 @@ export function OnboardingScreen(): React.ReactElement {
             onPress={() => void finish()}
             style={{ alignSelf: 'center', padding: spacing(1) }}
           >
-            <Text style={{ color: p.textMuted, fontSize: 15 }}>Saltear</Text>
+            <Txt style={{ color: p.textMuted, fontSize: 15 }}>Saltear</Txt>
           </Pressable>
         ) : null}
       </View>

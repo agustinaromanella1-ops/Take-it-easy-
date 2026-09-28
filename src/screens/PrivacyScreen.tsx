@@ -1,8 +1,8 @@
 import React from 'react';
-import { ScrollView, Text, View } from 'react-native';
+import { ScrollView, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { spacing, usePalette } from '../theme';
-import { Card } from '../components/ui';
+import { Card, Txt } from '../components/ui';
 
 const SECTIONS: { title: string; body: string }[] = [
   {
@@ -37,24 +37,24 @@ export function PrivacyScreen(): React.ReactElement {
 
   return (
     <ScrollView
-      style={{ flex: 1, backgroundColor: p.bg }}
+      style={{ flex: 1, backgroundColor: 'transparent' }}
       contentContainerStyle={{
         padding: spacing(2),
         paddingBottom: insets.bottom + spacing(4),
         gap: spacing(2),
       }}
     >
-      <Text style={{ color: p.text, fontSize: 17, lineHeight: 24 }}>
+      <Txt style={{ color: p.text, fontSize: 17, lineHeight: 24 }}>
         Esta app no recolecta, transmite ni almacena tus datos en ningún
         servidor. Todo lo que escribís queda en tu teléfono.
-      </Text>
+      </Txt>
 
       {SECTIONS.map((section) => (
         <Card key={section.title}>
-          <Text style={{ color: p.text, fontSize: 16, fontWeight: '700' }}>
+          <Txt style={{ color: p.text, fontSize: 16, fontWeight: '700' }}>
             {section.title}
-          </Text>
-          <Text
+          </Txt>
+          <Txt
             style={{
               color: p.textMuted,
               fontSize: 15,
@@ -63,14 +63,14 @@ export function PrivacyScreen(): React.ReactElement {
             }}
           >
             {section.body}
-          </Text>
+          </Txt>
         </Card>
       ))}
 
       <View>
-        <Text style={{ color: p.textMuted, fontSize: 13, lineHeight: 19 }}>
+        <Txt style={{ color: p.textMuted, fontSize: 13, lineHeight: 19 }}>
           Última actualización: 13 de septiembre de 2026.
-        </Text>
+        </Txt>
       </View>
     </ScrollView>
   );

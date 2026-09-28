@@ -1,10 +1,10 @@
 import React, { useState } from 'react';
-import { Alert, FlatList, Pressable, Text, View } from 'react-native';
+import { Alert, FlatList, Pressable, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { extractVariables } from '../domain/templates';
 import { useMessages } from '../state/MessagesContext';
-import { radius, spacing, usePalette } from '../theme';
-import { EmptyState } from '../components/ui';
+import { BORDER_WIDTH, radius, spacing, usePalette } from '../theme';
+import { EmptyState, Txt } from '../components/ui';
 import { PromptModal } from '../components/PromptModal';
 
 export function TemplatesScreen(): React.ReactElement {
@@ -27,7 +27,7 @@ export function TemplatesScreen(): React.ReactElement {
   };
 
   return (
-    <View style={{ flex: 1, backgroundColor: p.bg }}>
+    <View style={{ flex: 1, backgroundColor: 'transparent' }}>
       <FlatList
         data={templates}
         keyExtractor={(item) => item.id}
@@ -36,7 +36,7 @@ export function TemplatesScreen(): React.ReactElement {
           paddingBottom: insets.bottom + spacing(4),
         }}
         ListHeaderComponent={
-          <Text
+          <Txt
             style={{
               color: p.textMuted,
               fontSize: 15,
@@ -46,7 +46,7 @@ export function TemplatesScreen(): React.ReactElement {
           >
             Las plantillas se crean desde la pantalla de un mensaje nuevo: poné
             algo entre llaves, como {'{nombre}'}, y guardala.
-          </Text>
+          </Txt>
         }
         renderItem={({ item }) => {
           const variables = extractVariables(item.body);
@@ -55,16 +55,16 @@ export function TemplatesScreen(): React.ReactElement {
               style={{
                 backgroundColor: p.surface,
                 borderColor: p.border,
-                borderWidth: 1,
+                borderWidth: BORDER_WIDTH,
                 borderRadius: radius.md,
                 padding: spacing(2),
                 marginBottom: spacing(1.25),
               }}
             >
-              <Text style={{ color: p.text, fontSize: 16, fontWeight: '700' }}>
+              <Txt style={{ color: p.text, fontSize: 16, fontWeight: '700' }}>
                 {item.name}
-              </Text>
-              <Text
+              </Txt>
+              <Txt
                 numberOfLines={3}
                 style={{
                   color: p.textMuted,
@@ -74,9 +74,9 @@ export function TemplatesScreen(): React.ReactElement {
                 }}
               >
                 {item.body}
-              </Text>
+              </Txt>
               {variables.length > 0 ? (
-                <Text
+                <Txt
                   style={{
                     color: p.textMuted,
                     fontSize: 13,
@@ -84,7 +84,7 @@ export function TemplatesScreen(): React.ReactElement {
                   }}
                 >
                   Completa: {variables.map((v) => `{${v}}`).join(', ')}
-                </Text>
+                </Txt>
               ) : null}
               <View
                 style={{
@@ -97,21 +97,21 @@ export function TemplatesScreen(): React.ReactElement {
                   accessibilityRole="button"
                   onPress={() => setRenaming({ id: item.id, name: item.name })}
                 >
-                  <Text
+                  <Txt
                     style={{ color: p.accent, fontSize: 15, fontWeight: '700' }}
                   >
                     Renombrar
-                  </Text>
+                  </Txt>
                 </Pressable>
                 <Pressable
                   accessibilityRole="button"
                   onPress={() => confirmDelete(item.id, item.name)}
                 >
-                  <Text
+                  <Txt
                     style={{ color: p.danger, fontSize: 15, fontWeight: '700' }}
                   >
                     Borrar
-                  </Text>
+                  </Txt>
                 </Pressable>
               </View>
             </View>

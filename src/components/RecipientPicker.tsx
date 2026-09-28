@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Alert, Pressable, ScrollView, Text, TextInput, View } from 'react-native';
+import { Alert, Pressable, ScrollView, TextInput, View } from 'react-native';
 import * as Contacts from 'expo-contacts';
 import type { CountryCode } from 'libphonenumber-js';
 import {
@@ -9,8 +9,8 @@ import {
   formatAsYouType,
   parsePhone,
 } from '../domain/phone';
-import { radius, spacing, usePalette } from '../theme';
-import { Chip, Label } from './ui';
+import { BORDER_WIDTH, radius, spacing, usePalette } from '../theme';
+import { Chip, Label, Txt } from './ui';
 
 export interface Recipient {
   name: string | null;
@@ -111,10 +111,10 @@ export function RecipientPicker({
                 paddingHorizontal: spacing(1.5),
               }}
             >
-              <Text style={{ color: p.text, fontSize: 15, fontWeight: '600' }}>
+              <Txt style={{ color: p.text, fontSize: 15, fontWeight: '600' }}>
                 {r.name ?? r.e164}
-              </Text>
-              <Text style={{ color: p.textMuted, fontSize: 15 }}>✕</Text>
+              </Txt>
+              <Txt style={{ color: p.textMuted, fontSize: 15 }}>✕</Txt>
             </Pressable>
           ))}
         </View>
@@ -126,7 +126,7 @@ export function RecipientPicker({
           accessibilityLabel={`Código de país, ${callingCode(country)}`}
           onPress={() => setShowCountries((s) => !s)}
           style={{
-            borderWidth: 1,
+            borderWidth: BORDER_WIDTH,
             borderColor: p.border,
             backgroundColor: p.surface,
             borderRadius: radius.md,
@@ -134,9 +134,9 @@ export function RecipientPicker({
             justifyContent: 'center',
           }}
         >
-          <Text style={{ color: p.text, fontSize: 16, fontWeight: '700' }}>
+          <Txt style={{ color: p.text, fontSize: 16, fontWeight: '700' }}>
             {callingCode(country)} ▾
-          </Text>
+          </Txt>
         </Pressable>
 
         <TextInput
@@ -148,7 +148,7 @@ export function RecipientPicker({
           accessibilityLabel="Número de teléfono"
           style={{
             flex: 1,
-            borderWidth: 1,
+            borderWidth: BORDER_WIDTH,
             borderColor: parsed.ok || !raw ? p.border : p.danger,
             backgroundColor: p.surface,
             borderRadius: radius.md,
@@ -194,9 +194,9 @@ export function RecipientPicker({
           accessibilityRole="button"
           onPress={() => void pickFromContacts()}
         >
-          <Text style={{ color: p.accent, fontSize: 15, fontWeight: '700' }}>
+          <Txt style={{ color: p.accent, fontSize: 15, fontWeight: '700' }}>
             Elegir de mis contactos
-          </Text>
+          </Txt>
         </Pressable>
 
         {allowMultiple && parsed.ok && parsed.e164 ? (
@@ -206,24 +206,24 @@ export function RecipientPicker({
               if (parsed.e164) commit({ name: null, e164: parsed.e164 });
             }}
           >
-            <Text style={{ color: p.accent, fontSize: 15, fontWeight: '700' }}>
+            <Txt style={{ color: p.accent, fontSize: 15, fontWeight: '700' }}>
               ＋ Agregar
-            </Text>
+            </Txt>
           </Pressable>
         ) : null}
       </View>
 
       {raw && !parsed.ok ? (
-        <Text style={{ color: p.danger, fontSize: 13, marginTop: spacing(1) }}>
+        <Txt style={{ color: p.danger, fontSize: 13, marginTop: spacing(1) }}>
           Ese número no parece válido para {callingCode(country)}.
-        </Text>
+        </Txt>
       ) : null}
 
       {parsed.ok && parsed.assumedArgentineMobile ? (
-        <Text style={{ color: p.textMuted, fontSize: 13, marginTop: spacing(1) }}>
+        <Txt style={{ color: p.textMuted, fontSize: 13, marginTop: spacing(1) }}>
           Lo tomamos como celular: {parsed.e164}. WhatsApp necesita el 9 después
           del +54.
-        </Text>
+        </Txt>
       ) : null}
     </View>
   );

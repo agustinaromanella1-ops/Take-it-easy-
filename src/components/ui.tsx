@@ -6,10 +6,160 @@ import {
   Text,
   View,
   type StyleProp,
+  type TextProps,
   type TextStyle,
   type ViewStyle,
 } from 'react-native';
-import { radius, spacing, usePalette } from '../theme';
+import { LinearGradient } from 'expo-linear-gradient';
+import {
+  BORDER_WIDTH,
+  SHADOW_OFFSET,
+  fonts,
+  radius,
+  spacing,
+  usePalette,
+  type ShadowSize,
+} from '../theme';
+
+/* ------------------------------------------------------------------ *
+ * Texto
+ * ------------------------------------------------------------------ */
+
+/**
+ * Con tipografías propias el `fontWeight` deja de elegir el archivo correcto:
+ * hay que nombrar la familia de cada peso. Este componente lo hace solo, a
+ * partir del peso que ya trae el estilo, y neutraliza el `fontWeight` para
+ * que Android no aplique encima una negrita sintética.
+ */
+const FAMILY_BY_WEIGHT: Record<string, string> = {
+  normal: fonts.body,
+  '400': fonts.body,
+  '500': fonts.body,
+  '600': fonts.bodySemi,
+  bold: fonts.bodyBold,
+  '700': fonts.bodyBold,
+  '800': fonts.bodyBold,
+  '900': fonts.bodyBold,
+};
+
+export function Txt({
+  serif,
+  style,
+  ...rest
+}: TextProps & { serif?: boolean }): React.ReactElement {
+  const flat = StyleSheet.flatten(style) as TextStyle | undefined;
+  const weight = String(flat?.fontWeight ?? '400');
+  const family = serif
+    ? fonts.serif
+    : (FAMILY_BY_WEIGHT[weight] ?? fonts.body);
+
+  return (
+    <Text {...rest} style={[style, { fontFamily: family, fontWeight: 'normal' }]} />
+  );
+}
+
+/** Título de pantalla: serif de display, como en Pipí Cucú. */
+export function Title({
+  children,
+  style,
+}: {
+  children: React.ReactNode;
+  style?: StyleProp<TextStyle>;
+}): React.ReactElement {
+  const p = usePalette();
+  return (
+    <Txt
+      serif
+      style={[
+        { color: p.text, fontSize: 30, lineHeight: 36, letterSpacing: -0.3 },
+        style,
+      ]}
+    >
+      {children}
+    </Txt>
+  );
+}
+
+/* ------------------------------------------------------------------ *
+ * Fondo
+ * ------------------------------------------------------------------ */
+
+/** El atardecer: celeste arriba, lila al medio, durazno abajo. */
+export function ScreenBackground({
+  children,
+  style,
+}: {
+  children: React.ReactNode;
+  style?: StyleProp<ViewStyle>;
+}): React.ReactElement {
+  const p = usePalette();
+  return (
+    <LinearGradient
+      colors={p.gradient}
+      locations={[0, 0.45, 1]}
+      style={[{ flex: 1 }, style]}
+    >
+      {children}
+    </LinearGradient>
+  );
+}
+
+/* ------------------------------------------------------------------ *
+ * Sombra dura
+ * ------------------------------------------------------------------ */
+
+/**
+ * La sombra sin desenfoque que da el aire de calcomanía.
+ *
+ * No se puede hacer con las sombras nativas: en Android `elevation` siempre
+ * desenfoca y no acepta desplazamiento. Así que la dibujamos: un rectángulo
+ * del mismo tamaño, corrido, pintado detrás del contenido. Se ve idéntica en
+ * los dos sistemas.
+ *
+ * Quien la use tiene que dejar margen abajo y a la derecha, o la sombra queda
+ * pegada al elemento siguiente.
+ */
+export function HardShadow({
+  children,
+  size = 'md',
+  corner = radius.md,
+  hidden,
+  style,
+}: {
+  children: React.ReactNode;
+  size?: ShadowSize;
+  corner?: number;
+  /** Al apretar un botón la sombra desaparece y el botón "se hunde". */
+  hidden?: boolean;
+  style?: StyleProp<ViewStyle>;
+}): React.ReactElement {
+  const p = usePalette();
+  const { x, y } = SHADOW_OFFSET[size];
+
+  return (
+    <View style={style}>
+      {!hidden ? (
+        <View
+          pointerEvents="none"
+          style={{
+            position: 'absolute',
+            left: x,
+            top: y,
+            right: -x,
+            bottom: -y,
+            borderRadius: corner,
+            backgroundColor: p.shadow,
+          }}
+        />
+      ) : null}
+      {children}
+    </View>
+  );
+}
+
+/* ------------------------------------------------------------------ *
+ * Controles
+ * ------------------------------------------------------------------ */
 
 export function Button({
   label,
@@ -27,49 +177,68 @@ export function Button({
   style?: StyleProp<ViewStyle>;
 }): React.ReactElement {
   const p = usePalette();
+  const [pressed, setPressed] = React.useState(false);
 
-  const bg =
+  const ghost = variant === 'ghost';
+  const { x, y } = SHADOW_OFFSET.sm;
+
+  const background =
     variant === 'primary'
-      ? p.accent
-      : variant === 'secondary'
-        ? p.surfaceAlt
-        : 'transparent';
-  const fg =
+      ? p.primary
+      : variant === 'danger'
+        ? p.dangerSoft
+        : ghost
+          ? 'transparent'
+          : p.surface;
+
+  const color =
     variant === 'primary'
-      ? p.accentText
+      ? p.primaryText
       : variant === 'danger'
         ? p.danger
-        : p.text;
+        : ghost
+          ? p.accent
+          : p.ink;
+
+  const sunk = pressed && !ghost;
 
   return (
-    <Pressable
-      accessibilityRole="button"
-      accessibilityState={{ disabled: !!disabled }}
-      disabled={disabled || loading}
-      onPress={onPress}
-      style={({ pressed }) => [
-        {
-          backgroundColor: bg,
+    <HardShadow
+      size="sm"
+      corner={radius.pill}
+      hidden={ghost || sunk || disabled}
+      style={[{ marginBottom: ghost ? 0 : y }, style]}
+    >
+      <Pressable
+        accessibilityRole="button"
+        accessibilityState={{ disabled: !!disabled }}
+        disabled={disabled || loading}
+        onPress={onPress}
+        onPressIn={() => setPressed(true)}
+        onPressOut={() => setPressed(false)}
+        style={{
+          backgroundColor: background,
           borderRadius: radius.pill,
-          paddingVertical: spacing(1.75),
-          paddingHorizontal: spacing(3),
+          borderWidth: ghost ? 0 : BORDER_WIDTH,
+          borderColor: p.border,
+          paddingVertical: spacing(1.5),
+          paddingHorizontal: spacing(2.75),
+          minHeight: 44,
           alignItems: 'center',
           justifyContent: 'center',
-          opacity: disabled ? 0.45 : pressed ? 0.8 : 1,
-          borderWidth: variant === 'secondary' ? 1 : 0,
-          borderColor: p.border,
-        },
-        style,
-      ]}
-    >
-      {loading ? (
-        <ActivityIndicator color={fg} />
-      ) : (
-        <Text style={{ color: fg, fontSize: 16, fontWeight: '600' }}>
-          {label}
-        </Text>
-      )}
-    </Pressable>
+          opacity: disabled ? 0.45 : 1,
+          // Al apretar, el botón baja hasta donde estaba su sombra. Es el
+          // mismo gesto que hacen los botones de verdad.
+          transform: sunk ? [{ translateX: x }, { translateY: y }] : [],
+        }}
+      >
+        {loading ? (
+          <ActivityIndicator color={color} />
+        ) : (
+          <Txt style={{ color, fontSize: 16, fontWeight: '700' }}>{label}</Txt>
+        )}
+      </Pressable>
+    </HardShadow>
   );
 }
 
@@ -90,23 +259,23 @@ export function Chip({
       onPress={onPress}
       style={({ pressed }) => ({
         backgroundColor: selected ? p.accentSoft : p.surface,
-        borderColor: selected ? p.accent : p.border,
-        borderWidth: 1,
+        borderColor: p.border,
+        borderWidth: BORDER_WIDTH,
         borderRadius: radius.pill,
-        paddingVertical: spacing(1),
+        paddingVertical: spacing(0.875),
         paddingHorizontal: spacing(1.75),
-        opacity: pressed ? 0.75 : 1,
+        opacity: pressed ? 0.7 : 1,
       })}
     >
-      <Text
+      <Txt
         style={{
-          color: selected ? p.accent : p.text,
+          color: selected ? p.accentInk : p.ink,
           fontSize: 14,
-          fontWeight: '600',
+          fontWeight: '700',
         }}
       >
         {label}
-      </Text>
+      </Txt>
     </Pressable>
   );
 }
@@ -114,26 +283,37 @@ export function Chip({
 export function Card({
   children,
   style,
+  tone = 'surface',
 }: {
   children: React.ReactNode;
   style?: StyleProp<ViewStyle>;
+  tone?: 'surface' | 'warning' | 'accent';
 }): React.ReactElement {
   const p = usePalette();
+  const background =
+    tone === 'warning'
+      ? p.warningSoft
+      : tone === 'accent'
+        ? p.accentSoft
+        : p.surface;
+
   return (
-    <View
-      style={[
-        {
-          backgroundColor: p.surface,
-          borderRadius: radius.md,
-          borderWidth: 1,
-          borderColor: p.border,
-          padding: spacing(2),
-        },
-        style,
-      ]}
+    <HardShadow
+      corner={radius.md}
+      style={[{ marginBottom: SHADOW_OFFSET.md.y }, style]}
     >
-      {children}
-    </View>
+      <View
+        style={{
+          backgroundColor: background,
+          borderRadius: radius.md,
+          borderWidth: BORDER_WIDTH,
+          borderColor: p.border,
+          padding: spacing(2.5),
+        }}
+      >
+        {children}
+      </View>
+    </HardShadow>
   );
 }
 
@@ -146,7 +326,7 @@ export function Label({
 }): React.ReactElement {
   const p = usePalette();
   return (
-    <Text
+    <Txt
       style={[
         {
           color: p.textMuted,
@@ -160,7 +340,7 @@ export function Label({
       ]}
     >
       {children}
-    </Text>
+    </Txt>
   );
 }
 
@@ -174,27 +354,23 @@ export function EmptyState({
   const p = usePalette();
   return (
     <View style={styles.empty}>
-      <Text
-        style={{
-          color: p.text,
-          fontSize: 18,
-          fontWeight: '700',
-          textAlign: 'center',
-        }}
+      <Txt
+        serif
+        style={{ color: p.text, fontSize: 21, textAlign: 'center' }}
       >
         {title}
-      </Text>
-      <Text
+      </Txt>
+      <Txt
         style={{
           color: p.textMuted,
           fontSize: 15,
           textAlign: 'center',
           marginTop: spacing(1),
-          lineHeight: 21,
+          lineHeight: 22,
         }}
       >
         {detail}
-      </Text>
+      </Txt>
     </View>
   );
 }

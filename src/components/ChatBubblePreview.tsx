@@ -1,6 +1,7 @@
 import React from 'react';
-import { Text, View } from 'react-native';
-import { radius, spacing, usePalette } from '../theme';
+import { View } from 'react-native';
+import { BORDER_WIDTH, radius, spacing, usePalette } from '../theme';
+import { Txt } from './ui';
 
 /**
  * Vista previa con forma de burbuja de chat. No es decoración: leer el texto
@@ -21,6 +22,8 @@ export function ChatBubblePreview({
       <View
         style={{
           backgroundColor: p.bubble,
+          borderWidth: BORDER_WIDTH,
+          borderColor: p.border,
           borderRadius: radius.md,
           borderTopRightRadius: radius.sm / 2,
           paddingVertical: spacing(1.25),
@@ -28,7 +31,7 @@ export function ChatBubblePreview({
           maxWidth: '92%',
         }}
       >
-        <Text
+        <Txt
           style={{
             color: text ? p.bubbleText : p.textMuted,
             fontSize: 16,
@@ -37,8 +40,8 @@ export function ChatBubblePreview({
           }}
         >
           {text || 'Escribí el mensaje para verlo acá'}
-        </Text>
-        <Text
+        </Txt>
+        <Txt
           style={{
             color: p.textMuted,
             fontSize: 11,
@@ -47,7 +50,7 @@ export function ChatBubblePreview({
           }}
         >
           {time}
-        </Text>
+        </Txt>
       </View>
     </View>
   );

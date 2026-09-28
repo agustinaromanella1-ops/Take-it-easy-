@@ -5,7 +5,6 @@ import {
   Pressable,
   ScrollView,
   Switch,
-  Text,
   View,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -17,7 +16,7 @@ import { describeReliability } from '../domain/reliability';
 import { AndroidReliabilityActions } from '../components/Reliability';
 import { useMessages } from '../state/MessagesContext';
 import { spacing, usePalette } from '../theme';
-import { Button, Card, Chip, Label } from '../components/ui';
+import { Button, Card, Chip, Label, Title, Txt } from '../components/ui';
 import { Platform } from 'react-native';
 import type { RootStackParamList } from '../navigation/types';
 
@@ -44,12 +43,12 @@ function Row({
         gap: spacing(2),
       }}
     >
-      <Text style={{ color: p.textMuted, fontSize: 15 }}>{title}</Text>
-      <Text
+      <Txt style={{ color: p.textMuted, fontSize: 15 }}>{title}</Txt>
+      <Txt
         style={{ color: p.text, fontSize: 15, fontWeight: '600', flexShrink: 1 }}
       >
         {value}
-      </Text>
+      </Txt>
     </View>
   );
 }
@@ -114,22 +113,20 @@ export function SettingsScreen(): React.ReactElement {
 
   return (
     <ScrollView
-      style={{ flex: 1, backgroundColor: p.bg }}
+      style={{ flex: 1, backgroundColor: 'transparent' }}
       contentContainerStyle={{
         padding: spacing(2),
         paddingBottom: insets.bottom + spacing(4),
         gap: spacing(3),
       }}
     >
-      <Text style={{ color: p.text, fontSize: 30, fontWeight: '800' }}>
-        Ajustes
-      </Text>
+      <Title>Ajustes</Title>
 
       <View>
         <Label>Notificaciones</Label>
         <Card>
           <Row title="Estado" value={PERMISSION_LABEL[permission]} />
-          <Text
+          <Txt
             style={{
               color: p.textMuted,
               fontSize: 14,
@@ -139,7 +136,7 @@ export function SettingsScreen(): React.ReactElement {
           >
             Son la única forma que tiene la app de avisarte cuando llega el
             momento de mandar un mensaje.
-          </Text>
+          </Txt>
           {permission !== 'granted' ? (
             <Button
               label={
@@ -164,7 +161,7 @@ export function SettingsScreen(): React.ReactElement {
         <Card>
           <Row title="Zona horaria" value={timezone} />
           <Row title="Formato" value="24 horas" />
-          <Text
+          <Txt
             style={{
               color: p.textMuted,
               fontSize: 14,
@@ -175,19 +172,19 @@ export function SettingsScreen(): React.ReactElement {
             Guardamos el día y la hora que elegiste, no un instante fijo. Si
             cambia el horario de verano, tu mensaje de las 9 sigue saliendo a las
             9.
-          </Text>
+          </Txt>
         </Card>
       </View>
 
       <View>
         <Label>Puntualidad de los avisos</Label>
         <Card>
-          <Text style={{ color: p.text, fontSize: 15, lineHeight: 21 }}>
+          <Txt style={{ color: p.text, fontSize: 15, lineHeight: 21 }}>
             {describeReliability(reliability)}
-          </Text>
+          </Txt>
           {Platform.OS === 'android' ? (
             <>
-              <Text
+              <Txt
                 style={{
                   color: p.textMuted,
                   fontSize: 14,
@@ -198,7 +195,7 @@ export function SettingsScreen(): React.ReactElement {
                 Android puede demorar los avisos para ahorrar batería, sobre todo
                 en Xiaomi, Samsung, Huawei y Oppo. Estos dos ajustes son los que
                 hacen la diferencia.
-              </Text>
+              </Txt>
               <View style={{ marginTop: spacing(1.5) }}>
                 <AndroidReliabilityActions />
               </View>
@@ -218,9 +215,9 @@ export function SettingsScreen(): React.ReactElement {
               gap: spacing(2),
             }}
           >
-            <Text style={{ color: p.text, fontSize: 15, flex: 1 }}>
+            <Txt style={{ color: p.text, fontSize: 15, flex: 1 }}>
               {describeQuietHours(quietHours)}
-            </Text>
+            </Txt>
             <Switch
               value={quietHours.enabled}
               onValueChange={(enabled) =>
@@ -232,7 +229,7 @@ export function SettingsScreen(): React.ReactElement {
 
           {quietHours.enabled ? (
             <View style={{ marginTop: spacing(1.5), gap: spacing(1) }}>
-              <Text style={{ color: p.textMuted, fontSize: 13 }}>Desde</Text>
+              <Txt style={{ color: p.textMuted, fontSize: 13 }}>Desde</Txt>
               <View
                 style={{ flexDirection: 'row', flexWrap: 'wrap', gap: spacing(1) }}
               >
@@ -247,7 +244,7 @@ export function SettingsScreen(): React.ReactElement {
                   />
                 ))}
               </View>
-              <Text style={{ color: p.textMuted, fontSize: 13 }}>Hasta</Text>
+              <Txt style={{ color: p.textMuted, fontSize: 13 }}>Hasta</Txt>
               <View
                 style={{ flexDirection: 'row', flexWrap: 'wrap', gap: spacing(1) }}
               >
@@ -265,7 +262,7 @@ export function SettingsScreen(): React.ReactElement {
             </View>
           ) : null}
 
-          <Text
+          <Txt
             style={{
               color: p.textMuted,
               fontSize: 14,
@@ -275,7 +272,7 @@ export function SettingsScreen(): React.ReactElement {
           >
             No bloquea nada: si elegís una hora fuera de la franja, te propone la
             siguiente válida y vos decidís.
-          </Text>
+          </Txt>
         </Card>
       </View>
 
@@ -291,14 +288,14 @@ export function SettingsScreen(): React.ReactElement {
               alignItems: 'center',
             }}
           >
-            <Text style={{ color: p.text, fontSize: 15 }}>
+            <Txt style={{ color: p.text, fontSize: 15 }}>
               {templates.length === 1
                 ? '1 plantilla guardada'
                 : `${templates.length} plantillas guardadas`}
-            </Text>
-            <Text style={{ color: p.accent, fontSize: 15, fontWeight: '700' }}>
+            </Txt>
+            <Txt style={{ color: p.accent, fontSize: 15, fontWeight: '700' }}>
               Ver
-            </Text>
+            </Txt>
           </Pressable>
         </Card>
       </View>
@@ -306,10 +303,10 @@ export function SettingsScreen(): React.ReactElement {
       <View>
         <Label>Backup</Label>
         <Card>
-          <Text style={{ color: p.textMuted, fontSize: 14, lineHeight: 20 }}>
+          <Txt style={{ color: p.textMuted, fontSize: 14, lineHeight: 20 }}>
             Un archivo con tus mensajes y plantillas. Elegís vos dónde guardarlo:
             no se sube a ningún lado.
-          </Text>
+          </Txt>
           <Button
             label="Exportar backup"
             variant="secondary"
@@ -333,7 +330,7 @@ export function SettingsScreen(): React.ReactElement {
           <Row title="Programados" value={String(pending.length)} />
           <Row title="Borradores" value={String(drafts.length)} />
           <Row title="En el historial" value={String(history.length)} />
-          <Text
+          <Txt
             style={{
               color: p.textMuted,
               fontSize: 14,
@@ -344,15 +341,15 @@ export function SettingsScreen(): React.ReactElement {
             Todo vive en este teléfono. No hay servidor, no hay cuenta, no hay
             analytics: ni el texto de los mensajes ni tus contactos salen del
             dispositivo. La app funciona sin internet.
-          </Text>
+          </Txt>
           <Pressable
             accessibilityRole="button"
             onPress={() => navigation.navigate('Privacy')}
             style={{ marginTop: spacing(1.5) }}
           >
-            <Text style={{ color: p.accent, fontSize: 15, fontWeight: '700' }}>
+            <Txt style={{ color: p.accent, fontSize: 15, fontWeight: '700' }}>
               Leer la política de privacidad
-            </Text>
+            </Txt>
           </Pressable>
         </Card>
       </View>
@@ -360,11 +357,11 @@ export function SettingsScreen(): React.ReactElement {
       <View>
         <Label>Cómo funciona el envío</Label>
         <Card>
-          <Text style={{ color: p.text, fontSize: 15, lineHeight: 21 }}>
+          <Txt style={{ color: p.text, fontSize: 15, lineHeight: 21 }}>
             WhatsApp no permite que otra app mande mensajes por vos. Lo que
             hacemos es dejártelo listo: a la hora que elegiste te avisamos, se
             abre el chat con el texto ya escrito y vos tocás enviar.
-          </Text>
+          </Txt>
         </Card>
       </View>
     </ScrollView>

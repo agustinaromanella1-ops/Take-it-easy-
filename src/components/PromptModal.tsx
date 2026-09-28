@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
-import { Modal, Pressable, Text, TextInput, View } from 'react-native';
-import { radius, spacing, usePalette } from '../theme';
-import { Button } from './ui';
+import { Modal, Pressable, TextInput, View } from 'react-native';
+import { BORDER_WIDTH, radius, spacing, usePalette } from '../theme';
+import { Button, Title, Txt } from './ui';
 
 /**
  * Alert.prompt existe solo en iOS, así que para pedir un texto usamos este
@@ -60,13 +60,11 @@ export function PromptModal({
             gap: spacing(1.5),
           }}
         >
-          <Text style={{ color: p.text, fontSize: 20, fontWeight: '800' }}>
-            {title}
-          </Text>
+          <Title style={{ fontSize: 22, lineHeight: 28 }}>{title}</Title>
           {detail ? (
-            <Text style={{ color: p.textMuted, fontSize: 15, lineHeight: 21 }}>
+            <Txt style={{ color: p.textMuted, fontSize: 15, lineHeight: 21 }}>
               {detail}
-            </Text>
+            </Txt>
           ) : null}
           <TextInput
             value={value}
@@ -76,10 +74,10 @@ export function PromptModal({
             autoFocus
             accessibilityLabel={title}
             style={{
-              borderWidth: 1,
+              borderWidth: BORDER_WIDTH,
               borderColor: p.border,
-              backgroundColor: p.bg,
-              borderRadius: radius.md,
+              backgroundColor: p.surfaceAlt,
+              borderRadius: radius.sm,
               paddingHorizontal: spacing(1.5),
               paddingVertical: spacing(1.5),
               fontSize: 16,

@@ -67,6 +67,39 @@ npm run typecheck   # tsc --noEmit
 npm test            # 83 tests sobre la lógica de dominio
 ```
 
+## Sistema visual
+
+Tomado de **Pipí Cucú** (rama `main` de este mismo repo), para que las dos apps se lean
+como hermanas. Lo que lo define:
+
+- **Atardecer.** El fondo es un degradado de celeste `#d9ebfb` a lila `#e9dff7` a durazno
+  `#ffe3d2`. Lo pinta la app entera una sola vez, no cada pantalla: así no hay costuras al
+  navegar.
+- **El contorno es parte del dibujo**, no una línea de separación: 2,5 px en tinta
+  `#1f1e47`, no un gris finito.
+- **La sombra es dura y sin desenfoque.** Es lo que da el aire de calcomanía pegada sobre
+  la página en vez de flotando encima.
+- **Playfair Display** para títulos y **Nunito** para el cuerpo.
+- **Naranja `#f77957` para la acción principal**, con tinta encima y no blanco: el blanco
+  sobre ese naranja da 2,7:1 y no pasa contraste.
+- Al apretar, los botones **se hunden** hasta donde estaba su sombra.
+- El oscuro no es el claro dado vuelta: es el mismo atardecer más tarde, con fondos ciruela
+  y el contorno en lila claro, porque sobre oscuro una línea oscura no se ve.
+
+Los pares de texto sobre fondo vienen medidos contra WCAG AA desde el proyecto original;
+conservar los valores tal cual es lo que mantiene esa garantía.
+
+**La sombra dura no usa las sombras nativas.** En Android `elevation` siempre desenfoca y
+no acepta desplazamiento, así que el efecto no se puede reproducir con las propiedades del
+sistema. El componente `HardShadow` la dibuja: un rectángulo del mismo tamaño, corrido,
+pintado detrás del contenido. Se ve idéntica en Android y en iOS.
+
+**Las tipografías propias rompen `fontWeight`:** con una fuente cargada a mano, el peso ya
+no elige el archivo correcto, hay que nombrar la familia de cada uno. El componente `Txt`
+lo resuelve solo — lee el peso del estilo, elige la familia y neutraliza el `fontWeight`
+para que Android no aplique encima una negrita sintética. Por eso en las pantallas se usa
+`Txt` y no `Text`.
+
 ## Estructura
 
 ```
@@ -86,7 +119,8 @@ src/
   db/          SQLite local con migraciones versionadas
   notifications/  agendado y cancelación de avisos locales
   state/       MessagesContext: une base, notificaciones y ciclo de vida
-  components/  UI reutilizable
+  components/  UI reutilizable (ui.tsx tiene Txt, HardShadow y los controles)
+  theme.ts     los tokens del sistema visual: colores, radios, sombras, fuentes
   screens/     Primer uso, Programados, Nuevo/Editar, Detalle, Historial,
                Plantillas, Privacidad, Ajustes
 ```

@@ -1,5 +1,5 @@
 import React, { useMemo, useState } from 'react';
-import { Platform, Text, View } from 'react-native';
+import { Platform, View } from 'react-native';
 import DateTimePicker, {
   DateTimePickerAndroid,
   type DateTimePickerEvent,
@@ -10,7 +10,7 @@ import { quickOptions } from '../domain/schedule';
 import { toWallString } from '../domain/time';
 import type { WallClock } from '../domain/time';
 import { spacing, usePalette } from '../theme';
-import { Chip, Label } from './ui';
+import { Chip, Label, Txt } from './ui';
 
 /**
  * Atajos primero, date picker después. La idea es que programar sea tocar
@@ -94,16 +94,16 @@ export function WhenPicker({
       ) : null}
 
       {value ? (
-        <Text style={{ color: p.text, fontSize: 15 }}>
+        <Txt style={{ color: p.text, fontSize: 15 }}>
           Sale{' '}
-          <Text style={{ fontWeight: '800' }}>
+          <Txt style={{ fontWeight: '800' }}>
             {dayLabel(value, timezone).toLowerCase()} a las {timeLabel(value)}
-          </Text>
-        </Text>
+          </Txt>
+        </Txt>
       ) : (
-        <Text style={{ color: p.textMuted, fontSize: 15 }}>
+        <Txt style={{ color: p.textMuted, fontSize: 15 }}>
           Sin fecha todavía: se guarda como borrador.
-        </Text>
+        </Txt>
       )}
     </View>
   );

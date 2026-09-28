@@ -11,19 +11,39 @@
       "supportsTablet": false,
       "bundleIdentifier": "com.takeiteasy.listoparaenviar",
       "infoPlist": {
-        "LSApplicationQueriesSchemes": ["whatsapp"],
+        "LSApplicationQueriesSchemes": [
+          "whatsapp"
+        ],
         "NSContactsUsageDescription": "Para elegir a quién mandarle el mensaje desde tu agenda. Los contactos no salen del teléfono."
       }
     },
     "android": {
       "package": "com.takeiteasy.listoparaenviar",
       "edgeToEdgeEnabled": true,
-      "permissions": ["READ_CONTACTS", "POST_NOTIFICATIONS", "SCHEDULE_EXACT_ALARM"]
+      "permissions": [
+        "READ_CONTACTS",
+        "POST_NOTIFICATIONS",
+        "SCHEDULE_EXACT_ALARM"
+      ]
     },
     "plugins": [
-      ["expo-contacts", { "contactsPermission": "Para elegir a quién mandarle el mensaje desde tu agenda." }],
+      [
+        "expo-contacts",
+        {
+          "contactsPermission": "Para elegir a quién mandarle el mensaje desde tu agenda."
+        }
+      ],
       "expo-sqlite",
       "expo-notifications"
-    ]
+    ],
+    "backgroundColor": "#e9dff7",
+    "splash": {
+      "backgroundColor": "#d9ebfb",
+      "resizeMode": "contain"
+    },
+    "androidStatusBar": {
+      "translucent": true,
+      "barStyle": "dark-content"
+    }
   }
 }

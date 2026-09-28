@@ -1,16 +1,16 @@
 import React, { useMemo } from 'react';
-import { Pressable, SectionList, Text, View } from 'react-native';
+import { Pressable, SectionList, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { groupByDay, pendingCountLabel, type DaySection } from '../domain/grouping';
 import type { ScheduledMessage } from '../domain/types';
 import { useMessages } from '../state/MessagesContext';
-import { radius, spacing, usePalette } from '../theme';
+import { BORDER_WIDTH, radius, spacing, usePalette } from '../theme';
 import { MessageCard } from '../components/MessageCard';
 import { ConfirmSentSheet, PermissionBanner, UndoToast } from '../components/Banners';
 import { ReliabilityBanner } from '../components/Reliability';
-import { EmptyState } from '../components/ui';
+import { EmptyState, HardShadow, Title, Txt } from '../components/ui';
 import type { RootStackParamList } from '../navigation/types';
 
 type Nav = NativeStackNavigationProp<RootStackParamList>;
@@ -52,7 +52,7 @@ export function ScheduledListScreen(): React.ReactElement {
     navigation.navigate('Detail', { id: m.id });
 
   return (
-    <View style={{ flex: 1, backgroundColor: p.bg }}>
+    <View style={{ flex: 1, backgroundColor: 'transparent' }}>
       <SectionList
         sections={sections}
         keyExtractor={(item) => item.id}
@@ -63,21 +63,12 @@ export function ScheduledListScreen(): React.ReactElement {
         }}
         ListHeaderComponent={
           <View style={{ marginBottom: spacing(2) }}>
-            <Text
-              style={{
-                color: p.text,
-                fontSize: 30,
-                fontWeight: '800',
-                letterSpacing: -0.5,
-              }}
-            >
-              Programados
-            </Text>
-            <Text
+            <Title>Programados</Title>
+            <Txt
               style={{ color: p.textMuted, fontSize: 15, marginTop: spacing(0.5) }}
             >
               {pendingCountLabel(pending.length)}
-            </Text>
+            </Txt>
             {permission !== 'granted' ? (
               <View style={{ marginTop: spacing(2) }}>
                 <PermissionBanner
@@ -91,7 +82,7 @@ export function ScheduledListScreen(): React.ReactElement {
           </View>
         }
         renderSectionHeader={({ section }) => (
-          <Text
+          <Txt
             style={{
               color: section.overdue ? p.warning : p.textMuted,
               fontSize: 13,
@@ -103,7 +94,7 @@ export function ScheduledListScreen(): React.ReactElement {
             }}
           >
             {section.title}
-          </Text>
+          </Txt>
         )}
         renderItem={({ item, section }) => (
           <MessageCard
@@ -121,30 +112,34 @@ export function ScheduledListScreen(): React.ReactElement {
         }
       />
 
-      <Pressable
-        accessibilityRole="button"
-        accessibilityLabel="Nuevo mensaje"
-        onPress={() => navigation.navigate('Compose')}
-        style={({ pressed }) => ({
+      <HardShadow
+        size="md"
+        corner={radius.pill}
+        style={{
           position: 'absolute',
           right: spacing(2.5),
-          bottom: insets.bottom + spacing(2.5),
-          backgroundColor: p.accent,
-          borderRadius: radius.pill,
-          paddingVertical: spacing(2),
-          paddingHorizontal: spacing(3),
-          opacity: pressed ? 0.85 : 1,
-          shadowColor: '#000',
-          shadowOpacity: 0.2,
-          shadowRadius: 12,
-          shadowOffset: { width: 0, height: 4 },
-          elevation: 4,
-        })}
+          bottom: insets.bottom + spacing(3),
+        }}
       >
-        <Text style={{ color: p.accentText, fontSize: 16, fontWeight: '800' }}>
-          ＋  Nuevo mensaje
-        </Text>
-      </Pressable>
+        <Pressable
+          accessibilityRole="button"
+          accessibilityLabel="Nuevo mensaje"
+          onPress={() => navigation.navigate('Compose')}
+          style={({ pressed }) => ({
+            backgroundColor: p.primary,
+            borderRadius: radius.pill,
+            borderWidth: BORDER_WIDTH,
+            borderColor: p.border,
+            paddingVertical: spacing(1.75),
+            paddingHorizontal: spacing(3),
+            opacity: pressed ? 0.9 : 1,
+          })}
+        >
+          <Txt style={{ color: p.primaryText, fontSize: 16, fontWeight: '700' }}>
+            ＋  Nuevo mensaje
+          </Txt>
+        </Pressable>
+      </HardShadow>
 
       {undo ? (
         <UndoToast onUndo={() => void undoDelete()} onDismiss={dismissUndo} />

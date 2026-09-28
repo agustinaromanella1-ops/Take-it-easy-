@@ -1,5 +1,5 @@
 import React, { useMemo } from 'react';
-import { Alert, ScrollView, Text, View } from 'react-native';
+import { Alert, ScrollView, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { dayLabel, timeLabel } from '../domain/grouping';
@@ -9,7 +9,7 @@ import { SHIFT_LABELS, shiftWall, type ShiftKind } from '../domain/schedule';
 import { isPast } from '../domain/time';
 import { useMessages } from '../state/MessagesContext';
 import { spacing, usePalette } from '../theme';
-import { Button, Card, Chip, Label } from '../components/ui';
+import { Button, Card, Chip, Label, Title, Txt } from '../components/ui';
 import { ChatBubblePreview } from '../components/ChatBubblePreview';
 import type { RootStackParamList } from '../navigation/types';
 
@@ -69,7 +69,7 @@ export function MessageDetailScreen({
 
   return (
     <ScrollView
-      style={{ flex: 1, backgroundColor: p.bg }}
+      style={{ flex: 1, backgroundColor: 'transparent' }}
       contentContainerStyle={{
         padding: spacing(2),
         paddingBottom: insets.bottom + spacing(4),
@@ -77,10 +77,8 @@ export function MessageDetailScreen({
       }}
     >
       <View>
-        <Text style={{ color: p.text, fontSize: 26, fontWeight: '800' }}>
-          {who}
-        </Text>
-        <Text
+        <Title style={{ fontSize: 26, lineHeight: 32 }}>{who}</Title>
+        <Txt
           style={{
             color: overdue ? p.warning : p.textMuted,
             fontSize: 15,
@@ -93,9 +91,9 @@ export function MessageDetailScreen({
                 timezone,
               ).toLowerCase()} a las ${timeLabel(message.localAt)}`
             : 'Sin fecha: guardado como borrador'}
-        </Text>
+        </Txt>
         {recurrence ? (
-          <Text
+          <Txt
             style={{
               color: p.accent,
               fontSize: 14,
@@ -104,7 +102,7 @@ export function MessageDetailScreen({
             }}
           >
             🔁 {recurrence}
-          </Text>
+          </Txt>
         ) : null}
       </View>
 
@@ -115,10 +113,10 @@ export function MessageDetailScreen({
 
       {overdue ? (
         <Card style={{ backgroundColor: p.warningSoft, borderColor: p.warning }}>
-          <Text style={{ color: p.text, fontSize: 15, lineHeight: 21 }}>
+          <Txt style={{ color: p.text, fontSize: 15, lineHeight: 21 }}>
             La hora pasó y todavía no se mandó. Podés mandarlo ahora o correrlo a
             otro momento.
-          </Text>
+          </Txt>
         </Card>
       ) : null}
 
@@ -127,7 +125,7 @@ export function MessageDetailScreen({
           label="Abrir WhatsApp con el mensaje"
           onPress={() => void openInWhatsApp(message.id)}
         />
-        <Text
+        <Txt
           style={{
             color: p.textMuted,
             fontSize: 13,
@@ -136,7 +134,7 @@ export function MessageDetailScreen({
           }}
         >
           Se abre el chat con el texto ya escrito. El envío lo confirmás vos.
-        </Text>
+        </Txt>
       </View>
 
       <View>

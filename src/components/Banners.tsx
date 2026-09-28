@@ -1,9 +1,9 @@
 import React from 'react';
-import { Linking, Modal, Pressable, Text, View } from 'react-native';
+import { Linking, Modal, Pressable, View } from 'react-native';
 import { displayName } from '../domain/phone';
 import type { ScheduledMessage } from '../domain/types';
-import { radius, spacing, usePalette } from '../theme';
-import { Button } from './ui';
+import { BORDER_WIDTH, radius, spacing, usePalette } from '../theme';
+import { Button, Title, Txt } from './ui';
 
 /**
  * Sin permiso de notificaciones la app no puede cumplir su única función, así
@@ -23,16 +23,16 @@ export function PermissionBanner({
       style={{
         backgroundColor: p.warningSoft,
         borderColor: p.warning,
-        borderWidth: 1,
+        borderWidth: BORDER_WIDTH,
         borderRadius: radius.md,
         padding: spacing(2),
         marginBottom: spacing(2),
       }}
     >
-      <Text style={{ color: p.text, fontSize: 15, fontWeight: '700' }}>
+      <Txt style={{ color: p.text, fontSize: 15, fontWeight: '700' }}>
         Las notificaciones están apagadas
-      </Text>
-      <Text
+      </Txt>
+      <Txt
         style={{
           color: p.text,
           fontSize: 14,
@@ -42,7 +42,7 @@ export function PermissionBanner({
       >
         Sin ellas no podemos avisarte cuando llega el momento de mandar un
         mensaje, que es justamente para lo que sirve la app.
-      </Text>
+      </Txt>
       <Button
         label={denied ? 'Abrir ajustes del sistema' : 'Activar notificaciones'}
         variant="secondary"
@@ -78,16 +78,16 @@ export function UndoToast({
         gap: spacing(2),
       }}
     >
-      <Text style={{ color: p.bg, fontSize: 15, flex: 1 }}>
+      <Txt style={{ color: p.bg, fontSize: 15, flex: 1 }}>
         Mensaje cancelado
-      </Text>
+      </Txt>
       <Pressable accessibilityRole="button" onPress={onUndo} hitSlop={12}>
-        <Text style={{ color: p.bg, fontSize: 15, fontWeight: '800' }}>
+        <Txt style={{ color: p.bg, fontSize: 15, fontWeight: '800' }}>
           Deshacer
-        </Text>
+        </Txt>
       </Pressable>
       <Pressable accessibilityRole="button" onPress={onDismiss} hitSlop={12}>
-        <Text style={{ color: p.bg, fontSize: 18, opacity: 0.7 }}>✕</Text>
+        <Txt style={{ color: p.bg, fontSize: 18, opacity: 0.7 }}>✕</Txt>
       </Pressable>
     </View>
   );
@@ -133,13 +133,13 @@ export function ConfirmSentSheet({
             gap: spacing(1.5),
           }}
         >
-          <Text style={{ color: p.text, fontSize: 20, fontWeight: '800' }}>
+          <Title style={{ fontSize: 22, lineHeight: 28 }}>
             ¿Se lo mandaste a {who}?
-          </Text>
-          <Text style={{ color: p.textMuted, fontSize: 15, lineHeight: 21 }}>
+          </Title>
+          <Txt style={{ color: p.textMuted, fontSize: 15, lineHeight: 21 }}>
             Nos sirve para saber si lo guardamos en el historial o lo dejamos
             pendiente.
-          </Text>
+          </Txt>
           <Button label="Sí, lo mandé" onPress={onSent} />
           <Button
             label="No, todavía no"
