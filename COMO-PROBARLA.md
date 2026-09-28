@@ -1,82 +1,35 @@
 # Cómo bajar la app y probarla
 
-## Qué build te conviene
+## El camino corto: no necesitás nada instalado
 
-Hay dos formas de tener la app en el teléfono, y sirven para cosas distintas:
+Cada vez que se sube un cambio, **GitHub compila la app solo** y deja el archivo
+publicado. Vos entrás desde el celular y lo instalás. No hace falta terminal, ni Node, ni
+Android Studio, ni cuenta de Expo.
 
-| | **preview** | **development** |
-|---|---|---|
-| Para qué | Usarla como una app normal | Iterar el código |
-| Necesita la compu prendida | No | Sí, corriendo el servidor |
-| Ves los cambios de código al toque | No, hay que recompilar | Sí, al guardar |
+**El enlace es siempre el mismo**, así que conviene guardarlo en favoritos del teléfono:
 
-**Si lo que querés es usarla una semana y ver si te sirve, andá por `preview`.** Se instala
-y funciona sola, sin computadora de por medio. La de `development` la vamos a necesitar
-cuando estemos cambiando cosas.
+> https://github.com/agustinaromanella1-ops/Take-it-easy-/releases/tag/apk-listo-para-enviar
 
----
+Ahí abajo de todo, en **Assets**, está `listo-para-enviar.apk`. Lo tocás y se baja.
 
-## Paso 0 — Chequear el proyecto (en tu máquina)
+Android te va a advertir que es de origen desconocido — es normal, no viene de Play Store.
+Le das **permitir de esta fuente** y después **Instalar**.
 
-```bash
-git clone https://github.com/agustinaromanella1-ops/Take-it-easy-.git
-cd Take-it-easy-
-git checkout claude/whatsapp-scheduled-messages-prompt-65nixm
-npm install
-npx expo-doctor
-```
+Cada vez que cambiemos algo, volvés a ese mismo enlace y bajás la versión nueva. Es el
+mismo flujo que ya usás para la agenda docente.
 
-`expo-doctor` tiene que dar 18/18. Si algo falla, mandame la salida antes de seguir: es más
-barato arreglarlo acá que después de una build de 15 minutos.
+## Los permisos (no te los saltees)
 
-## Paso 1 — Cuenta de Expo
+Al abrirla vas a ver tres pantallas de explicación. Al final te pide **notificaciones**:
+dale que sí, sin eso la app no hace nada.
 
-Gratis, no pide tarjeta.
-
-```bash
-npm install -g eas-cli
-eas login
-```
-
-Si no tenés cuenta, creala en [expo.dev](https://expo.dev) y volvé a este paso.
-
-## Paso 2 — Compilar
-
-```bash
-eas build --profile preview --platform android
-```
-
-La primera vez te va a preguntar si genera un *keystore* (la firma de la app): decile que sí
-y que lo maneje él. Queda guardado en tu cuenta.
-
-Tarda entre 10 y 20 minutos. Se compila en los servidores de Expo, tu máquina solo espera.
-Podés cerrar la terminal: el progreso queda en [expo.dev](https://expo.dev) → tu proyecto →
-Builds.
-
-## Paso 3 — Instalar en el celular
-
-Cuando termina, la terminal te muestra un **QR y un link**. Abrilo desde el celular y bajá
-el APK.
-
-Android te va a advertir que es una app de origen desconocido. Es esperable: no viene de
-Play Store. Tenés que darle **Configuración → permitir de esta fuente** (el texto exacto
-cambia según el teléfono) y después Instalar.
-
-## Paso 4 — Los permisos
-
-Al abrirla por primera vez vas a ver la explicación de tres pantallas y al final te va a
-pedir **notificaciones**. Dale que sí: sin eso la app no hace nada.
-
-En la última pantalla, si estás en Android, te ofrece dos ajustes más. **Hacelos los dos
-ahora**, son los que deciden si los avisos llegan puntuales:
+En la última pantalla te ofrece dos ajustes más. **Hacé los dos**, son los que deciden si
+los avisos llegan puntuales:
 
 - **Permitir alarmas exactas**
-- **Quitar la optimización de batería** (buscá la app en la lista y ponela en "Sin optimizar"
-  o "Sin restricciones")
+- **Quitar la optimización de batería** (buscá la app y ponela en "Sin restricciones")
 
-Si te los salteás, están después en Ajustes → Puntualidad de los avisos.
-
----
+Si los salteás, después están en Ajustes → Puntualidad de los avisos.
 
 ## Qué probar el primer día
 
@@ -127,14 +80,33 @@ Conviene empezar por Android.
 
 ---
 
-## Cuando queramos cambiar código
+## El camino largo (solo si vas a tocar el código)
 
-Ahí sí el otro perfil:
+Para ver los cambios al instante mientras se programa, hace falta una *development build*
+y sí necesitás terminal. Esto es para desarrollar, no para probar:
 
 ```bash
+git clone https://github.com/agustinaromanella1-ops/Take-it-easy-.git
+cd Take-it-easy-
+git checkout claude/whatsapp-scheduled-messages-prompt-65nixm
+npm install
+npx expo-doctor                                      # tiene que dar 18/18
+
+npm install -g eas-cli
+eas login                                            # cuenta gratis de Expo
 eas build --profile development --platform android   # una sola vez
 npx expo start --dev-client                          # cada vez que trabajes
 ```
 
-Se instala una vez y después levanta el código desde tu máquina. El celular y la compu
-tienen que estar en la misma red de wifi.
+El celular y la computadora tienen que estar en la misma red de wifi.
+
+## Cómo se compila el APK
+
+El archivo `.github/workflows/apk-de-prueba.yml` hace todo: revisa que el proyecto esté
+sano (`tsc` y los tests), genera el proyecto Android con `expo prebuild`, compila con
+Gradle y sube el resultado a la publicación de etiqueta fija.
+
+Se compila con `assembleRelease` y no `assembleDebug`: el APK de depuración espera que haya
+un servidor de desarrollo escuchando, así que en el teléfono queda en pantalla roja. El de
+release trae el JavaScript adentro. Se firma con la clave de depuración, que para probar
+alcanza — para publicar en Play hace falta una clave propia.
