@@ -52,61 +52,65 @@ export interface Palette {
 }
 
 const light: Palette = {
-  gradient: ['#d9ebfb', '#e9dff7', '#ffe3d2'],
-  bg: '#e9dff7',
+  // El cielo al caer la tarde mirado desde abajo: verde agua arriba, donde
+  // todavía queda día, y durazno abajo, sobre el horizonte.
+  gradient: ['#ddf2ec', '#f1ecf9', '#fff0e6'],
+  bg: '#f1ecf9',
   surface: '#ffffff',
-  surfaceAlt: '#f7f3fc',
+  surfaceAlt: '#f2f8f6',
 
-  ink: '#1f1e47',
-  text: '#1f1e47',
-  textMuted: '#5f5880',
+  ink: '#123f3c',
+  text: '#123f3c',
+  textMuted: '#4a6a66',
 
-  border: '#1f1e47',
-  shadow: '#1f1e47',
+  border: '#123f3c',
+  shadow: '#123f3c',
 
-  accent: '#7b52ab',
-  accentSoft: '#efe6fb',
-  accentInk: '#5f3e87',
-  primary: '#f77957',
-  primaryText: '#1f1e47',
+  accent: '#186b5c',
+  accentSoft: '#d7f0e8',
+  accentInk: '#0f5447',
+  primary: '#ff9c80',
+  primaryText: '#123f3c',
 
-  warning: '#a63508',
-  warningSoft: '#fbf1e2',
-  danger: '#b33a4a',
-  dangerSoft: '#fde6ea',
+  warning: '#9a4a0a',
+  warningSoft: '#fdeedd',
+  danger: '#a8323f',
+  dangerSoft: '#fde7ea',
 
-  bubble: '#e2f5ec',
-  bubbleText: '#27674e',
+  bubble: '#ddf3ec',
+  bubbleText: '#10514a',
 };
 
 const dark: Palette = {
-  gradient: ['#1a1533', '#241b3d', '#33203c'],
-  bg: '#241b3d',
-  surface: '#2c2450',
-  surfaceAlt: '#241d44',
+  // El mismo atardecer un rato más tarde: el verde agua se apaga en noche y
+  // el durazno queda como un resto de ciruela sobre el horizonte.
+  gradient: ['#0e2321', '#16202e', '#2a1f2b'],
+  bg: '#16202e',
+  surface: '#1b2e2c',
+  surfaceAlt: '#162523',
 
-  ink: '#f6f0fb',
-  text: '#f6f0fb',
-  textMuted: '#aba1c6',
+  ink: '#eaf5f2',
+  text: '#eaf5f2',
+  textMuted: '#9db5b1',
 
-  // Sobre oscuro una línea oscura no se ve: el contorno pasa a lila claro.
-  border: '#9086c9',
+  // Sobre oscuro una línea oscura no se ve: el contorno se aclara.
+  border: '#71958e',
   // La sombra dura necesita ser MÁS oscura que el fondo para leerse.
-  shadow: '#0f0c1e',
+  shadow: '#050f0e',
 
-  accent: '#c9b2ec',
-  accentSoft: '#352b5c',
-  accentInk: '#cdb6ee',
-  primary: '#f77957',
-  primaryText: '#1f1e47',
+  accent: '#7fd9c4',
+  accentSoft: '#1b3b36',
+  accentInk: '#8fe0cc',
+  primary: '#ff9c80',
+  primaryText: '#123f3c',
 
   warning: '#f0c48a',
-  warningSoft: '#3d2a1c',
+  warningSoft: '#3a2b1c',
   danger: '#ff8a9b',
-  dangerSoft: '#45222c',
+  dangerSoft: '#42222a',
 
-  bubble: '#1f3f38',
-  bubbleText: '#86d3ae',
+  bubble: '#1d423c',
+  bubbleText: '#8ddcc6',
 };
 
 export const spacing = (n: number): number => n * 8;
@@ -132,6 +136,9 @@ export const fonts = {
   bodyBold: 'Nunito_700Bold',
   bodySemi: 'Nunito_600SemiBold',
 } as const;
+
+/** Las dos paletas, expuestas para que el test de contraste las mida. */
+export const palettes = { light, dark } as const;
 
 export function usePalette(): Palette {
   return useColorScheme() === 'dark' ? dark : light;

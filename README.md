@@ -72,22 +72,29 @@ npm test            # 83 tests sobre la lógica de dominio
 Tomado de **Pipí Cucú** (rama `main` de este mismo repo), para que las dos apps se lean
 como hermanas. Lo que lo define:
 
-- **Atardecer.** El fondo es un degradado de celeste `#d9ebfb` a lila `#e9dff7` a durazno
-  `#ffe3d2`. Lo pinta la app entera una sola vez, no cada pantalla: así no hay costuras al
-  navegar.
+- **Atardecer con verde agua.** El fondo es un degradado de verde agua `#ddf2ec` arriba,
+  donde todavía queda día, a lila `#f1ecf9`, a durazno `#fff0e6` sobre el horizonte. Lo
+  pinta la app entera una sola vez, no cada pantalla: así no hay costuras al navegar.
 - **El contorno es parte del dibujo**, no una línea de separación: 2,5 px en tinta
-  `#1f1e47`, no un gris finito.
+  `#123f3c`, un verde profundo, no un gris finito.
 - **La sombra es dura y sin desenfoque.** Es lo que da el aire de calcomanía pegada sobre
   la página en vez de flotando encima.
 - **Playfair Display** para títulos y **Nunito** para el cuerpo.
-- **Naranja `#f77957` para la acción principal**, con tinta encima y no blanco: el blanco
-  sobre ese naranja da 2,7:1 y no pasa contraste.
+- **Coral `#ff9c80` para la acción principal**, con tinta encima y no blanco.
 - Al apretar, los botones **se hunden** hasta donde estaba su sombra.
-- El oscuro no es el claro dado vuelta: es el mismo atardecer más tarde, con fondos ciruela
-  y el contorno en lila claro, porque sobre oscuro una línea oscura no se ve.
+- El oscuro no es el claro dado vuelta: es el mismo atardecer más tarde, el verde agua
+  apagado en noche y el durazno como un resto de ciruela, con el contorno aclarado porque
+  sobre oscuro una línea oscura no se ve.
 
-Los pares de texto sobre fondo vienen medidos contra WCAG AA desde el proyecto original;
-conservar los valores tal cual es lo que mantiene esa garantía.
+**El contraste está medido por un test, no de palabra.** `src/__tests__/contraste.test.ts`
+calcula la relación WCAG 2.1 de cada par de texto sobre fondo —incluido el texto sobre las
+tres paradas del degradado— y falla si alguno baja de 4,5:1 (3:1 para contornos). Así,
+aclarar la paleta no puede romper la legibilidad en silencio: fue justamente ese test el
+que obligó a aclarar el coral del botón principal, porque con el naranja anterior la tinta
+encima daba 4,34:1.
+
+Para mirar la paleta sin esperar a que compile el APK: `node icono/vista-previa.mjs` dibuja
+la pantalla principal en los dos modos leyendo los valores de `theme.ts`.
 
 **La sombra dura no usa las sombras nativas.** En Android `elevation` siempre desenfoca y
 no acepta desplazamiento, así que el efecto no se puede reproducir con las propiedades del
