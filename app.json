@@ -37,10 +37,6 @@
       "expo-notifications"
     ],
     "backgroundColor": "#e9dff7",
-    "splash": {
-      "backgroundColor": "#d9ebfb",
-      "resizeMode": "contain"
-    },
     "androidStatusBar": {
       "translucent": true,
       "barStyle": "dark-content"

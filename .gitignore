@@ -4,3 +4,7 @@ dist/
 web-build/
 *.log
 .DS_Store
+
+# Los genera expo prebuild; no se versionan
+android/
+ios/
