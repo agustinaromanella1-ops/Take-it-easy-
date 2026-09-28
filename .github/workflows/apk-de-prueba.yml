@@ -32,6 +32,12 @@ jobs:
           npx tsc --noEmit
           npx jest
 
+      # Empaquetar el JavaScript acá y no recién dentro de Gradle: tsc no ve
+      # los módulos que faltan en tiempo de ejecución, y si el empaquetado
+      # falla, así se entera en un minuto en vez de a los cuatro.
+      - name: Revisar que el JavaScript empaquete
+        run: npx expo export --platform android --output-dir .expo/export-check
+
       # Expo genera el proyecto Android a partir de app.json. No lo guardamos
       # en el repositorio: se arma acá y queda siempre al día con la config.
       - name: Armar el proyecto Android

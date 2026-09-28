@@ -2,13 +2,14 @@ import React, { useCallback } from 'react';
 import { View, useColorScheme } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
 import * as SplashScreen from 'expo-splash-screen';
-import {
-  useFonts,
-  Nunito_400Regular,
-  Nunito_600SemiBold,
-  Nunito_700Bold,
-} from '@expo-google-fonts/nunito';
-import { PlayfairDisplay_700Bold } from '@expo-google-fonts/playfair-display';
+import { useFonts } from 'expo-font';
+// Importadas por peso y no desde la raíz del paquete: el índice hace un
+// require() de TODAS las variantes, así que importar de ahí mete los ~8 MB de
+// las dos familias enteras en el APK para usar cuatro archivos.
+import { Nunito_400Regular } from '@expo-google-fonts/nunito/400Regular';
+import { Nunito_600SemiBold } from '@expo-google-fonts/nunito/600SemiBold';
+import { Nunito_700Bold } from '@expo-google-fonts/nunito/700Bold';
+import { PlayfairDisplay_700Bold } from '@expo-google-fonts/playfair-display/700Bold';
 import {
   DarkTheme,
   DefaultTheme,
