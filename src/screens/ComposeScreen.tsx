@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import {
   Alert,
   KeyboardAvoidingView,
@@ -57,9 +57,16 @@ export function ComposeScreen({
   } = useMessages();
 
   const editingId = route.params?.id ?? null;
+  const duplicateOf = route.params?.duplicateOf ?? null;
+
   const existing = useMemo(
     () => messages.find((m) => m.id === editingId) ?? null,
     [editingId, messages],
+  );
+  /** Duplicar no crea nada: se copian los datos y recién al guardar hay fila. */
+  const fuente = useMemo(
+    () => messages.find((m) => m.id === (editingId ?? duplicateOf)) ?? null,
+    [duplicateOf, editingId, messages],
   );
 
   const [recipients, setRecipients] = useState<Recipient[]>([]);
@@ -70,21 +77,35 @@ export function ComposeScreen({
   const [saving, setSaving] = useState(false);
   const [namingTemplate, setNamingTemplate] = useState(false);
 
+  // Se carga una sola vez por mensaje. Antes el efecto dependía del objeto,
+  // cuya identidad cambia en cada refresh(): volver a la app o recibir un
+  // aviso mientras se escribía pisaba el texto tipeado con el guardado.
+  const cargado = useRef<string | null>(null);
   useEffect(() => {
-    if (!existing) return;
-    setRecipients([
-      { name: existing.contactName, e164: existing.phoneE164 },
-    ]);
-    setBody(existing.body);
-    setWhen(existing.localAt);
-    setFrequency(parseRule(existing.recurrenceRule));
-  }, [existing]);
+    const clave = editingId ?? duplicateOf;
+    if (!fuente || !clave || cargado.current === clave) return;
+    cargado.current = clave;
+
+    setRecipients(
+      // Al duplicar, el destinatario se elige de nuevo: es el punto de duplicar.
+      duplicateOf
+        ? []
+        : [{ name: fuente.contactName, e164: fuente.phoneE164 }],
+    );
+    setBody(fuente.body);
+    setWhen(duplicateOf ? null : fuente.localAt);
+    setFrequency(parseRule(fuente.recurrenceRule));
+  }, [duplicateOf, editingId, fuente]);
 
   useEffect(() => {
     navigation.setOptions({
-      title: editingId ? 'Editar mensaje' : 'Nuevo mensaje',
+      title: editingId
+        ? 'Editar mensaje'
+        : duplicateOf
+          ? 'Duplicar mensaje'
+          : 'Nuevo mensaje',
     });
-  }, [editingId, navigation]);
+  }, [duplicateOf, editingId, navigation]);
 
   const variables = useMemo(() => extractVariables(body), [body]);
   const rendered = useMemo(
@@ -150,6 +171,7 @@ export function ComposeScreen({
           body: text,
           phoneE164: first.e164,
           contactName: first.name,
+          recurrenceRule,
         });
         if (when && when !== existing.localAt) {
           await rescheduleMessage(existing.id, when);

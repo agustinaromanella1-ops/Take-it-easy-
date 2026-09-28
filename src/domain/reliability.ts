@@ -38,6 +38,20 @@ export const MIN_SAMPLES = 3;
 /** Cuántos retrasos hacen falta entre las muestras recientes para avisar. */
 export const LATE_COUNT_TO_WARN = 2;
 
+/**
+ * `notification.date` de expo-notifications viene en **segundos** en iOS y en
+ * **milisegundos** en Android. Un valor en segundos tomado como milisegundos
+ * cae en 1970: el retraso da negativo, se recorta a cero y la medición de
+ * puntualidad queda muerta sin que nada falle.
+ *
+ * Cualquier instante real en milisegundos supera holgadamente 1e12 (año 2001),
+ * y en segundos no lo alcanza hasta el año 33 mil: el umbral separa los dos
+ * casos sin ambigüedad.
+ */
+export function aMilisegundos(marca: number): number {
+  return marca < 1e12 ? Math.round(marca * 1000) : marca;
+}
+
 /** Minutos de retraso, nunca negativo: una notificación no llega antes de tiempo. */
 export function delayMinutes(sample: DeliverySample): number {
   const expected = new Date(sample.expectedAt).getTime();

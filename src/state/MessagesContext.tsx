@@ -21,6 +21,7 @@ import { snoozeOneHour } from '../domain/schedule';
 import { nextOccurrence } from '../domain/recurrence';
 import { DEFAULT_QUIET_HOURS, type QuietHours } from '../domain/quietHours';
 import {
+  aMilisegundos,
   assessReliability,
   recordSample,
   type DeliverySample,
@@ -69,10 +70,14 @@ interface MessagesValue {
   ) => Promise<number>;
   editMessage: (
     id: string,
-    patch: { body?: string; phoneE164?: string; contactName?: string | null },
+    patch: {
+      body?: string;
+      phoneE164?: string;
+      contactName?: string | null;
+      recurrenceRule?: string | null;
+    },
   ) => Promise<void>;
   rescheduleMessage: (id: string, localAt: string) => Promise<void>;
-  duplicateMessage: (id: string) => Promise<ScheduledMessage | null>;
   deleteMessage: (id: string) => Promise<void>;
   undoDelete: () => Promise<void>;
   dismissUndo: () => void;
@@ -304,6 +309,7 @@ export function MessagesProvider({
         body?: string;
         phoneE164?: string;
         contactName?: string | null;
+        recurrenceRule?: string | null;
       },
     ) => {
       await repo.update(id, patch);
@@ -318,23 +324,6 @@ export function MessagesProvider({
       await refresh();
     },
     [refresh],
-  );
-
-  const duplicateMessage = useCallback(
-    async (id: string) => {
-      const source = await repo.getById(id);
-      if (!source) return null;
-      const copy = await repo.create({
-        contactName: source.contactName,
-        phoneE164: source.phoneE164,
-        body: source.body,
-        localAt: null, // la copia arranca sin fecha: se decide destinatario y momento
-        timezone,
-      });
-      await refresh();
-      return copy;
-    },
-    [refresh, timezone],
   );
 
   const dismissUndo = useCallback(() => {
@@ -388,7 +377,12 @@ export function MessagesProvider({
         await Linking.openURL(web);
       }
 
-      await repo.setStatus(id, 'fired');
+      // Un borrador no tiene fecha, y 'fired' sin fecha no cae en ninguna
+      // lista: el mensaje desaparecería de la pantalla. Abrir WhatsApp desde
+      // un borrador no cambia su estado.
+      if (message.status !== 'draft') {
+        await repo.setStatus(id, 'fired');
+      }
       await refresh();
     },
     [refresh],
@@ -403,11 +397,15 @@ export function MessagesProvider({
         ? nextOccurrence(message.localAt, message.recurrenceRule, timezone)
         : null;
 
+      // Marcar enviado un mensaje cuya hora todavía no llegó tiene que
+      // cancelar su aviso: si no, suena igual más tarde y al tocarlo el
+      // mensaje vuelve a salir del historial.
+      await notify.cancel(message.notificationId);
+
       if (next) {
         // Recurrente: guardamos esta salida en el historial y adelantamos el
         // mensaje vivo a la próxima repetición.
         await repo.archiveOccurrence(message);
-        await notify.cancel(message.notificationId);
         await repo.reschedule(id, next, message.timezone);
 
         const updated = await repo.getById(id);
@@ -416,6 +414,7 @@ export function MessagesProvider({
           await repo.update(id, { notificationId });
         }
       } else {
+        await repo.update(id, { notificationId: null });
         await repo.setStatus(id, 'sent');
       }
 
@@ -502,7 +501,7 @@ export function MessagesProvider({
       if (!expectedAt) return;
       const sample: DeliverySample = {
         expectedAt,
-        deliveredAt: new Date(deliveredAtMs).toISOString(),
+        deliveredAt: new Date(aMilisegundos(deliveredAtMs)).toISOString(),
       };
 
       const stored = await settingsRepo.loadDeliverySamples();
@@ -560,6 +559,13 @@ export function MessagesProvider({
     // parseBackup valida la forma antes de tocar la base: si el archivo está
     // roto, tira un error entendible y no se importa nada a medias.
     const backup = parseBackup(raw);
+
+    // Las filas que se van a pisar traen notificationId; si las sobrescribimos
+    // sin cancelar, ese aviso queda huérfano —ya no hay id para cancelarlo— y
+    // reconcile() agenda uno nuevo encima: llegan dos.
+    for (const existente of await repo.listAll()) {
+      await notify.cancel(existente.notificationId);
+    }
 
     await repo.replaceAllMessages(backup.messages);
     await templatesRepo.replaceAllTemplates(backup.templates);
@@ -667,7 +673,6 @@ export function MessagesProvider({
       createForMany,
       editMessage,
       rescheduleMessage,
-      duplicateMessage,
       deleteMessage,
       undoDelete,
       dismissUndo,
@@ -699,7 +704,6 @@ export function MessagesProvider({
     deleteTemplate,
     dismissConfirmation,
     dismissUndo,
-    duplicateMessage,
     editMessage,
     editTemplate,
     ensurePermission,

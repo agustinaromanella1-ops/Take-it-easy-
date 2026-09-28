@@ -61,3 +61,29 @@ describe('backup', () => {
     expect(parsed.templates).toEqual([]);
   });
 });
+
+describe('validación de los campos que la base exige', () => {
+  const base = { version: 1, templates: [] };
+
+  it('rechaza un mensaje sin createdAt, que es NOT NULL en la tabla', () => {
+    const { createdAt, ...sinFecha } = message;
+    expect(() =>
+      parseBackup(JSON.stringify({ ...base, messages: [sinFecha] })),
+    ).toThrow(/formato que no reconocemos/);
+  });
+
+  it('rechaza un estado que el resto del código no sabe manejar', () => {
+    expect(() =>
+      parseBackup(
+        JSON.stringify({ ...base, messages: [{ ...message, status: 'inventado' }] }),
+      ),
+    ).toThrow(/formato que no reconocemos/);
+  });
+
+  it('acepta los cinco estados válidos', () => {
+    for (const status of ['draft', 'scheduled', 'fired', 'sent', 'skipped']) {
+      const archivo = JSON.stringify({ ...base, messages: [{ ...message, status }] });
+      expect(parseBackup(archivo).messages).toHaveLength(1);
+    }
+  });
+});

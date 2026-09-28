@@ -8,7 +8,7 @@ export type TabsParamList = {
 
 export type RootStackParamList = {
   Tabs: NavigatorScreenParams<TabsParamList>;
-  Compose: { id?: string } | undefined;
+  Compose: { id?: string; duplicateOf?: string } | undefined;
   Detail: { id: string };
   Templates: undefined;
   Privacy: undefined;

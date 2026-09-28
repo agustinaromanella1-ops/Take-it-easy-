@@ -17,7 +17,7 @@ export function HistoryScreen(): React.ReactElement {
   const p = usePalette();
   const insets = useSafeAreaInsets();
   const navigation = useNavigation<Nav>();
-  const { history, duplicateMessage } = useMessages();
+  const { history } = useMessages();
 
   const sorted = [...history].sort((a, b) => {
     const at = a.sentAt ?? a.createdAt;
@@ -54,12 +54,9 @@ export function HistoryScreen(): React.ReactElement {
                   ? format(parseISO(item.sentAt), "d MMM HH:mm", { locale: es })
                   : ''
             }
-            onPress={() => {
-              void (async () => {
-                const copy = await duplicateMessage(item.id);
-                if (copy) navigation.navigate('Compose', { id: copy.id });
-              })();
-            }}
+            onPress={() =>
+              navigation.navigate('Compose', { duplicateOf: item.id })
+            }
           />
         )}
         ListEmptyComponent={

@@ -186,10 +186,18 @@ export async function archiveOccurrence(
   });
 }
 
+/**
+ * Importa en una transacción: si una fila falla a mitad de camino, no queda
+ * media importación aplicada. Sin esto, la promesa de "se valida todo antes de
+ * tocar la base" no se sostenía contra un error de escritura.
+ */
 export async function replaceAllMessages(
   messages: ScheduledMessage[],
 ): Promise<void> {
-  for (const message of messages) {
-    await restore({ ...message, notificationId: null });
-  }
+  const db = await getDb();
+  await db.withTransactionAsync(async () => {
+    for (const message of messages) {
+      await restore({ ...message, notificationId: null });
+    }
+  });
 }

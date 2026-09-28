@@ -1,4 +1,5 @@
 import {
+  aMilisegundos,
   assessReliability,
   delayMinutes,
   describeReliability,
@@ -111,5 +112,26 @@ describe('isOnTime y describeReliability', () => {
         lateCount: 3,
       }),
     ).toMatch(/22 minutos/);
+  });
+});
+
+describe('aMilisegundos', () => {
+  it('convierte una marca en segundos, como la que manda iOS', () => {
+    // 2026-09-14T12:00:00Z en segundos
+    expect(aMilisegundos(1789041600)).toBe(1789041600000);
+  });
+
+  it('deja intacta una marca que ya viene en milisegundos, como Android', () => {
+    expect(aMilisegundos(1789041600000)).toBe(1789041600000);
+  });
+
+  it('sin la conversión el retraso quedaría en cero y la medición muerta', () => {
+    const esperado = new Date(1789041600000).toISOString();
+    const entregadoEnSegundos = 1789041600 + 15 * 60;
+    const muestra = {
+      expectedAt: esperado,
+      deliveredAt: new Date(aMilisegundos(entregadoEnSegundos)).toISOString(),
+    };
+    expect(delayMinutes(muestra)).toBe(15);
   });
 });

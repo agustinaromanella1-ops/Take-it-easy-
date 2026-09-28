@@ -34,18 +34,23 @@ const transparent = (base: Theme): Theme => ({
 
 export default function App(): React.ReactElement | null {
   const scheme = useColorScheme();
-  const [fontsLoaded] = useFonts({
+  const [fontsLoaded, fontError] = useFonts({
     Nunito_400Regular,
     Nunito_600SemiBold,
     Nunito_700Bold,
     PlayfairDisplay_700Bold,
   });
 
-  const onReady = useCallback(() => {
-    if (fontsLoaded) void SplashScreen.hideAsync();
-  }, [fontsLoaded]);
+  // Si las tipografías no cargan, la app abre igual con la del sistema. Antes
+  // el error se descartaba y la app quedaba para siempre en el splash, que es
+  // mucho peor que verse distinta.
+  const listo = fontsLoaded || fontError !== null;
 
-  if (!fontsLoaded) return null;
+  const onReady = useCallback(() => {
+    if (listo) void SplashScreen.hideAsync();
+  }, [listo]);
+
+  if (!listo) return null;
 
   return (
     <SafeAreaProvider>

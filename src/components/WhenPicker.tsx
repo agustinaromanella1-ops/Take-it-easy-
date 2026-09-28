@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from 'react';
+import React, { useState } from 'react';
 import { Platform, View } from 'react-native';
 import DateTimePicker, {
   DateTimePickerAndroid,
@@ -27,7 +27,12 @@ export function WhenPicker({
 }): React.ReactElement {
   const p = usePalette();
   const [iosPickerVisible, setIosPickerVisible] = useState(false);
-  const options = useMemo(() => quickOptions(timezone), [timezone]);
+  /** Qué atajo está elegido, por id: el valor en sí se recalcula y no sirve. */
+  const [elegido, setElegido] = useState<string | null>(null);
+
+  // Sin memorizar: si la pantalla queda abierta un rato, "En 2 horas"
+  // apuntaría a un momento ya pasado y el guardado lo rechazaría.
+  const options = quickOptions(timezone);
 
   const openCustomPicker = () => {
     const base = value ? parseISO(value) : new Date();
@@ -73,11 +78,23 @@ export function WhenPicker({
           <Chip
             key={o.id}
             label={o.label}
-            selected={value === o.wall}
-            onPress={() => onChange(o.wall)}
+            selected={elegido === o.id}
+            onPress={() => {
+              // Recalculado al tocar, no al dibujar: entre una cosa y la otra
+              // pudo pasar el tiempo suficiente para que el valor sea pasado.
+              const fresco = quickOptions(timezone).find((x) => x.id === o.id);
+              setElegido(o.id);
+              onChange((fresco ?? o).wall);
+            }}
           />
         ))}
-        <Chip label="Otro momento…" onPress={openCustomPicker} />
+        <Chip
+          label="Otro momento…"
+          onPress={() => {
+            setElegido(null);
+            openCustomPicker();
+          }}
+        />
       </View>
 
       {iosPickerVisible && Platform.OS === 'ios' ? (

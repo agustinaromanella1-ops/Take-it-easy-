@@ -1,4 +1,4 @@
-import type { ScheduledMessage } from './types';
+import type { MessageStatus, ScheduledMessage } from './types';
 import type { Template } from './templates';
 
 export const BACKUP_VERSION = 1;
@@ -25,6 +25,14 @@ export function serializeBackup(
 
 export class BackupError extends Error {}
 
+const ESTADOS: MessageStatus[] = [
+  'draft',
+  'scheduled',
+  'fired',
+  'sent',
+  'skipped',
+];
+
 const isMessage = (value: unknown): value is ScheduledMessage => {
   if (typeof value !== 'object' || value === null) return false;
   const m = value as Record<string, unknown>;
@@ -33,7 +41,12 @@ const isMessage = (value: unknown): value is ScheduledMessage => {
     typeof m['phoneE164'] === 'string' &&
     typeof m['body'] === 'string' &&
     typeof m['timezone'] === 'string' &&
-    typeof m['status'] === 'string'
+    // createdAt es NOT NULL en la tabla y el estado tiene que ser uno de los
+    // que el resto del código sabe manejar: sin estas dos, un archivo
+    // malformado rompe recién a mitad de la importación.
+    typeof m['createdAt'] === 'string' &&
+    typeof m['status'] === 'string' &&
+    (ESTADOS as string[]).includes(m['status'])
   );
 };
 

@@ -6,7 +6,7 @@ import { dayLabel, timeLabel } from '../domain/grouping';
 import { displayName } from '../domain/phone';
 import { describeRule } from '../domain/recurrence';
 import { SHIFT_LABELS, shiftWall, type ShiftKind } from '../domain/schedule';
-import { isPast } from '../domain/time';
+import { isPast, toWallString, wallNow } from '../domain/time';
 import { useMessages } from '../state/MessagesContext';
 import { spacing, usePalette } from '../theme';
 import { Button, Card, Chip, Label, Title, Txt } from '../components/ui';
@@ -25,7 +25,6 @@ export function MessageDetailScreen({
     messages,
     timezone,
     rescheduleMessage,
-    duplicateMessage,
     deleteMessage,
     openInWhatsApp,
     confirmSent,
@@ -44,7 +43,20 @@ export function MessageDetailScreen({
     message.localAt !== null && isPast(message.localAt, message.timezone);
 
   const applyShift = async (kind: ShiftKind) => {
-    const base = message.localAt ?? new Date().toISOString().slice(0, 16);
+    // Dos cosas acá:
+    //
+    // 1. Un mensaje sin fecha no puede partir de `new Date().toISOString()`:
+    //    eso es hora UTC usada como hora de pared, y en Argentina "+1 hora"
+    //    terminaba agendando cuatro horas más tarde sin que isPast lo notara.
+    // 2. Si la hora ya pasó, correr desde ella no sirve: "+1 hora" sobre un
+    //    mensaje de ayer sigue siendo pasado, justo en la tarjeta atrasada
+    //    que invita a reprogramarlo. En ese caso se corre desde ahora.
+    const ahora = toWallString(wallNow(timezone));
+    const base =
+      message.localAt && !isPast(message.localAt, message.timezone)
+        ? message.localAt
+        : ahora;
+
     const next = shiftWall(base, kind);
     if (isPast(next, timezone)) {
       Alert.alert('Ese momento ya pasó', 'Probá con otro corrimiento.');
@@ -163,12 +175,9 @@ export function MessageDetailScreen({
         <Button
           label="Duplicar para otra persona"
           variant="secondary"
-          onPress={() => {
-            void (async () => {
-              const copy = await duplicateMessage(message.id);
-              if (copy) navigation.replace('Compose', { id: copy.id });
-            })();
-          }}
+          onPress={() =>
+            navigation.navigate('Compose', { duplicateOf: message.id })
+          }
         />
         <Button
           label="Marcar como enviado"
