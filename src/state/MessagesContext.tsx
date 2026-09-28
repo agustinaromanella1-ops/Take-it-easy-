@@ -50,6 +50,11 @@ interface MessagesValue {
   /** Qué tan a horario vienen llegando los avisos en este teléfono. */
   reliability: Reliability;
   onboardingCompleted: boolean;
+  /**
+   * Cuántos avisos tiene agendados el sistema. Comparado con los pendientes,
+   * dice de quién es el problema cuando un mensaje no suena.
+   */
+  osScheduled: number | null;
   /** Mensaje que se abrió en WhatsApp y todavía no confirmamos si salió. */
   awaitingConfirmation: ScheduledMessage | null;
   undo: PendingUndo | null;
@@ -89,6 +94,8 @@ interface MessagesValue {
   importBackup: () => Promise<{ messages: number; templates: number } | null>;
 
   completeOnboarding: () => Promise<void>;
+  checkScheduled: () => Promise<void>;
+  testNotification: (seconds: number) => Promise<void>;
 }
 
 const MessagesContext = createContext<MessagesValue | null>(null);
@@ -111,9 +118,14 @@ export function MessagesProvider({
   const [quietHours, setQuietHours] = useState<QuietHours>(DEFAULT_QUIET_HOURS);
   const [deliverySamples, setDeliverySamples] = useState<DeliverySample[]>([]);
   const [onboardingCompleted, setOnboardingCompleted] = useState(true);
+  const [osScheduled, setOsScheduled] = useState<number | null>(null);
 
   const timezone = useMemo(() => deviceTimezone(), []);
   const undoTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  /** ensurePermission se define más abajo; la ref evita reordenar el archivo. */
+  const ensurePermissionRef = useRef<() => Promise<notify.PermissionState>>(
+    async () => 'undetermined',
+  );
   /** Id que dejamos "en el aire" al saltar a WhatsApp, para preguntar al volver. */
   const openedId = useRef<string | null>(null);
 
@@ -124,7 +136,29 @@ export function MessagesProvider({
     ]);
     setMessages(allMessages);
     setTemplates(allTemplates);
+    try {
+      setOsScheduled(await notify.scheduledCount());
+    } catch {
+      setOsScheduled(null);
+    }
   }, []);
+
+  const checkScheduled = useCallback(async () => {
+    try {
+      setOsScheduled(await notify.scheduledCount());
+    } catch {
+      setOsScheduled(null);
+    }
+  }, []);
+
+  const testNotification = useCallback(
+    async (seconds: number) => {
+      await ensurePermissionRef.current();
+      await notify.scheduleTest(seconds);
+      await checkScheduled();
+    },
+    [checkScheduled],
+  );
 
   /**
    * Al arrancar recalculamos el instante UTC de cada pendiente a partir de la
@@ -209,6 +243,8 @@ export function MessagesProvider({
     setPermission(next);
     return next;
   }, []);
+
+  ensurePermissionRef.current = ensurePermission;
 
   const createMessage = useCallback(
     async (input: NewMessageInput) => {
@@ -610,6 +646,7 @@ export function MessagesProvider({
       quietHours,
       reliability: assessReliability(deliverySamples),
       onboardingCompleted,
+      osScheduled,
       awaitingConfirmation,
       undo,
       createMessage,
@@ -633,9 +670,12 @@ export function MessagesProvider({
       exportBackup,
       importBackup,
       completeOnboarding,
+      checkScheduled,
+      testNotification,
     };
   }, [
     awaitingConfirmation,
+    checkScheduled,
     completeOnboarding,
     confirmSent,
     createForMany,
@@ -655,6 +695,7 @@ export function MessagesProvider({
     messages,
     onboardingCompleted,
     openInWhatsApp,
+    osScheduled,
     permission,
     quietHours,
     ready,
@@ -662,6 +703,7 @@ export function MessagesProvider({
     rescheduleMessage,
     saveTemplate,
     templates,
+    testNotification,
     timezone,
     undo,
     undoDelete,

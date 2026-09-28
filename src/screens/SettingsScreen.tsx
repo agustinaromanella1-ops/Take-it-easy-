@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   Alert,
   Linking,
@@ -76,8 +76,29 @@ export function SettingsScreen(): React.ReactElement {
     exportBackup,
     importBackup,
     reliability,
+    osScheduled,
+    checkScheduled,
+    testNotification,
   } = useMessages();
   const [busy, setBusy] = useState(false);
+
+  // El número del sistema puede cambiar sin que la app se entere (un aviso que
+  // sonó, uno que el teléfono descartó), así que se relee al abrir Ajustes.
+  useEffect(() => {
+    void checkScheduled();
+  }, [checkScheduled]);
+
+  const lanzarPrueba = async () => {
+    try {
+      await testNotification(30);
+      Alert.alert(
+        'Aviso de prueba agendado',
+        'Cerrá la app del todo ahora y esperá 30 segundos. Si el aviso llega, los avisos funcionan y el problema está en otro lado.',
+      );
+    } catch {
+      Alert.alert('No pudimos agendar la prueba', 'Revisá el permiso de notificaciones.');
+    }
+  };
 
   const runImport = async () => {
     setBusy(true);
@@ -182,6 +203,36 @@ export function SettingsScreen(): React.ReactElement {
           <Txt style={{ color: p.text, fontSize: 15, lineHeight: 21 }}>
             {describeReliability(reliability)}
           </Txt>
+
+          <View style={{ marginTop: spacing(1.5) }}>
+            <Row title="Mensajes pendientes" value={String(pending.length)} />
+            <Row
+              title="Avisos agendados en el sistema"
+              value={osScheduled === null ? '—' : String(osScheduled)}
+            />
+          </View>
+
+          {osScheduled !== null && osScheduled < pending.length ? (
+            <Txt
+              style={{
+                color: p.warning,
+                fontSize: 14,
+                lineHeight: 20,
+                marginTop: spacing(1),
+              }}
+            >
+              El sistema tiene agendados menos avisos que mensajes pendientes.
+              Suele pasar cuando el teléfono cierra la app para ahorrar batería.
+              Los dos ajustes de abajo lo resuelven.
+            </Txt>
+          ) : null}
+
+          <Button
+            label="Probar con la app cerrada"
+            variant="secondary"
+            onPress={() => void lanzarPrueba()}
+            style={{ marginTop: spacing(1.5) }}
+          />
           {Platform.OS === 'android' ? (
             <>
               <Txt

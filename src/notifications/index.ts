@@ -84,11 +84,47 @@ export async function scheduleFor(
       body: previewLines(message.body),
       data: { messageId: message.id },
       categoryIdentifier: CATEGORY_ID,
-      ...(Platform.OS === 'android' ? { channelId: CHANNEL_ID } : {}),
     },
+    // El canal va en el disparador, no en el contenido. Puesto en el
+    // contenido se ignora sin avisar, y el aviso termina en el canal por
+    // defecto: sin la importancia alta que configuramos, Android no lo
+    // muestra en pantalla y lo puede demorar.
     trigger: {
       type: Notifications.SchedulableTriggerInputTypes.DATE,
       date,
+      ...(Platform.OS === 'android' ? { channelId: CHANNEL_ID } : {}),
+    },
+  });
+}
+
+/**
+ * Cuántos avisos tiene agendados el sistema operativo ahora mismo.
+ *
+ * Es el dato que decide de quién es el problema cuando un mensaje no suena:
+ * si la app tiene tres pendientes y el sistema tiene tres agendados, el
+ * teléfono los está descartando o demorando. Si tiene cero, el problema es
+ * nuestro.
+ */
+export async function scheduledCount(): Promise<number> {
+  const agendados = await Notifications.getAllScheduledNotificationsAsync();
+  return agendados.length;
+}
+
+/**
+ * Un aviso de prueba, para poder verificar con la app cerrada sin tener que
+ * inventar un mensaje de mentira y después borrarlo.
+ */
+export async function scheduleTest(seconds: number): Promise<void> {
+  await Notifications.scheduleNotificationAsync({
+    content: {
+      title: 'Prueba de aviso',
+      body: `Si estás leyendo esto con la app cerrada, los avisos funcionan.`,
+    },
+    trigger: {
+      type: Notifications.SchedulableTriggerInputTypes.TIME_INTERVAL,
+      seconds,
+      repeats: false,
+      ...(Platform.OS === 'android' ? { channelId: CHANNEL_ID } : {}),
     },
   });
 }
