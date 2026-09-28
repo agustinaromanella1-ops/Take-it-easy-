@@ -5,7 +5,7 @@ import {
   previewLines,
   timeLabel,
 } from '../domain/grouping';
-import type { ScheduledMessage } from '../domain/types';
+import { awaitsNotification, type ScheduledMessage } from '../domain/types';
 
 const BA = 'America/Argentina/Buenos_Aires';
 /** Lunes 14/09/2026, 10:00 en Buenos Aires. */
@@ -104,5 +104,30 @@ describe('pendingCountLabel', () => {
 describe('previewLines', () => {
   it('devuelve como mucho dos líneas con contenido', () => {
     expect(previewLines('uno\n\ndos\ntres')).toBe('uno\ndos');
+  });
+});
+
+describe('awaitsNotification', () => {
+  const ahora = NOW;
+
+  it('cuenta un programado a futuro', () => {
+    const m = message('a', '2026-09-20T09:00');
+    expect(awaitsNotification({ ...m, scheduledAt: '2026-09-20T12:00:00.000Z' }, ahora)).toBe(true);
+  });
+
+  it('no cuenta uno cuya hora ya pasó: no se puede agendar para atrás', () => {
+    const m = message('b', '2026-09-13T09:00');
+    expect(awaitsNotification({ ...m, scheduledAt: '2026-09-13T12:00:00.000Z' }, ahora)).toBe(false);
+  });
+
+  it('no cuenta uno ya disparado: su aviso ya sonó', () => {
+    const m = message('c', '2026-09-20T09:00', { status: 'fired' });
+    expect(awaitsNotification({ ...m, scheduledAt: '2026-09-20T12:00:00.000Z' }, ahora)).toBe(false);
+  });
+
+  it('no cuenta borradores ni cerrados', () => {
+    expect(awaitsNotification(message('d', null, { status: 'draft' }), ahora)).toBe(false);
+    const enviado = message('e', '2026-09-20T09:00', { status: 'sent' });
+    expect(awaitsNotification({ ...enviado, scheduledAt: '2026-09-20T12:00:00.000Z' }, ahora)).toBe(false);
   });
 });

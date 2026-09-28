@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useCallback, useState } from 'react';
 import {
   Alert,
   Linking,
@@ -8,7 +8,7 @@ import {
   View,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { useNavigation } from '@react-navigation/native';
+import { useFocusEffect, useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { BackupError } from '../domain/backup';
 import { describeQuietHours } from '../domain/quietHours';
@@ -77,26 +77,38 @@ export function SettingsScreen(): React.ReactElement {
     importBackup,
     reliability,
     osScheduled,
+    awaitingNotification,
     checkScheduled,
     testNotification,
   } = useMessages();
   const [busy, setBusy] = useState(false);
 
-  // El número del sistema puede cambiar sin que la app se entere (un aviso que
-  // sonó, uno que el teléfono descartó), así que se relee al abrir Ajustes.
-  useEffect(() => {
-    void checkScheduled();
-  }, [checkScheduled]);
+  // Ajustes es una pestaña y queda montada, así que un useEffect correría una
+  // sola vez en toda la sesión. El número del sistema cambia solo —un aviso
+  // que sonó, uno que el teléfono descartó—, por eso se relee cada vez que la
+  // pestaña vuelve al frente.
+  useFocusEffect(
+    useCallback(() => {
+      void checkScheduled();
+    }, [checkScheduled]),
+  );
 
   const lanzarPrueba = async () => {
     try {
-      await testNotification(30);
+      const permiso = await testNotification(30);
+      if (permiso !== 'granted') {
+        Alert.alert(
+          'Faltan los permisos',
+          'Sin permiso de notificaciones no podemos avisarte de nada. Activalo y volvé a probar.',
+        );
+        return;
+      }
       Alert.alert(
         'Aviso de prueba agendado',
         'Cerrá la app del todo ahora y esperá 30 segundos. Si el aviso llega, los avisos funcionan y el problema está en otro lado.',
       );
     } catch {
-      Alert.alert('No pudimos agendar la prueba', 'Revisá el permiso de notificaciones.');
+      Alert.alert('No pudimos agendar la prueba', 'Probá de nuevo en un momento.');
     }
   };
 
@@ -205,14 +217,17 @@ export function SettingsScreen(): React.ReactElement {
           </Txt>
 
           <View style={{ marginTop: spacing(1.5) }}>
-            <Row title="Mensajes pendientes" value={String(pending.length)} />
+            <Row
+              title="Avisos que deberían estar agendados"
+              value={String(awaitingNotification)}
+            />
             <Row
               title="Avisos agendados en el sistema"
               value={osScheduled === null ? '—' : String(osScheduled)}
             />
           </View>
 
-          {osScheduled !== null && osScheduled < pending.length ? (
+          {osScheduled !== null && osScheduled < awaitingNotification ? (
             <Txt
               style={{
                 color: p.warning,
@@ -221,9 +236,10 @@ export function SettingsScreen(): React.ReactElement {
                 marginTop: spacing(1),
               }}
             >
-              El sistema tiene agendados menos avisos que mensajes pendientes.
-              Suele pasar cuando el teléfono cierra la app para ahorrar batería.
-              Los dos ajustes de abajo lo resuelven.
+              El sistema tiene agendados menos avisos de los que corresponden.
+              {Platform.OS === 'android'
+                ? ' Suele pasar cuando el teléfono cierra la app para ahorrar batería; los dos ajustes de abajo lo resuelven.'
+                : ' Revisá que la app pueda avisarte incluso en modo concentración.'}
             </Txt>
           ) : null}
 

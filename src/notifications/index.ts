@@ -8,6 +8,8 @@ export const CATEGORY_ID = 'scheduled-message';
 export const ACTION_OPEN = 'open-whatsapp';
 export const ACTION_SNOOZE = 'snooze-1h';
 const CHANNEL_ID = 'scheduled-messages';
+/** Marca del aviso de prueba, para poder excluirlo de la cuenta. */
+const TEST_FLAG = 'esPrueba';
 
 /** Cuando la app está abierta, igual queremos ver el aviso. */
 Notifications.setNotificationHandler({
@@ -107,7 +109,11 @@ export async function scheduleFor(
  */
 export async function scheduledCount(): Promise<number> {
   const agendados = await Notifications.getAllScheduledNotificationsAsync();
-  return agendados.length;
+  // El aviso de prueba no cuenta: si no, durante sus 30 segundos infla el
+  // número y tapa un faltante real justo mientras se está diagnosticando.
+  return agendados.filter(
+    (a) => a.content.data?.[TEST_FLAG] !== true,
+  ).length;
 }
 
 /**
@@ -118,7 +124,8 @@ export async function scheduleTest(seconds: number): Promise<void> {
   await Notifications.scheduleNotificationAsync({
     content: {
       title: 'Prueba de aviso',
-      body: `Si estás leyendo esto con la app cerrada, los avisos funcionan.`,
+      body: 'Si estás leyendo esto con la app cerrada, los avisos funcionan.',
+      data: { [TEST_FLAG]: true },
     },
     trigger: {
       type: Notifications.SchedulableTriggerInputTypes.TIME_INTERVAL,

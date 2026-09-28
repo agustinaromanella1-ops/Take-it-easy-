@@ -30,7 +30,7 @@ import { parseBackup, serializeBackup } from '../domain/backup';
 import type { Template } from '../domain/templates';
 import { whatsappSchemeUrl, whatsappWebUrl } from '../domain/whatsapp';
 import type { NewMessageInput, ScheduledMessage } from '../domain/types';
-import { isDone, isPending } from '../domain/types';
+import { awaitsNotification, isDone, isPending } from '../domain/types';
 
 interface PendingUndo {
   message: ScheduledMessage;
@@ -55,6 +55,8 @@ interface MessagesValue {
    * dice de quién es el problema cuando un mensaje no suena.
    */
   osScheduled: number | null;
+  /** Cuántos avisos deberían estar agendados, para comparar con el sistema. */
+  awaitingNotification: number;
   /** Mensaje que se abrió en WhatsApp y todavía no confirmamos si salió. */
   awaitingConfirmation: ScheduledMessage | null;
   undo: PendingUndo | null;
@@ -95,7 +97,7 @@ interface MessagesValue {
 
   completeOnboarding: () => Promise<void>;
   checkScheduled: () => Promise<void>;
-  testNotification: (seconds: number) => Promise<void>;
+  testNotification: (seconds: number) => Promise<notify.PermissionState>;
 }
 
 const MessagesContext = createContext<MessagesValue | null>(null);
@@ -151,11 +153,18 @@ export function MessagesProvider({
     }
   }, []);
 
+  /**
+   * Devuelve el estado del permiso en lugar de agendar a ciegas: sin permiso
+   * nada falla, y la app terminaría diciendo "si llega, funciona" cuando lo
+   * que pasa es que el aviso no puede aparecer.
+   */
   const testNotification = useCallback(
-    async (seconds: number) => {
-      await ensurePermissionRef.current();
+    async (seconds: number): Promise<notify.PermissionState> => {
+      const permiso = await ensurePermissionRef.current();
+      if (permiso !== 'granted') return permiso;
       await notify.scheduleTest(seconds);
       await checkScheduled();
+      return permiso;
     },
     [checkScheduled],
   );
@@ -244,7 +253,11 @@ export function MessagesProvider({
     return next;
   }, []);
 
-  ensurePermissionRef.current = ensurePermission;
+  // Mutar una ref durante el dibujado es un antipatrón aunque acá sea
+  // inofensivo: va en un efecto.
+  useEffect(() => {
+    ensurePermissionRef.current = ensurePermission;
+  }, [ensurePermission]);
 
   const createMessage = useCallback(
     async (input: NewMessageInput) => {
@@ -647,6 +660,7 @@ export function MessagesProvider({
       reliability: assessReliability(deliverySamples),
       onboardingCompleted,
       osScheduled,
+      awaitingNotification: messages.filter((m) => awaitsNotification(m)).length,
       awaitingConfirmation,
       undo,
       createMessage,

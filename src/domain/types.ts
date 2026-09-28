@@ -53,3 +53,19 @@ export const isPending = (m: ScheduledMessage): boolean =>
 
 export const isDone = (m: ScheduledMessage): boolean =>
   m.status === 'sent' || m.status === 'skipped';
+
+/**
+ * Mensajes que deberían tener un aviso agendado en el sistema ahora mismo.
+ *
+ * No es lo mismo que "pendiente": un mensaje ya disparado no tiene aviso
+ * porque ya sonó, y uno cuya hora pasó tampoco, porque no se puede agendar
+ * para el pasado. Comparar los pendientes contra lo que agendó el sistema
+ * daría falsos negativos apenas suena el primer aviso.
+ */
+export const awaitsNotification = (
+  m: ScheduledMessage,
+  now: Date = new Date(),
+): boolean =>
+  m.status === 'scheduled' &&
+  m.scheduledAt !== null &&
+  new Date(m.scheduledAt).getTime() > now.getTime();
