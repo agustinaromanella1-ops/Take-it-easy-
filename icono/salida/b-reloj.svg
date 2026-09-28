@@ -1,0 +1,20 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1024" height="1024" viewBox="0 0 1024 1024">
+  <defs>
+    <linearGradient id="cielo" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#e8e3f5"/>
+      <stop offset="1" stop-color="#fde4d6"/>
+    </linearGradient>
+  </defs>
+  <rect width="1024" height="1024" fill="url(#cielo)"/>
+  <!-- El anillo no tiene grosor parejo: es más grueso a los costados y más
+       fino arriba y abajo, como la panza de una "O" de Playfair. Eso es lo que
+       lo emparenta con el icono de Pipí Cucú sin usar una letra. -->
+  <path d="M 244 512 a 268 268 0 1 0 536 0 a 268 268 0 1 0 -536 0 z
+           M 280 512 a 232 240 0 1 0 464 0 a 232 240 0 1 0 -464 0 z"
+        fill-rule="evenodd" fill="#2f6273"/>
+  <g transform="translate(512 512)">
+    <line x1="0" y1="0" x2="0" y2="-158" stroke="#2f6273" stroke-width="32" stroke-linecap="round"/>
+    <line x1="0" y1="0" x2="-138" y2="0" stroke="#ad5417" stroke-width="36" stroke-linecap="round"/>
+    <circle r="24" fill="#2f6273"/>
+  </g>
+</svg>
