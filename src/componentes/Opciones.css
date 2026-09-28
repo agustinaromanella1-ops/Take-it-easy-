@@ -1,0 +1,57 @@
+.opciones {
+  display: flex;
+  gap: 8px;
+  margin-top: 12px;
+  padding: 0;
+  border: none;
+}
+
+.opciones label {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 10px 6px;
+  border: var(--grosor) solid var(--borde);
+  border-radius: 999px;
+  background: var(--superficie);
+  color: var(--secundario);
+  font-size: 14px;
+  font-weight: 600;
+  text-align: center;
+  line-height: 1.25;
+  cursor: pointer;
+}
+
+/* La elegida se rellena, no sólo se pinta el texto: a un metro del ojo, un
+   cambio de color de letra no se distingue de la falta de contraste. */
+.opciones label.elegida {
+  background: var(--lila-suave);
+  color: var(--texto);
+  font-weight: 700;
+  box-shadow: var(--sombra-chica);
+}
+
+.opciones label:active {
+  transform: translate(1px, 1px);
+}
+
+/* El radio sigue estando y sigue recibiendo foco; lo que se ve es la
+   pastilla, así que el foco se dibuja sobre ella.
+
+   Se lo achica a cero dentro de la etiqueta en vez de sacarlo del flujo con
+   `position: absolute`: así no queda un punto suelto en una esquina de la
+   pantalla, que es dónde termina un absoluto sin ancestro posicionado. */
+.opciones input {
+  appearance: none;
+  width: 0;
+  height: 0;
+  margin: 0;
+  border: none;
+  outline: none;
+}
+
+.opciones label:has(input:focus-visible) {
+  outline: 2px solid var(--lila-osc);
+  outline-offset: 2px;
+}

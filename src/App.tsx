@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 
 import { reprogramarPendientes } from './agenda/recordatorios';
+import { pintar, useAnimaciones, useTema } from './aspecto';
 import type { LoGuardado } from './componentes/Guardado';
 import { escucharBotonAtras } from './nativo/botonAtras';
 import Intro from './instructivo/Intro';
@@ -46,6 +47,14 @@ export default function App() {
   const [guardado, setGuardado] = useState<LoGuardado | undefined>();
   const olvidarGuardado = useCallback(() => setGuardado(undefined), []);
   const actual = pila[pila.length - 1];
+
+  // Lo elegido en Ajustes, puesto en el <html>. Va por liveQuery para que
+  // el cambio se vea en el momento, sin recargar.
+  const tema = useTema();
+  const animaciones = useAnimaciones();
+  useEffect(() => {
+    pintar(tema, animaciones);
+  }, [tema, animaciones]);
 
   // El listener del botón atrás se registra una sola vez, así que no puede
   // leer `pila` por closure: necesita la pila de ahora, no la del montaje.

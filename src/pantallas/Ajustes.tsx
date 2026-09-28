@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
+import { useLiveQuery } from 'dexie-react-hooks';
 
 import {
   CopiaInvalidaError,
@@ -21,6 +22,16 @@ import {
   type QuePaso,
   type Resultado,
 } from '../agenda/prueba';
+import {
+  ANIMACIONES,
+  TEMAS,
+  guardarAnimaciones,
+  guardarTema,
+  useAnimaciones,
+  useTema,
+} from '../aspecto';
+import { contarLoGuardado, enRenglones } from '../datos/inventario';
+import Opciones from '../componentes/Opciones';
 import Perrito from '../componentes/Perrito';
 import { NOMBRE } from '../nombre';
 import { olvidarInstructivo } from '../datos/preferencias';
@@ -55,6 +66,10 @@ export default function Ajustes({ verInstructivo }: { verInstructivo: () => void
   // encuentra sin querer, y cuando se lo cuentan lo encuentra.
   const [toques, setToques] = useState(0);
   const asomado = toques >= 5;
+
+  const tema = useTema();
+  const animaciones = useAnimaciones();
+  const guardado = useLiveQuery(contarLoGuardado, [], undefined);
 
   useEffect(() => {
     let vigente = true;
@@ -112,6 +127,50 @@ export default function Ajustes({ verInstructivo }: { verInstructivo: () => void
       <header>
         <h1>Ajustes</h1>
       </header>
+
+      <section>
+        <h2>Cómo se ve</h2>
+        <p className="detalle">
+          Automático sigue al teléfono: si se pone oscuro al atardecer, la app
+          también.
+        </p>
+        <Opciones
+          nombre="tema"
+          etiqueta="Cómo se ve"
+          opciones={TEMAS}
+          valor={tema}
+          alElegir={guardarTema}
+        />
+      </section>
+
+      <section>
+        <h2>Animaciones</h2>
+        <p className="detalle">
+          Lo que se desliza y aparece de a poco. Apagarlas no saca nada de la
+          app: todo sigue estando, sólo que quieto.
+        </p>
+        <Opciones
+          nombre="animaciones"
+          etiqueta="Animaciones"
+          opciones={ANIMACIONES}
+          valor={animaciones}
+          alElegir={guardarAnimaciones}
+        />
+      </section>
+
+      <section>
+        <h2>Datos guardados</h2>
+        <p className="detalle">Lo que hay en este teléfono en este momento.</p>
+        {guardado && (
+          <ul className="inventario">
+            {enRenglones(guardado).map(({ cuantos, texto }) => (
+              <li key={texto}>
+                <strong>{cuantos}</strong> {texto}
+              </li>
+            ))}
+          </ul>
+        )}
+      </section>
 
       <section>
         <h2>Copia de seguridad</h2>
@@ -308,6 +367,43 @@ export default function Ajustes({ verInstructivo }: { verInstructivo: () => void
         >
           Ver el instructivo de nuevo
         </button>
+      </section>
+
+      <section>
+        <h2>Por qué no se sincroniza</h2>
+        <p className="detalle">
+          No hay cuenta, no hay nube y no hay servidor: lo que cargás no sale
+          del teléfono. Eso es a propósito. Una lista con los nombres de tus
+          alumnos, sus notas y tus observaciones es exactamente la clase de
+          cosa que no conviene tener en el servidor de nadie, y la forma más
+          segura de que no se filtre es que nunca se haya subido.
+        </p>
+        <p className="detalle">
+          La contra es real y conviene decirla: si perdés el teléfono, se
+          pierde todo con él. Por eso está la copia de seguridad de más arriba,
+          y por eso conviene hacerla cada tanto.
+        </p>
+      </section>
+
+      <section>
+        <h2>Privacidad</h2>
+        <p className="detalle">
+          La app no pide ni guarda DNI, domicilio, fecha de nacimiento ni fotos
+          de los alumnos, y no tiene ningún campo de salud, diagnóstico ni
+          sospecha de diagnóstico. Lo único que guarda de cada alumno es el
+          nombre con el que lo llamás en la lista.
+        </p>
+        <p className="detalle">
+          Las observaciones son privadas y no hay forma de compartirlas: no
+          existe el botón. El dictado por voz, donde el teléfono lo permite,
+          funciona con el reconocimiento que ya está instalado en el aparato;
+          si ese reconocimiento no está, no aparece el micrófono y se escribe a
+          mano. Nunca se manda audio a ningún lado.
+        </p>
+        <p className="detalle">
+          El único archivo que sale del teléfono es el que generás vos con
+          «Guardar una copia», y va a donde vos lo mandes.
+        </p>
       </section>
 
       <p className="version" onClick={() => setToques((van) => van + 1)}>

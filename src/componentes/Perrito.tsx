@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 
+import { seMueve, useAnimaciones } from '../aspecto';
 import './Perrito.css';
 
 /**
@@ -24,18 +25,22 @@ function pideQuieto(): boolean {
 }
 
 export default function Perrito() {
-  // Quien tenga pedido en el sistema que se reduzcan las animaciones recibe el
-  // dibujo detenido. Son dos archivos porque un GIF animado no se puede frenar
-  // desde CSS.
-  const [quieto, setQuieto] = useState(pideQuieto);
+  // Quien tenga pedido que se reduzcan las animaciones recibe el dibujo
+  // detenido. Son dos archivos porque un GIF animado no se puede frenar desde
+  // CSS. Manda lo elegido en Ajustes, y «Según el sistema» es lo que dice el
+  // teléfono.
+  const animaciones = useAnimaciones();
+  const [loPideElSistema, setLoPideElSistema] = useState(pideQuieto);
 
   useEffect(() => {
     if (!window.matchMedia) return;
     const consulta = window.matchMedia('(prefers-reduced-motion: reduce)');
-    const alCambiar = () => setQuieto(consulta.matches);
+    const alCambiar = () => setLoPideElSistema(consulta.matches);
     consulta.addEventListener('change', alCambiar);
     return () => consulta.removeEventListener('change', alCambiar);
   }, []);
+
+  const quieto = !seMueve(animaciones, loPideElSistema);
 
   return (
     <img
