@@ -5,7 +5,7 @@
   font-family: inherit;
   font-size: 14px;
   font-weight: 700;
-  color: var(--primario);
+  color: var(--enlace);
   cursor: pointer;
 }
 
@@ -23,7 +23,7 @@
 }
 
 .notas .promedio {
-  color: var(--primario);
+  color: var(--enlace);
 }
 
 .notas .vacio {
@@ -48,9 +48,10 @@
   flex-wrap: wrap;
   padding: 12px 14px;
   margin-bottom: 8px;
-  border: 1px solid var(--borde);
-  border-radius: 14px;
+  border: var(--grosor) solid var(--borde);
+  border-radius: var(--radio-chico);
   background: var(--superficie);
+  box-shadow: var(--sombra);
 }
 
 .notas .fila.error {
@@ -67,8 +68,8 @@
 .notas input.nota {
   width: 72px;
   padding: 10px;
-  border: 1px solid var(--borde);
-  border-radius: 11px;
+  border: var(--grosor) solid var(--borde);
+  border-radius: var(--radio-chico);
   background: var(--fondo);
   color: var(--texto);
   font-family: inherit;
@@ -85,7 +86,7 @@
 
 .notas .etiquetas button {
   padding: 8px 11px;
-  border: 1px solid var(--borde);
+  border: var(--grosor) solid var(--borde);
   border-radius: 10px;
   background: var(--fondo);
   color: var(--secundario);
@@ -96,8 +97,8 @@
 }
 
 .notas .etiquetas .elegida {
-  background: var(--lila);
-  border-color: var(--lila);
+  background: var(--lila-suave);
+  border-color: var(--borde);
   color: var(--lila-osc);
   font-weight: 700;
 }
@@ -105,8 +106,8 @@
 .notas .aviso {
   margin-top: 12px;
   padding: 12px 14px;
-  border-radius: 12px;
-  background: var(--rosa);
+  border-radius: var(--radio-chico);
+  background: var(--rosa-fondo);
   color: var(--rosa-osc);
   font-size: 13px;
   line-height: 1.5;
@@ -130,7 +131,7 @@
   display: flex;
   justify-content: space-between;
   padding: 10px 0;
-  border-bottom: 1px solid var(--borde);
+  border-bottom: 1px solid var(--linea);
   font-size: 14px;
 }
 
@@ -140,7 +141,7 @@
 
 .notas .cuantas {
   font-weight: 700;
-  color: var(--primario);
+  color: var(--enlace);
 }
 
 /* Las notas se guardan solas al escribirlas; esto lo dice, y se va solo. */
@@ -149,8 +150,8 @@
   margin-top: 8px;
   padding: 4px 10px;
   border-radius: 999px;
-  background: var(--salvia);
-  color: #fff;
+  background: var(--salvia-fondo);
+  color: var(--salvia-osc);
   font-size: 12px;
   font-weight: 700;
 }

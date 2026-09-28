@@ -1,5 +1,5 @@
 .notas-alumno .promedio {
-  color: var(--primario);
+  color: var(--enlace);
   font-weight: 700;
 }
 
@@ -16,9 +16,10 @@
   align-items: center;
   gap: 12px;
   padding: 12px 14px;
-  border-radius: 14px;
+  border-radius: var(--radio-chico);
   background: var(--superficie);
-  border: 1px solid var(--borde);
+  border: var(--grosor) solid var(--borde);
+  box-shadow: var(--sombra);
 }
 
 .notas-alumno .que {
@@ -44,7 +45,7 @@
   min-width: 52px;
   padding: 7px 12px;
   border-radius: 10px;
-  background: var(--lila);
+  background: var(--lila-suave);
   color: var(--lila-osc);
   text-align: center;
   font-size: 16px;
@@ -53,7 +54,7 @@
 
 /* Las conceptuales no son un número y no tienen que parecerlo. */
 .notas-alumno .valor.conceptual {
-  background: var(--celeste);
+  background: var(--celeste-fondo);
   color: var(--celeste-osc);
   font-size: 13px;
 }
@@ -62,7 +63,7 @@
    al cerrar la materia. */
 .notas-alumno .linea.sin .valor {
   background: none;
-  border: 1px dashed var(--borde);
+  border: var(--grosor) dashed var(--borde);
   color: var(--secundario);
   font-size: 12px;
   font-weight: 600;
@@ -98,8 +99,8 @@
 .notas-alumno .nota {
   width: 100px;
   padding: 14px;
-  border: 1px solid var(--borde);
-  border-radius: 12px;
+  border: var(--grosor) solid var(--borde);
+  border-radius: var(--radio-chico);
   background: var(--superficie);
   color: var(--texto);
   font-family: inherit;
@@ -110,7 +111,7 @@
 
 .notas-alumno .nota.error {
   border-color: var(--rosa-osc);
-  background: var(--rosa);
+  background: var(--rosa-fondo);
 }
 
 .notas-alumno .de {
@@ -121,8 +122,8 @@
 .notas-alumno .aviso {
   margin-top: 10px;
   padding: 12px 14px;
-  border-radius: 12px;
-  background: var(--durazno);
+  border-radius: var(--radio-chico);
+  background: var(--durazno-fondo);
   color: var(--durazno-osc);
   font-size: 14px;
 }
@@ -137,9 +138,10 @@
 
 .notas-alumno .obs li {
   padding: 12px 14px;
-  border-radius: 14px;
+  border-radius: var(--radio-chico);
   background: var(--superficie);
-  border: 1px solid var(--borde);
+  border: var(--grosor) solid var(--borde);
+  box-shadow: var(--sombra);
 }
 
 .notas-alumno .obs .fecha {

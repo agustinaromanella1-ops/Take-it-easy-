@@ -5,7 +5,7 @@
   font-family: inherit;
   font-size: 14px;
   font-weight: 700;
-  color: var(--primario);
+  color: var(--enlace);
   cursor: pointer;
 }
 
@@ -36,9 +36,10 @@
 
 .agenda .entradas li {
   background: var(--superficie);
-  border: 1px solid var(--borde);
-  border-radius: 14px;
+  border: var(--grosor) solid var(--borde);
+  border-radius: var(--radio-chico);
   padding: 14px;
+  box-shadow: var(--sombra);
 }
 
 .agenda .cabecera {
@@ -60,7 +61,7 @@
   font-weight: 700;
   padding: 3px 9px;
   border-radius: 999px;
-  background: var(--celeste);
+  background: var(--celeste-fondo);
   color: var(--celeste-osc);
 }
 
@@ -81,8 +82,8 @@
   gap: 10px;
   margin-top: 10px;
   padding: 9px 12px;
-  border-radius: 11px;
-  background: var(--noche);
+  border-radius: var(--radio-chico);
+  background: var(--noche-fondo);
   color: var(--noche-osc);
   font-size: 13px;
 }
@@ -130,12 +131,13 @@
 .agenda textarea {
   width: 100%;
   padding: 13px 14px;
-  border: 1px solid var(--borde);
-  border-radius: 12px;
+  border: var(--grosor) solid var(--borde);
+  border-radius: var(--radio-chico);
   background: var(--superficie);
   color: var(--texto);
   font-family: inherit;
   font-size: 16px;
+  box-shadow: var(--sombra);
 }
 
 .agenda textarea {
@@ -146,9 +148,10 @@
 .agenda .aviso {
   margin-top: 22px;
   padding: 14px;
-  border: 1px solid var(--borde);
-  border-radius: 14px;
+  border: var(--grosor) solid var(--borde);
+  border-radius: var(--radio-chico);
   background: var(--superficie);
+  box-shadow: var(--sombra);
 }
 
 .agenda .interruptor {
@@ -184,8 +187,8 @@
 .agenda .bloqueo {
   margin-top: 12px;
   padding: 12px 14px;
-  border-radius: 12px;
-  background: var(--rosa);
+  border-radius: var(--radio-chico);
+  background: var(--rosa-fondo);
   color: var(--rosa-osc);
   font-size: 13px;
   line-height: 1.5;

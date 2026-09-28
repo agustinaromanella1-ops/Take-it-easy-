@@ -5,7 +5,7 @@
   font-family: inherit;
   font-size: 14px;
   font-weight: 700;
-  color: var(--primario);
+  color: var(--enlace);
   cursor: pointer;
 }
 
@@ -38,12 +38,13 @@
   display: block;
   width: 100%;
   padding: 14px 16px;
-  border: 1px solid var(--borde);
-  border-radius: 14px;
+  border: var(--grosor) solid var(--borde);
+  border-radius: var(--radio-chico);
   background: var(--superficie);
   font-family: inherit;
   text-align: left;
   cursor: pointer;
+  box-shadow: var(--sombra);
 }
 
 .evaluaciones .lista .nombre {
@@ -75,8 +76,8 @@
 .evaluaciones input {
   width: 100%;
   padding: 13px 14px;
-  border: 1px solid var(--borde);
-  border-radius: 12px;
+  border: var(--grosor) solid var(--borde);
+  border-radius: var(--radio-chico);
   background: var(--superficie);
   color: var(--texto);
   font-family: inherit;
@@ -103,19 +104,20 @@
 
 .evaluaciones .opciones button {
   padding: 10px 14px;
-  border: 1px solid var(--borde);
-  border-radius: 11px;
+  border: var(--grosor) solid var(--borde);
+  border-radius: var(--radio-chico);
   background: var(--superficie);
   color: var(--secundario);
   font-family: inherit;
   font-size: 14px;
   font-weight: 600;
   cursor: pointer;
+  box-shadow: var(--sombra);
 }
 
 .evaluaciones .opciones .elegida {
-  background: var(--lila);
-  border-color: var(--lila);
+  background: var(--lila-suave);
+  border-color: var(--borde);
   color: var(--lila-osc);
   font-weight: 700;
 }
@@ -125,12 +127,13 @@
   width: 100%;
   margin-top: 10px;
   padding: 13px 14px;
-  border: 1px solid var(--borde);
-  border-radius: 12px;
+  border: var(--grosor) solid var(--borde);
+  border-radius: var(--radio-chico);
   background: var(--superficie);
   color: var(--texto);
   font-family: inherit;
   font-size: 16px;
+  box-shadow: var(--sombra);
 }
 
 /* Sacar uno de los propios. Es una acción chica y reversible —se vuelve a
@@ -138,7 +141,7 @@
 .evaluaciones .sacar-tipo {
   margin: 3px 6px 0 0;
   padding: 3px 8px;
-  border: 1px solid var(--borde);
+  border: var(--grosor) solid var(--borde);
   border-radius: 999px;
   background: none;
   color: var(--secundario);
@@ -150,8 +153,8 @@
 .evaluaciones .aviso {
   margin-top: 14px;
   padding: 12px 14px;
-  border-radius: 12px;
-  background: var(--durazno);
+  border-radius: var(--radio-chico);
+  background: var(--durazno-fondo);
   color: var(--durazno-osc);
   font-size: 14px;
   line-height: 1.45;

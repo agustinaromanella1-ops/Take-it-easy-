@@ -1,33 +1,161 @@
 @import '@fontsource/nunito/400.css';
 @import '@fontsource/nunito/600.css';
 @import '@fontsource/nunito/700.css';
+@import '@fontsource/playfair-display/700.css';
+
+/**
+ * El aspecto de la app, copiado del de Pipí Cucú: fondo en degradado, tarjetas
+ * blancas con un borde grueso oscuro y una sombra dura sin difuminar, botones
+ * en pastilla, y coral para lo que se toca.
+ *
+ * Casi todo el color de la app sale de acá: fuera de este archivo quedan seis
+ * `#fff` sueltos. Cambiar el tema es cambiar estas variables.
+ */
 
 :root {
-  --fondo: #fff9f5;
+  /* El fondo va en degradado y `--fondo` es su tono medio: lo usan las cosas
+     que necesitan taparlo con un color liso. */
+  --fondo: #eee5f5;
+  --degradado: linear-gradient(
+    180deg,
+    #d9e8f9 0%,
+    #e7def6 36%,
+    #f5dfe8 70%,
+    #fce4d6 100%
+  );
   --superficie: #ffffff;
-  --borde: #f0e8e1;
-  --texto: #2e2a45;
-  --secundario: #6e6880;
-  --primario: #7b5ea7;
 
-  --lila: #e3d5f5;
-  --lila-osc: #6b4e9e;
+  /* El borde es parte del dibujo, no una división: grueso y oscuro, como un
+     contorno de tinta. `--linea` es para separar de verdad, que es otra cosa. */
+  --borde: #241c4f;
+  --grosor: 2.5px;
+  --linea: rgba(36, 28, 79, 0.16);
+  --sombra: 4px 4px 0 var(--borde);
+  --sombra-chica: 3px 3px 0 var(--borde);
+  --radio: 20px;
+  --radio-chico: 14px;
+
+  --texto: #221a4e;
+  --secundario: #5f5685;
+
+  --primario: #f97b5c;
+  /* El texto que se toca y no es un botón. Aparte de `--primario` a propósito:
+     el coral está pensado para rellenar una pastilla, y como letra sobre el
+     fondo claro no llega ni a tres a uno. */
+  --enlace: #5b3f96;
+  /* Texto oscuro sobre el coral, en los dos temas: el coral es claro y el
+     blanco encima no llega a contrastar. */
+  --sobre-primario: #221a4e;
+
+  /* Cada color tiene dos papeles y no son el mismo.
+     `--rosa` identifica: es el color de una materia, el punto al lado de
+     «presente», la franja al costado de una fila. Ese no cambia con el tema,
+     porque si cambiara, la materia dejaría de ser reconocible de noche.
+     `--rosa-fondo` rellena: es lo que va detrás de un texto, y tiene que dar
+     vuelta con el tema o queda claro sobre claro. `--rosa-osc` es ese texto. */
+  --lila: #b79ae6;
+  --lila-osc: #5b3f96;
+  --lila-suave: #ece2fb;
+  --amarillo: #fbd24e;
   --rosa: #fbd5e3;
-  --rosa-osc: #b54a75;
+  --rosa-fondo: #fbd5e3;
+  --rosa-osc: #9c2f47;
   --durazno: #ffdcc2;
-  --durazno-osc: #c4652a;
+  --durazno-fondo: #ffdcc2;
+  --durazno-osc: #934417;
   --celeste: #cfe7f5;
-  --celeste-osc: #2c7196;
+  --celeste-fondo: #cfe7f5;
+  --celeste-osc: #23607f;
   --noche: #d3d8f0;
+  --noche-fondo: #d3d8f0;
   --noche-osc: #3a4380;
   --salvia: #8fc4a8;
-  --salvia-osc: #3d7a5e;
+  --salvia-fondo: #d8ece1;
+  --salvia-osc: #2f6b4f;
+
+  /* El bloque que se planta al revés que todo lo demás: el aviso de «se
+     guardó», con su botón de deshacer. En claro es tinta con letra blanca. */
+  --contraste: #241c4f;
+  --sobre-contraste: #ffffff;
+  /* Lo que se toca dentro de ese bloque, que es siempre «Deshacer». */
+  --sobre-contraste-suave: #b79ae6;
 
   /* Lo que mide la barra de secciones. Lo necesita el pie de cada pantalla,
      que se pega justo encima de ella. */
-  --alto-nav: 44px;
+  --alto-nav: 52px;
 
   color-scheme: light;
+}
+
+/**
+ * El tema oscuro. Se aplica solo si el teléfono lo pide, o a mano desde
+ * Ajustes poniendo `data-tema` en el html.
+ *
+ * Las tarjetas dejan de ser blancas y el borde deja de ser tinta: pasa a ser
+ * un lila claro, porque un contorno negro sobre un fondo oscuro no se ve.
+ */
+@media (prefers-color-scheme: dark) {
+  :root:not([data-tema='claro']) {
+    --fondo: #241046;
+    --degradado: linear-gradient(180deg, #1d0e3b 0%, #2a1750 55%, #341d5a 100%);
+    --superficie: #342357;
+    --borde: #9c85db;
+    --linea: rgba(156, 133, 219, 0.3);
+    --sombra: 4px 4px 0 rgba(12, 5, 28, 0.55);
+    --sombra-chica: 3px 3px 0 rgba(12, 5, 28, 0.55);
+    --texto: #ffffff;
+    --secundario: #c6b9e6;
+    --lila: #b79ae6;
+    --lila-osc: #e2d5fa;
+    --lila-suave: #45316f;
+    /* Los rellenos dan vuelta; los colores que identifican, no. */
+    --rosa-fondo: #5a2b3c;
+    --rosa-osc: #f4a0b4;
+    --durazno-fondo: #5d3a1e;
+    --durazno-osc: #ffc49a;
+    --celeste-fondo: #1e4054;
+    --celeste-osc: #9fd4f2;
+    --noche-fondo: #2f3663;
+    --noche-osc: #b9c2f0;
+    --salvia-fondo: #2c5642;
+    --salvia-osc: #8fd7ae;
+    --contraste: #574089;
+    --sobre-contraste: #ffffff;
+    --sobre-contraste-suave: #d9c7f5;
+    --enlace: #e2d5fa;
+    color-scheme: dark;
+  }
+}
+
+:root[data-tema='oscuro'] {
+  --fondo: #241046;
+  --degradado: linear-gradient(180deg, #1d0e3b 0%, #2a1750 55%, #341d5a 100%);
+  --superficie: #342357;
+  --borde: #9c85db;
+  --linea: rgba(156, 133, 219, 0.3);
+  --sombra: 4px 4px 0 rgba(12, 5, 28, 0.55);
+  --sombra-chica: 3px 3px 0 rgba(12, 5, 28, 0.55);
+  --texto: #ffffff;
+  --secundario: #c6b9e6;
+  --lila: #b79ae6;
+  --lila-osc: #e2d5fa;
+  --lila-suave: #45316f;
+  /* Los rellenos dan vuelta; los colores que identifican, no. */
+  --rosa-fondo: #5a2b3c;
+  --rosa-osc: #f4a0b4;
+  --durazno-fondo: #5d3a1e;
+  --durazno-osc: #ffc49a;
+  --celeste-fondo: #1e4054;
+  --celeste-osc: #9fd4f2;
+  --noche-fondo: #2f3663;
+  --noche-osc: #b9c2f0;
+  --salvia-fondo: #2c5642;
+  --salvia-osc: #8fd7ae;
+  --contraste: #574089;
+  --sobre-contraste: #ffffff;
+  --sobre-contraste-suave: #d9c7f5;
+  --enlace: #e2d5fa;
+  color-scheme: dark;
 }
 
 * {
@@ -36,12 +164,31 @@
   padding: 0;
 }
 
+/* El degradado va en el html y no en el body para que cubra toda la altura
+   aunque la página sea más corta que la ventana, y no se repita al scrollear. */
+html {
+  min-height: 100%;
+  background: var(--fondo);
+  background-image: var(--degradado);
+  background-attachment: fixed;
+}
+
 body {
   font-family: 'Nunito', system-ui, -apple-system, sans-serif;
-  background: var(--fondo);
   color: var(--texto);
+  background: transparent;
   -webkit-font-smoothing: antialiased;
   -webkit-tap-highlight-color: transparent;
+}
+
+/* Los títulos van en serif y el resto en la redonda. El contraste entre las
+   dos es la mitad del aspecto. */
+h1,
+h2,
+h3 {
+  font-family: 'Playfair Display', Georgia, serif;
+  font-weight: 700;
+  letter-spacing: 0;
 }
 
 /* El contenido no se mete debajo de la barra de estado ni del gesto de inicio. */
@@ -49,4 +196,38 @@ body {
   min-height: 100dvh;
   padding: env(safe-area-inset-top) env(safe-area-inset-right)
     env(safe-area-inset-bottom) env(safe-area-inset-left);
+}
+
+/**
+ * Quien pidió menos movimiento en el sistema lo recibe, y desde Ajustes se
+ * puede forzar en cualquiera de los dos sentidos.
+ */
+@media (prefers-reduced-motion: reduce) {
+  :root:not([data-animaciones='siempre']) *,
+  :root:not([data-animaciones='siempre']) *::before,
+  :root:not([data-animaciones='siempre']) *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+  }
+}
+
+:root[data-animaciones='nunca'] *,
+:root[data-animaciones='nunca'] *::before,
+:root[data-animaciones='nunca'] *::after {
+  animation-duration: 0.001ms !important;
+  animation-iteration-count: 1 !important;
+  transition-duration: 0.001ms !important;
+}
+
+/* Para el texto que sólo tiene sentido leído en voz alta: está en la página y
+   los lectores de pantalla lo anuncian, pero no ocupa lugar. */
+.visualmente-oculto {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
 }

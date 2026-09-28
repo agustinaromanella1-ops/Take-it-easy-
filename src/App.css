@@ -20,49 +20,70 @@
 }
 
 /* Pegado al borde de abajo, pero por encima de la barra de secciones: si se
-   pegara al borde de la ventana quedaría tapándola. */
+   pegara al borde de la ventana quedaría tapándola.
+
+   El fondo es traslúcido y desenfoca lo de atrás en vez de taparlo con un
+   color liso: sobre un degradado, un rectángulo de un solo tono se ve como un
+   parche. */
 .pie {
   position: sticky;
   bottom: var(--alto-nav);
   z-index: 2;
   margin-top: auto;
-  padding-top: 14px;
-  background: var(--fondo);
+  /* Los márgenes negativos anulan el padding lateral de .pantalla: si no, la
+     banda desenfocada termina veinte píxeles antes que la pantalla y se ve
+     como un recuadro apoyado encima, con dos bordes verticales que no
+     separan nada. */
+  margin-left: -20px;
+  margin-right: -20px;
+  padding: 14px 20px 6px;
+  background: color-mix(in srgb, var(--fondo) 72%, transparent);
+  backdrop-filter: blur(10px);
+}
+
+/* Pastilla con contorno grueso y sombra dura, sin difuminar: es el gesto que
+   define el aspecto. Al apretar, el botón se corre hacia la sombra y la sombra
+   se achica, que es lo que lo hace sentir un objeto. */
+.primario,
+.secundario {
+  display: block;
+  width: 100%;
+  border: var(--grosor) solid var(--borde);
+  border-radius: 999px;
+  box-shadow: var(--sombra);
+  font-family: inherit;
+  font-weight: 700;
+  cursor: pointer;
+  transition: transform 0.06s, box-shadow 0.06s;
+}
+
+.primario:active:not(:disabled),
+.secundario:active:not(:disabled) {
+  transform: translate(2px, 2px);
+  box-shadow: 2px 2px 0 var(--borde);
 }
 
 .primario {
-  display: block;
-  width: 100%;
   padding: 15px;
-  border: none;
-  border-radius: 12px;
   background: var(--primario);
-  color: #fff;
-  font-family: inherit;
+  color: var(--sobre-primario);
   font-size: 16px;
-  font-weight: 700;
-  cursor: pointer;
 }
 
 .primario:disabled {
-  background: var(--borde);
+  background: var(--superficie);
   color: var(--secundario);
+  box-shadow: none;
+  opacity: 0.65;
   cursor: default;
 }
 
 .secundario {
-  display: block;
-  width: 100%;
-  margin-top: 8px;
+  margin-top: 10px;
   padding: 13px;
-  border: none;
-  border-radius: 12px;
-  background: none;
-  color: var(--primario);
-  font-family: inherit;
+  background: var(--superficie);
+  color: var(--texto);
   font-size: 15px;
-  font-weight: 700;
-  cursor: pointer;
 }
 
 /* Pegada al borde de abajo de la ventana, no al final del documento.
@@ -81,7 +102,7 @@ nav {
      adivinado que el pie usa para pegarse encima. */
   height: var(--alto-nav);
   box-sizing: border-box;
-  border-top: 1px solid var(--borde);
+  border-top: var(--grosor) solid var(--borde);
   background: var(--superficie);
 }
 
@@ -100,8 +121,31 @@ nav button {
   cursor: pointer;
 }
 
+/* La sección donde se está se marca con una pastilla lila detrás, no sólo con
+   el color del texto: a doce píxeles, un cambio de color no alcanza. */
 nav button.activa {
-  color: var(--primario);
+  color: var(--lila-osc);
+  font-weight: 700;
+}
+
+nav button.activa span,
+nav button.activa {
+  border-radius: 999px;
+}
+
+nav button.activa::before {
+  content: '';
+  position: absolute;
+  width: 62px;
+  height: 30px;
+  border-radius: 999px;
+  background: var(--lila-suave);
+  z-index: -1;
+}
+
+nav button {
+  position: relative;
+  z-index: 0;
 }
 
 /* Acciones poco frecuentes y reversibles: presentes, pero sin pelear con las otras. */
@@ -111,7 +155,7 @@ nav button.activa {
   margin-top: 4px;
   padding: 11px;
   border: none;
-  border-radius: 12px;
+  border-radius: 999px;
   background: none;
   color: var(--secundario);
   font-family: inherit;

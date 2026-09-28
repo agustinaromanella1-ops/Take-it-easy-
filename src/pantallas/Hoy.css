@@ -38,13 +38,14 @@
 
 .hoy .clase {
   background: var(--superficie);
-  border: 1px solid var(--borde);
+  border: var(--grosor) solid var(--borde);
   border-left: 5px solid var(--borde);
-  border-radius: 16px;
+  border-radius: var(--radio);
   padding: 16px;
   display: flex;
   gap: 14px;
   align-items: flex-start;
+  box-shadow: var(--sombra);
 }
 
 .hoy .clase.lila { border-left-color: var(--lila); }

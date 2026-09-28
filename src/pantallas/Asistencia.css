@@ -8,13 +8,14 @@
   width: 34px;
   height: 34px;
   flex: none;
-  border: 1px solid var(--borde);
+  border: var(--grosor) solid var(--borde);
   border-radius: 10px;
   background: var(--superficie);
   color: var(--texto);
   font-size: 17px;
   font-family: inherit;
   cursor: pointer;
+  box-shadow: var(--sombra);
 }
 
 .asistencia .barra h1 {
@@ -32,10 +33,11 @@
   margin-top: 14px;
   padding: 12px 14px;
   background: var(--superficie);
-  border: 1px solid var(--borde);
-  border-radius: 12px;
+  border: var(--grosor) solid var(--borde);
+  border-radius: var(--radio-chico);
   font-size: 14px;
   color: var(--secundario);
+  box-shadow: var(--sombra);
 }
 
 .asistencia .avance b {
@@ -53,12 +55,13 @@
 
 .asistencia .alumno {
   background: var(--superficie);
-  border: 1px solid var(--borde);
-  border-radius: 14px;
+  border: var(--grosor) solid var(--borde);
+  border-radius: var(--radio-chico);
   padding: 12px 14px;
   display: flex;
   align-items: center;
   gap: 12px;
+  box-shadow: var(--sombra);
 }
 
 .asistencia .nombre {
@@ -90,7 +93,7 @@
   min-width: 36px;
   height: 36px;
   padding: 0 9px;
-  border: 1px solid var(--borde);
+  border: var(--grosor) solid var(--borde);
   border-radius: 10px;
   background: var(--superficie);
   color: var(--secundario);
@@ -101,6 +104,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
+  box-shadow: var(--sombra);
 }
 
 /* Verde salvia sólo en "presente", y como borde y punto, nunca como fondo. */
@@ -119,14 +123,14 @@
 }
 
 .asistencia .op.ausente[aria-pressed='true'] {
-  background: var(--rosa);
-  border-color: var(--rosa);
+  background: var(--rosa-fondo);
+  border-color: var(--rosa-fondo);
   color: var(--rosa-osc);
 }
 
 .asistencia .op.tarde[aria-pressed='true'] {
-  background: var(--durazno);
-  border-color: var(--durazno);
+  background: var(--durazno-fondo);
+  border-color: var(--durazno-fondo);
   color: var(--durazno-osc);
 }
 
@@ -136,9 +140,9 @@
   align-items: center;
   gap: 12px;
   padding: 12px 14px;
-  background: var(--texto);
-  color: #fff;
-  border-radius: 12px;
+  background: var(--contraste);
+  color: var(--sobre-contraste);
+  border-radius: var(--radio-chico);
   font-size: 14px;
 }
 
@@ -150,7 +154,7 @@
   background: none;
   border: none;
   padding: 0;
-  color: var(--lila);
+  color: var(--sobre-contraste-suave);
   font-family: inherit;
   font-size: 14px;
   font-weight: 700;

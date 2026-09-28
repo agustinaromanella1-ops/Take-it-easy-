@@ -8,13 +8,14 @@
   width: 34px;
   height: 34px;
   flex: none;
-  border: 1px solid var(--borde);
+  border: var(--grosor) solid var(--borde);
   border-radius: 10px;
   background: var(--superficie);
   color: var(--texto);
   font-size: 17px;
   font-family: inherit;
   cursor: pointer;
+  box-shadow: var(--sombra);
 }
 
 .horario .barra h1 {
@@ -49,8 +50,9 @@
   gap: 10px;
   padding: 12px 14px;
   background: var(--superficie);
-  border: 1px solid var(--borde);
-  border-radius: 12px;
+  border: var(--grosor) solid var(--borde);
+  border-radius: var(--radio-chico);
+  box-shadow: var(--sombra);
 }
 
 .horario .dia {
@@ -73,7 +75,7 @@
   font-family: inherit;
   font-size: 13px;
   font-weight: 700;
-  color: var(--primario);
+  color: var(--enlace);
   cursor: pointer;
   flex: none;
 }
@@ -81,7 +83,7 @@
 .horario .agregar {
   margin-top: 26px;
   padding-top: 18px;
-  border-top: 1px solid var(--borde);
+  border-top: 1px solid var(--linea);
 }
 
 .horario .rotulo,
@@ -102,7 +104,7 @@
 .horario .dias button {
   flex: 1;
   height: 42px;
-  border: 1px solid var(--borde);
+  border: var(--grosor) solid var(--borde);
   border-radius: 10px;
   background: var(--superficie);
   color: var(--secundario);
@@ -110,11 +112,12 @@
   font-size: 14px;
   font-weight: 700;
   cursor: pointer;
+  box-shadow: var(--sombra);
 }
 
 .horario .dias button.elegido {
-  background: var(--lila);
-  border-color: var(--lila);
+  background: var(--lila-suave);
+  border-color: var(--borde);
   color: var(--lila-osc);
 }
 
@@ -135,8 +138,8 @@
 .horario .horas-campos input {
   width: 100%;
   padding: 11px 12px;
-  border: 1px solid var(--borde);
-  border-radius: 12px;
+  border: var(--grosor) solid var(--borde);
+  border-radius: var(--radio-chico);
   background: var(--superficie);
   color: var(--texto);
   font-family: inherit;

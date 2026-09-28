@@ -12,7 +12,7 @@
   font-family: inherit;
   font-size: 14px;
   font-weight: 700;
-  color: var(--primario);
+  color: var(--enlace);
   cursor: pointer;
 }
 
@@ -31,14 +31,15 @@
   min-height: 220px;
   margin-top: 16px;
   padding: 14px;
-  border: 1px solid var(--borde);
-  border-radius: 14px;
+  border: var(--grosor) solid var(--borde);
+  border-radius: var(--radio-chico);
   background: var(--superficie);
   color: var(--texto);
   font-family: inherit;
   font-size: 15px;
   line-height: 1.7;
   resize: none;
+  box-shadow: var(--sombra);
 }
 
 .alumnos textarea::placeholder {
@@ -49,9 +50,9 @@
 .alumnos .descartado {
   margin-top: 14px;
   padding: 12px 14px;
-  background: var(--durazno);
+  background: var(--durazno-fondo);
   color: var(--durazno-osc);
-  border-radius: 12px;
+  border-radius: var(--radio-chico);
   font-size: 13px;
   line-height: 1.5;
 }
@@ -66,9 +67,10 @@
 
 .alumnos .fila {
   background: var(--superficie);
-  border: 1px solid var(--borde);
-  border-radius: 14px;
+  border: var(--grosor) solid var(--borde);
+  border-radius: var(--radio-chico);
   padding: 12px 14px;
+  box-shadow: var(--sombra);
 }
 
 .alumnos .fila.revisar {
@@ -99,7 +101,7 @@
 .alumnos .campos input {
   width: 100%;
   padding: 9px 10px;
-  border: 1px solid var(--borde);
+  border: var(--grosor) solid var(--borde);
   border-radius: 10px;
   background: var(--fondo);
   color: var(--texto);
@@ -122,7 +124,7 @@
 .alumnos .original {
   margin-top: 10px;
   padding-top: 9px;
-  border-top: 1px solid var(--borde);
+  border-top: 1px solid var(--linea);
   display: flex;
   align-items: center;
   gap: 10px;
@@ -145,7 +147,7 @@
   font-family: inherit;
   font-size: 12px;
   font-weight: 700;
-  color: var(--primario);
+  color: var(--enlace);
   cursor: pointer;
   flex: none;
 }
@@ -175,6 +177,6 @@
   font-weight: 700;
   padding: 3px 9px;
   border-radius: 999px;
-  background: var(--durazno);
+  background: var(--durazno-fondo);
   color: var(--durazno-osc);
 }

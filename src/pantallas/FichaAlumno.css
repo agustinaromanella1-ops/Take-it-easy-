@@ -5,7 +5,7 @@
   font-family: inherit;
   font-size: 14px;
   font-weight: 700;
-  color: var(--primario);
+  color: var(--enlace);
   cursor: pointer;
 }
 
@@ -27,11 +27,11 @@
   border-radius: 999px;
 }
 
-.ficha .chip.lila { background: var(--lila); color: var(--lila-osc); }
-.ficha .chip.rosa { background: var(--rosa); color: var(--rosa-osc); }
-.ficha .chip.durazno { background: var(--durazno); color: var(--durazno-osc); }
-.ficha .chip.celeste { background: var(--celeste); color: var(--celeste-osc); }
-.ficha .chip.noche { background: var(--noche); color: var(--noche-osc); }
+.ficha .chip.lila { background: var(--lila-suave); color: var(--lila-osc); }
+.ficha .chip.rosa { background: var(--rosa-fondo); color: var(--rosa-osc); }
+.ficha .chip.durazno { background: var(--durazno-fondo); color: var(--durazno-osc); }
+.ficha .chip.celeste { background: var(--celeste-fondo); color: var(--celeste-osc); }
+.ficha .chip.noche { background: var(--noche-fondo); color: var(--noche-osc); }
 
 .ficha .tarjetas {
   display: flex;
@@ -43,9 +43,10 @@
   flex: 1;
   min-width: 0;
   background: var(--superficie);
-  border: 1px solid var(--borde);
-  border-radius: 14px;
+  border: var(--grosor) solid var(--borde);
+  border-radius: var(--radio-chico);
   padding: 14px;
+  box-shadow: var(--sombra);
 }
 
 .ficha .rotulo {
@@ -93,9 +94,10 @@
 
 .ficha .observacion {
   background: var(--superficie);
-  border: 1px solid var(--borde);
-  border-radius: 14px;
+  border: var(--grosor) solid var(--borde);
+  border-radius: var(--radio-chico);
   padding: 14px;
+  box-shadow: var(--sombra);
 }
 
 .ficha .cabecera {
@@ -134,14 +136,15 @@
   min-height: 160px;
   margin-top: 16px;
   padding: 14px;
-  border: 1px solid var(--borde);
-  border-radius: 14px;
+  border: var(--grosor) solid var(--borde);
+  border-radius: var(--radio-chico);
   background: var(--superficie);
   color: var(--texto);
   font-family: inherit;
   font-size: 15px;
   line-height: 1.7;
   resize: none;
+  box-shadow: var(--sombra);
 }
 
 .ficha textarea::placeholder {
@@ -152,8 +155,8 @@
 .ficha .privada {
   margin-top: 14px;
   padding: 12px 14px;
-  border-radius: 12px;
-  background: var(--lila);
+  border-radius: var(--radio-chico);
+  background: var(--lila-suave);
   color: var(--lila-osc);
   font-size: 13px;
   line-height: 1.5;
@@ -165,8 +168,8 @@
   gap: 12px;
   margin-bottom: 10px;
   padding: 12px 14px;
-  border-radius: 12px;
-  background: var(--noche);
+  border-radius: var(--radio-chico);
+  background: var(--noche-fondo);
   color: var(--noche-osc);
   font-size: 14px;
 }
@@ -201,5 +204,5 @@
   margin-top: 8px;
   font-size: 12px;
   font-weight: 700;
-  color: var(--primario);
+  color: var(--enlace);
 }

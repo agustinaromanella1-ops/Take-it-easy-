@@ -5,7 +5,7 @@
   font-family: inherit;
   font-size: 14px;
   font-weight: 700;
-  color: var(--primario);
+  color: var(--enlace);
   cursor: pointer;
 }
 
@@ -34,14 +34,15 @@
 
 .materia .alumnos li {
   background: var(--superficie);
-  border: 1px solid var(--borde);
-  border-radius: 12px;
+  border: var(--grosor) solid var(--borde);
+  border-radius: var(--radio-chico);
   padding: 12px 14px;
   display: flex;
   align-items: center;
   gap: 10px;
   font-size: 15px;
   font-weight: 600;
+  box-shadow: var(--sombra);
 }
 
 /* El nombre abre la ficha, así que es un botón; se sigue leyendo como texto. */
@@ -64,7 +65,7 @@
   font-family: inherit;
   font-size: 13px;
   font-weight: 700;
-  color: var(--primario);
+  color: var(--enlace);
   cursor: pointer;
   flex: none;
 }
@@ -93,14 +94,15 @@
   margin-top: 18px;
   padding: 13px 14px;
   background: var(--superficie);
-  border: 1px solid var(--borde);
-  border-radius: 12px;
+  border: var(--grosor) solid var(--borde);
+  border-radius: var(--radio-chico);
   font-family: inherit;
   text-align: left;
   cursor: pointer;
   display: flex;
   align-items: baseline;
   gap: 10px;
+  box-shadow: var(--sombra);
 }
 
 .materia .horario .rotulo {
