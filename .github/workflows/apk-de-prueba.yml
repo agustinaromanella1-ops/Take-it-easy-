@@ -1,0 +1,70 @@
+name: APK de prueba
+
+# Compila la app y la deja publicada como archivo descargable, para poder
+# instalarla en un teléfono sin tener Android Studio, ni Node, ni una terminal.
+# El enlace de la publicación es siempre el mismo: se puede guardar en
+# favoritos del teléfono y volver a entrar después de cada cambio.
+
+on:
+  push:
+    branches: [claude/whatsapp-scheduled-messages-prompt-65nixm]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  compilar:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - run: npm ci
+
+      - name: Revisar que esté todo en orden antes de compilar
+        run: |
+          npx tsc --noEmit
+          npx jest
+
+      # Expo genera el proyecto Android a partir de app.json. No lo guardamos
+      # en el repositorio: se arma acá y queda siempre al día con la config.
+      - name: Armar el proyecto Android
+        run: npx expo prebuild --platform android --no-install
+
+      # Expo SDK 53 (React Native 0.79) compila con JDK 17.
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 17
+
+      - uses: gradle/actions/setup-gradle@v4
+
+      # assembleRelease y no assembleDebug: el APK de depuración espera que haya
+      # un servidor de desarrollo escuchando, así que en el teléfono queda en
+      # pantalla roja. El de release trae el JavaScript adentro y se firma con
+      # la clave de depuración, que para probar alcanza.
+      - name: Compilar el APK
+        working-directory: android
+        run: ./gradlew assembleRelease --no-daemon
+
+      - name: Ponerle un nombre reconocible
+        run: cp android/app/build/outputs/apk/release/app-release.apk listo-para-enviar.apk
+
+      - name: Publicar para descargar
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          if gh release view apk-listo-para-enviar >/dev/null 2>&1; then
+            gh release upload apk-listo-para-enviar listo-para-enviar.apk --clobber
+          else
+            gh release create apk-listo-para-enviar listo-para-enviar.apk \
+              --prerelease \
+              --title "Listo para enviar — APK de prueba" \
+              --notes "Versión para probar en el teléfono. Se reemplaza con cada cambio."
+          fi
