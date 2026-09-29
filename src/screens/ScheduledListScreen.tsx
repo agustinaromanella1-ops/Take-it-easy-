@@ -1,4 +1,4 @@
-import React, { useMemo } from 'react';
+import React, { useMemo, useState } from 'react';
 import { Pressable, SectionList, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
@@ -10,6 +10,12 @@ import { BORDER_WIDTH, radius, spacing, usePalette } from '../theme';
 import { MessageCard } from '../components/MessageCard';
 import { ConfirmSentSheet, PermissionBanner, UndoToast } from '../components/Banners';
 import { ReliabilityBanner } from '../components/Reliability';
+import {
+  AvisoDeVersion,
+  BotonAyuda,
+  ConsejoDePantalla,
+  HojaDeAyuda,
+} from '../components/Ayuda';
 import { EmptyState, HardShadow, Title, Txt } from '../components/ui';
 import type { RootStackParamList } from '../navigation/types';
 
@@ -33,7 +39,10 @@ export function ScheduledListScreen(): React.ReactElement {
     dismissConfirmation,
     ensurePermission,
     reliability,
+    hayVersionNueva,
+    publicacion,
   } = useMessages();
+  const [ayudaAbierta, setAyudaAbierta] = useState(false);
 
   const sections = useMemo<DaySection[]>(() => {
     const grouped = groupByDay(pending, timezone);
@@ -63,12 +72,28 @@ export function ScheduledListScreen(): React.ReactElement {
         }}
         ListHeaderComponent={
           <View style={{ marginBottom: spacing(2) }}>
-            <Title>Programados</Title>
-            <Txt
-              style={{ color: p.textMuted, fontSize: 15, marginTop: spacing(0.5) }}
+            <View
+              style={{
+                flexDirection: 'row',
+                alignItems: 'flex-start',
+                justifyContent: 'space-between',
+                gap: spacing(2),
+              }}
             >
-              {pendingCountLabel(pending.length)}
-            </Txt>
+              <View style={{ flex: 1 }}>
+                <Title>Programados</Title>
+                <Txt
+                  style={{
+                    color: p.textMuted,
+                    fontSize: 15,
+                    marginTop: spacing(0.5),
+                  }}
+                >
+                  {pendingCountLabel(pending.length)}
+                </Txt>
+              </View>
+              <BotonAyuda onPress={() => setAyudaAbierta(true)} />
+            </View>
             {permission !== 'granted' ? (
               <View style={{ marginTop: spacing(2) }}>
                 <PermissionBanner
@@ -79,6 +104,12 @@ export function ScheduledListScreen(): React.ReactElement {
             ) : (
               <ReliabilityBanner reliability={reliability} />
             )}
+
+            {hayVersionNueva && publicacion ? (
+              <AvisoDeVersion publicacion={publicacion} />
+            ) : null}
+
+            <ConsejoDePantalla pantalla="programados" />
           </View>
         }
         renderSectionHeader={({ section }) => (
@@ -144,6 +175,11 @@ export function ScheduledListScreen(): React.ReactElement {
       {undo ? (
         <UndoToast onUndo={() => void undoDelete()} onDismiss={dismissUndo} />
       ) : null}
+
+      <HojaDeAyuda
+        visible={ayudaAbierta}
+        onCerrar={() => setAyudaAbierta(false)}
+      />
 
       {awaitingConfirmation ? (
         <ConfirmSentSheet

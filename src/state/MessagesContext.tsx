@@ -29,6 +29,11 @@ import {
 } from '../domain/reliability';
 import { parseBackup, serializeBackup } from '../domain/backup';
 import { setThemePreference, type ThemePreference } from '../theme';
+import {
+  hayActualizacion,
+  type Publicacion,
+} from '../domain/actualizacion';
+import { buscarPublicacion, compiladaEn } from '../update/github';
 import type { Template } from '../domain/templates';
 import { whatsappSchemeUrl, whatsappWebUrl } from '../domain/whatsapp';
 import type { NewMessageInput, ScheduledMessage } from '../domain/types';
@@ -57,6 +62,16 @@ interface MessagesValue {
    * dice de quién es el problema cuando un mensaje no suena.
    */
   osScheduled: number | null;
+
+  /** Cuándo se compiló esta app, o null en desarrollo. */
+  compiladaEn: string | null;
+  /** La publicación que hay en GitHub, si se pudo consultar. */
+  publicacion: Publicacion | null;
+  hayVersionNueva: boolean;
+  buscandoVersion: boolean;
+
+  /** Ids de los consejos ya descartados. */
+  consejosVistos: string[];
   /** Cuántos avisos deberían estar agendados, para comparar con el sistema. */
   awaitingNotification: number;
   /** Mensaje que se abrió en WhatsApp y todavía no confirmamos si salió. */
@@ -105,6 +120,10 @@ interface MessagesValue {
   importBackup: () => Promise<{ messages: number; templates: number } | null>;
 
   completeOnboarding: () => Promise<void>;
+  reiniciarTutorial: () => Promise<void>;
+  descartarConsejo: (id: string) => Promise<void>;
+  reiniciarConsejos: () => Promise<void>;
+  buscarVersion: () => Promise<void>;
   checkScheduled: () => Promise<void>;
   testNotification: (seconds: number) => Promise<notify.PermissionState>;
 }
@@ -130,6 +149,9 @@ export function MessagesProvider({
   const [deliverySamples, setDeliverySamples] = useState<DeliverySample[]>([]);
   const [onboardingCompleted, setOnboardingCompleted] = useState(true);
   const [osScheduled, setOsScheduled] = useState<number | null>(null);
+  const [publicacion, setPublicacion] = useState<Publicacion | null>(null);
+  const [buscandoVersion, setBuscandoVersion] = useState(false);
+  const [consejosVistos, setConsejosVistos] = useState<string[]>([]);
 
   const timezone = useMemo(() => deviceTimezone(), []);
   const undoTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -211,11 +233,12 @@ export function MessagesProvider({
     (async () => {
       await notify.configure();
       const perm = await notify.getPermission();
-      const [hours, samples, onboarded, tema] = await Promise.all([
+      const [hours, samples, onboarded, tema, consejos] = await Promise.all([
         settingsRepo.loadQuietHours(),
         settingsRepo.loadDeliverySamples(),
         settingsRepo.loadOnboardingCompleted(),
         settingsRepo.loadThemePreference(),
+        settingsRepo.loadConsejosVistos(),
       ]);
       // Antes de marcar la app como lista, así no se dibuja un cuadro en
       // claro y salta a oscuro.
@@ -226,6 +249,7 @@ export function MessagesProvider({
       setQuietHours(hours);
       setDeliverySamples(samples);
       setOnboardingCompleted(onboarded);
+      setConsejosVistos(consejos);
       await refresh();
       setReady(true);
     })();
@@ -512,6 +536,38 @@ export function MessagesProvider({
     setOnboardingCompleted(true);
   }, []);
 
+  const reiniciarTutorial = useCallback(async () => {
+    await settingsRepo.saveOnboardingCompleted(false);
+    setOnboardingCompleted(false);
+  }, []);
+
+  const descartarConsejo = useCallback(async (id: string) => {
+    setConsejosVistos((actuales) => {
+      if (actuales.includes(id)) return actuales;
+      const siguiente = [...actuales, id];
+      void settingsRepo.saveConsejosVistos(siguiente);
+      return siguiente;
+    });
+  }, []);
+
+  const reiniciarConsejos = useCallback(async () => {
+    await settingsRepo.saveConsejosVistos([]);
+    setConsejosVistos([]);
+  }, []);
+
+  /**
+   * La única llamada de red de la app. No bloquea nada: si falla, no se
+   * ofrece actualizar y listo.
+   */
+  const buscarVersion = useCallback(async () => {
+    setBuscandoVersion(true);
+    try {
+      setPublicacion(await buscarPublicacion());
+    } finally {
+      setBuscandoVersion(false);
+    }
+  }, []);
+
   /**
    * Guarda cuánto tardó en llegar un aviso respecto de su hora. Las dos vías
    * (el aviso que suena con la app viva y el toque sobre la notificación)
@@ -640,6 +696,13 @@ export function MessagesProvider({
     return () => sub.remove();
   }, [refresh]);
 
+  // Se busca una sola vez al abrir, y nunca antes de que la app esté lista:
+  // que haya versión nueva no es más urgente que dibujar la pantalla.
+  useEffect(() => {
+    if (!ready) return;
+    void buscarVersion();
+  }, [buscarVersion, ready]);
+
   /** Toques y acciones sobre la notificación. */
   useEffect(() => {
     const sub = Notifications.addNotificationResponseReceivedListener(
@@ -702,6 +765,11 @@ export function MessagesProvider({
       reliability: assessReliability(deliverySamples),
       onboardingCompleted,
       osScheduled,
+      compiladaEn: compiladaEn(),
+      publicacion,
+      hayVersionNueva: hayActualizacion(compiladaEn(), publicacion),
+      buscandoVersion,
+      consejosVistos,
       awaitingNotification: messages.filter((m) => awaitsNotification(m)).length,
       awaitingConfirmation,
       undo,
@@ -726,13 +794,21 @@ export function MessagesProvider({
       exportBackup,
       importBackup,
       completeOnboarding,
+      reiniciarTutorial,
+      descartarConsejo,
+      reiniciarConsejos,
+      buscarVersion,
       checkScheduled,
       testNotification,
     };
   }, [
     awaitingConfirmation,
+    buscandoVersion,
+    buscarVersion,
     checkScheduled,
     completeOnboarding,
+    consejosVistos,
+    descartarConsejo,
     confirmSent,
     createForMany,
     deliverySamples,
@@ -754,7 +830,10 @@ export function MessagesProvider({
     permission,
     quietHours,
     ready,
+    publicacion,
     refresh,
+    reiniciarConsejos,
+    reiniciarTutorial,
     rescheduleMessage,
     saveTemplate,
     templates,

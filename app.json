@@ -58,6 +58,9 @@
       "translucent": true,
       "barStyle": "dark-content"
     },
-    "icon": "./assets/icon.png"
+    "icon": "./assets/icon.png",
+    "extra": {
+      "buildTime": null
+    }
   }
 }

@@ -31,6 +31,7 @@ import { useMessages } from '../state/MessagesContext';
 import { BORDER_WIDTH, radius, spacing, usePalette } from '../theme';
 import { Button, Chip, Label, Txt } from '../components/ui';
 import { ChatBubblePreview } from '../components/ChatBubblePreview';
+import { ConsejoDePantalla } from '../components/Ayuda';
 import { PromptModal } from '../components/PromptModal';
 import { RecipientPicker, type Recipient } from '../components/RecipientPicker';
 import { WhenPicker } from '../components/WhenPicker';
@@ -206,6 +207,8 @@ export function ComposeScreen({
         contentContainerStyle={{ padding: spacing(2), gap: spacing(3) }}
         keyboardShouldPersistTaps="handled"
       >
+        <ConsejoDePantalla pantalla="nuevo" />
+
         <RecipientPicker
           selected={recipients}
           allowMultiple={!editingId}
@@ -222,23 +225,44 @@ export function ComposeScreen({
           </Txt>
         ) : null}
 
-        {templates.length > 0 && !editingId ? (
+        {!editingId ? (
           <View>
-            <Label>Empezar desde una plantilla</Label>
-            <View
-              style={{ flexDirection: 'row', flexWrap: 'wrap', gap: spacing(1) }}
-            >
-              {templates.map((t) => (
+            <Label>Plantillas</Label>
+            {templates.length > 0 ? (
+              <View
+                style={{ flexDirection: 'row', flexWrap: 'wrap', gap: spacing(1) }}
+              >
+                {templates.map((t) => (
+                  <Chip
+                    key={t.id}
+                    label={t.name}
+                    onPress={() => {
+                      setBody(t.body);
+                      setValues({});
+                    }}
+                  />
+                ))}
                 <Chip
-                  key={t.id}
-                  label={t.name}
-                  onPress={() => {
-                    setBody(t.body);
-                    setValues({});
-                  }}
+                  label="Administrar…"
+                  onPress={() => navigation.navigate('Templates')}
                 />
-              ))}
-            </View>
+              </View>
+            ) : (
+              // Antes esta sección directamente no se dibujaba sin plantillas,
+              // así que quien no tenía ninguna no se enteraba de que existían.
+              <Pressable
+                accessibilityRole="button"
+                onPress={() => navigation.navigate('Templates')}
+              >
+                <Txt style={{ color: p.textMuted, fontSize: 15, lineHeight: 21 }}>
+                  Para los mensajes que mandás seguido cambiando solo un par de
+                  datos.{' '}
+                  <Txt style={{ color: p.accent, fontWeight: '700' }}>
+                    Crear la primera
+                  </Txt>
+                </Txt>
+              </Pressable>
+            )}
           </View>
         ) : null}
 

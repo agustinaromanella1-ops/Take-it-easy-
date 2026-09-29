@@ -7,6 +7,7 @@ const QUIET_HOURS_KEY = 'quietHours';
 const ONBOARDING_KEY = 'onboardingCompleted';
 const DELIVERY_SAMPLES_KEY = 'deliverySamples';
 const THEME_KEY = 'tema';
+const CONSEJOS_KEY = 'consejosVistos';
 
 async function read(key: string): Promise<string | null> {
   const db = await getDb();
@@ -79,4 +80,19 @@ export async function saveThemePreference(
   valor: ThemePreference,
 ): Promise<void> {
   await write(THEME_KEY, valor);
+}
+
+export async function loadConsejosVistos(): Promise<string[]> {
+  const raw = await read(CONSEJOS_KEY);
+  if (!raw) return [];
+  try {
+    const parsed: unknown = JSON.parse(raw);
+    return Array.isArray(parsed) ? parsed.filter((v) => typeof v === 'string') : [];
+  } catch {
+    return [];
+  }
+}
+
+export async function saveConsejosVistos(ids: string[]): Promise<void> {
+  await write(CONSEJOS_KEY, JSON.stringify(ids));
 }

@@ -19,7 +19,11 @@ const SECTIONS: { title: string; body: string }[] = [
   },
   {
     title: 'Sin terceros',
-    body: 'La app no incluye analytics, publicidad, seguimiento ni reporte de errores. No hay nadie más con acceso a tus datos porque no hay datos viajando.',
+    body: 'La app no incluye analytics, publicidad, seguimiento ni reporte de errores. El único servidor con el que habla es GitHub, y solo para saber si hay una versión nueva.',
+  },
+  {
+    title: 'La única conexión a internet',
+    body: 'Para avisarte de una versión nueva, la app consulta la página pública donde está publicado el archivo. No lleva nada tuyo: ni mensajes, ni contactos, ni un identificador del teléfono. Compara una fecha contra otra. Si no hay internet, no pasa nada: el resto de la app anda sin conexión.',
   },
   {
     title: 'Relación con WhatsApp',
@@ -46,7 +50,8 @@ export function PrivacyScreen(): React.ReactElement {
     >
       <Txt style={{ color: p.text, fontSize: 17, lineHeight: 24 }}>
         Esta app no recolecta, transmite ni almacena tus datos en ningún
-        servidor. Todo lo que escribís queda en tu teléfono.
+        servidor. Todo lo que escribís queda en tu teléfono. La única conexión
+        a internet es para avisarte de una versión nueva, y no lleva nada tuyo.
       </Txt>
 
       {SECTIONS.map((section) => (
@@ -69,7 +74,7 @@ export function PrivacyScreen(): React.ReactElement {
 
       <View>
         <Txt style={{ color: p.textMuted, fontSize: 13, lineHeight: 19 }}>
-          Última actualización: 13 de septiembre de 2026.
+          Última actualización: 29 de septiembre de 2026.
         </Txt>
       </View>
     </ScrollView>

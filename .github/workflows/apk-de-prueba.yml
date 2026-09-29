@@ -38,6 +38,19 @@ jobs:
       - name: Revisar que el JavaScript empaquete
         run: npx expo export --platform android --output-dir .expo/export-check
 
+      # La app compara esta fecha contra la del archivo publicado para saber
+      # si hay una versión nueva. Sin esto, extra.buildTime queda en null y la
+      # app simplemente no ofrece actualizar, que es lo correcto en desarrollo.
+      - name: Grabar la fecha de compilación
+        run: |
+          node -e "
+            const fs = require('fs');
+            const cfg = JSON.parse(fs.readFileSync('app.json', 'utf8'));
+            cfg.expo.extra = { ...cfg.expo.extra, buildTime: new Date().toISOString() };
+            fs.writeFileSync('app.json', JSON.stringify(cfg, null, 2) + '\n');
+          "
+          node -e "console.log('compilada en', require('./app.json').expo.extra.buildTime)"
+
       # Expo genera el proyecto Android a partir de app.json. No lo guardamos
       # en el repositorio: se arma acá y queda siempre al día con la config.
       - name: Armar el proyecto Android

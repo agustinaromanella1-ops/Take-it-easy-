@@ -6,6 +6,7 @@ import { useMessages } from '../state/MessagesContext';
 import { BORDER_WIDTH, radius, spacing, usePalette } from '../theme';
 import { Button, EmptyState, HardShadow, Txt } from '../components/ui';
 import { TemplateEditor } from '../components/TemplateEditor';
+import { ConsejoDePantalla } from '../components/Ayuda';
 
 /** Qué está abierto en el editor: nada, una plantilla nueva, o una existente. */
 type Edicion = null | { modo: 'nueva' } | { modo: 'editar'; plantilla: Template };
@@ -46,7 +47,9 @@ export function TemplatesScreen(): React.ReactElement {
           paddingBottom: insets.bottom + spacing(12),
         }}
         ListHeaderComponent={
-          <Txt
+          <>
+            <ConsejoDePantalla pantalla="plantillas" />
+            <Txt
             style={{
               color: p.textMuted,
               fontSize: 15,
@@ -56,8 +59,9 @@ export function TemplatesScreen(): React.ReactElement {
           >
             Para los mensajes que mandás seguido cambiando solo un par de datos.
             Lo que pongas entre llaves, como {'{nombre}'}, lo completás en el
-            momento.
-          </Txt>
+              momento.
+            </Txt>
+          </>
         }
         renderItem={({ item }) => {
           const variables = extractVariables(item.body);

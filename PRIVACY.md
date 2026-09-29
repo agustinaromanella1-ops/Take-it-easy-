@@ -1,11 +1,14 @@
 # Política de privacidad — Listo para enviar
 
-**Última actualización:** 13 de septiembre de 2026
+**Última actualización:** 29 de septiembre de 2026
 
 ## Resumen
 
 Esta app no recolecta, transmite ni almacena tus datos en ningún servidor. Todo lo que
 escribís queda en tu teléfono. No hay cuenta, no hay registro, no hay analytics.
+
+La app hace **una sola** conexión a internet, y es opcional: consultar si hay una versión
+nueva para descargar. Está explicada abajo.
 
 ## Qué datos maneja la app y dónde quedan
 
@@ -28,6 +31,21 @@ Si le das permiso, la app puede abrir el selector de contactos del sistema para 
 quién mandarle un mensaje. Solo se guarda el nombre y el número de la persona que elegiste,
 y solo en tu teléfono. La app no lee tu agenda completa, no la copia ni la transmite a
 ningún lado. Podés no dar el permiso y escribir los números a mano: la app funciona igual.
+
+## La única conexión a internet: buscar actualizaciones
+
+La app no se distribuye por una tienda, así que para avisarte de una versión nueva consulta
+la página pública de GitHub donde está publicado el archivo. Es un pedido de lectura
+(`GET`) a `api.github.com`, y **no lleva nada tuyo**: ni tus mensajes, ni tus contactos, ni
+un identificador del teléfono. Lo único que compara es la fecha del archivo publicado
+contra la fecha en que se compiló tu app.
+
+Se hace una vez al abrir la app, y de nuevo solo si tocás "Buscar actualizaciones" en
+Ajustes. Si no hay internet o falla, la app no muestra ningún error y sigue funcionando
+igual: todo el resto anda sin conexión.
+
+Como cualquier pedido a un servidor, GitHub ve la dirección IP desde la que se hace, igual
+que si abrieras esa página en el navegador. No podemos evitar eso y por eso lo decimos.
 
 ## Notificaciones
 
@@ -52,8 +70,9 @@ condiciones de ese servicio.
 
 ## Terceros
 
-La app no incluye SDKs de analytics, publicidad, seguimiento ni reporte de errores. No hay
-terceros con acceso a tus datos porque no hay transmisión de datos.
+La app no incluye SDKs de analytics, publicidad, seguimiento ni reporte de errores. El
+único servidor con el que habla es GitHub, para la consulta de versión descrita arriba, y
+en esa consulta no viaja ningún dato tuyo.
 
 ## Permisos que pide la app y para qué
 

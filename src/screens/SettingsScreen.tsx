@@ -14,6 +14,8 @@ import { BackupError } from '../domain/backup';
 import { describeQuietHours } from '../domain/quietHours';
 import { describeReliability } from '../domain/reliability';
 import { AndroidReliabilityActions } from '../components/Reliability';
+import { ConsejoDePantalla } from '../components/Ayuda';
+import { describirVersion } from '../domain/actualizacion';
 import { useMessages } from '../state/MessagesContext';
 import { spacing, usePalette } from '../theme';
 import { Button, Card, Chip, Label, Title, Txt } from '../components/ui';
@@ -86,6 +88,11 @@ export function SettingsScreen(): React.ReactElement {
     checkScheduled,
     testNotification,
     updateTheme,
+    compiladaEn,
+    publicacion,
+    hayVersionNueva,
+    buscandoVersion,
+    buscarVersion,
   } = useMessages();
   const tema = useThemePreference();
   const [busy, setBusy] = useState(false);
@@ -161,6 +168,57 @@ export function SettingsScreen(): React.ReactElement {
       }}
     >
       <Title>Ajustes</Title>
+
+      <ConsejoDePantalla pantalla="ajustes" />
+
+      <View>
+        <Label>Versión</Label>
+        <Card>
+          <Txt style={{ color: p.text, fontSize: 15, lineHeight: 21 }}>
+            {describirVersion(compiladaEn)}
+          </Txt>
+          <Txt
+            style={{
+              color: hayVersionNueva ? p.warning : p.textMuted,
+              fontSize: 14,
+              lineHeight: 20,
+              marginTop: spacing(0.5),
+            }}
+          >
+            {hayVersionNueva
+              ? 'Hay una versión nueva para bajar.'
+              : publicacion
+                ? 'Estás al día.'
+                : 'No pudimos consultar si hay una versión nueva.'}
+          </Txt>
+          {hayVersionNueva && publicacion ? (
+            <Button
+              label="Bajar la versión nueva"
+              onPress={() => void Linking.openURL(publicacion.url)}
+              style={{ marginTop: spacing(1.5) }}
+            />
+          ) : (
+            <Button
+              label={buscandoVersion ? 'Buscando…' : 'Buscar actualizaciones'}
+              variant="secondary"
+              disabled={buscandoVersion}
+              onPress={() => void buscarVersion()}
+              style={{ marginTop: spacing(1.5) }}
+            />
+          )}
+          <Txt
+            style={{
+              color: p.textMuted,
+              fontSize: 13,
+              lineHeight: 19,
+              marginTop: spacing(1),
+            }}
+          >
+            Es la única vez que la app usa internet: consulta si el archivo
+            publicado es más nuevo que el que tenés. No manda nada tuyo.
+          </Txt>
+        </Card>
+      </View>
 
       <View>
         <Label>Notificaciones</Label>
