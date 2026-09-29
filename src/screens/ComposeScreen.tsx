@@ -130,16 +130,10 @@ export function ComposeScreen({
           : [...current, recipient],
     );
 
-  const offerToSaveTemplate = () => {
-    if (variables.length === 0) {
-      Alert.alert(
-        'Todavía no es una plantilla',
-        'Poné algo entre llaves, como {nombre}, para que se complete distinto cada vez.',
-      );
-      return;
-    }
-    setNamingTemplate(true);
-  };
+  // Cualquier texto que se repita sirve como plantilla, tenga variables o no.
+  // Antes esto exigía llaves y era el único camino para crear una: si no
+  // sabías el truco, la función no existía.
+  const offerToSaveTemplate = () => setNamingTemplate(true);
 
   const save = async () => {
     const parsedAll = recipients.map((r) => parsePhone(r.e164));
@@ -271,7 +265,7 @@ export function ComposeScreen({
               color: p.text,
             }}
           />
-          {variables.length > 0 ? (
+          {body.trim().length > 0 ? (
             <Pressable
               accessibilityRole="button"
               onPress={offerToSaveTemplate}
@@ -408,7 +402,7 @@ export function ComposeScreen({
       <PromptModal
         visible={namingTemplate}
         title="Guardar como plantilla"
-        detail="Después la vas a poder elegir al escribir un mensaje nuevo."
+        detail="Después la vas a poder elegir al escribir un mensaje nuevo. Si ponés algo entre llaves, como {nombre}, lo completás cada vez."
         placeholder="Ej: Saludo de cumpleaños"
         onConfirm={(name) => {
           setNamingTemplate(false);
