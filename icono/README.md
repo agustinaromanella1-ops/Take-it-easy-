@@ -27,7 +27,43 @@ Valores tomados del PNG original (`public/icon-512.png` en `main`):
 Ojo: ese teal **no** está en la paleta del CSS de la app, que usa `--ink: #1f1e47`. El
 icono tiene su propia tinta, y es esa la que hay que igualar.
 
-## Las tres direcciones
+## El icono elegido
+
+Agustina eligió la burbuja con el reloj a las nueve y mandó una versión sobre verde
+saturado. El dibujo quedó tal cual; lo que cambió es el color y el soporte.
+
+**Por qué no ese verde.** El suyo era `#058065`, a distancia 89 del verde de WhatsApp
+(`#25d366`) en RGB. Una burbuja de chat sobre un verde así se lee como "app oficial de
+WhatsApp", que para una app cuya función es justamente abrir WhatsApp es el mayor riesgo de
+rechazo en la tienda que tenemos. La tinta de la app, `#123f3c`, está a distancia 155: casi
+el doble de lejos, y además es el color con el que ya está pintada la app entera.
+
+**Por qué redibujarlo.** La imagen original era un PNG con sombra y bordes suaves. A 48 px
+—el tamaño real en el cajón de apps— eso se convierte en una mancha. El vector mantiene el
+filo a cualquier tamaño.
+
+Hay dos variantes generadas:
+
+- **`a-tinta`** — la composición original con la tinta de la app. Es la que se publica.
+- **`b-atardecer`** — la versión de familia: el mismo cielo pastel del icono de Pipí Cucú,
+  con la burbuja en tinta y el minutero en coral.
+
+Para cambiar cuál se publica, la constante `ELEGIDA` en `generar.mjs`.
+
+## Archivos que se generan
+
+`node icono/generar.mjs` escribe en `assets/`:
+
+| Archivo | Para qué |
+|---|---|
+| `icon.png` | iOS y respaldo. Cuadrado lleno, sin transparencia ni esquinas redondeadas propias: la máscara la aplica el sistema. |
+| `adaptive-icon.png` | Primer plano de Android, achicado al 92 % para que el dibujo entre en el 66 % central que ninguna máscara recorta. El fondo lo pone `app.json`. |
+| `splash-icon.png` | Pantalla de arranque. Va invertido —burbuja en tinta— porque el fondo de arranque es el verde agua claro de la app. |
+
+El centro óptico no es el geométrico: la colita corre el dibujo hacia abajo y a la derecha,
+y sin corregirlo el icono se ve desplazado dentro de su cuadrado.
+
+## Las tres direcciones anteriores
 
 ### A — La letra con el acento
 
