@@ -142,35 +142,34 @@ console.log('hoja de 48 px');
  * Los archivos que piden las tiendas
  * ---------------------------------------------------------------- */
 
-/** El que se publica. Cambiar acá si se elige la otra variante. */
-const ELEGIDA = 'a-tinta';
-const dibujo = burbuja({ relleno: CREMA, agujas: TINTA, minutero: TINTA });
+/** La variante que se publica. Cambiar acá para volver a la otra. */
+const ELEGIDA = 'b-atardecer';
+
+/** Burbuja en tinta, agujas en crema y el minutero en coral. */
+const dibujo = (escala = 1) =>
+  burbuja({ relleno: TINTA, agujas: CREMA, minutero: CORAL, escala });
+
+const CIELO = `<rect width="${LIENZO}" height="${LIENZO}" fill="url(#cielo)"/>`;
 
 // iOS y el icono de respaldo: cuadrado lleno, sin transparencia ni esquinas
 // redondeadas propias. La máscara la aplica el sistema.
+writeFileSync(join(assets, 'icon.png'), rend(svg(CIELO, dibujo(), DEGRADADO), 1024));
+
+// Android arma su icono con dos capas. El primer plano va achicado: el sistema
+// recorta el borde con máscaras distintas según el fabricante, así que todo lo
+// importante tiene que caber en el 66 % central.
+writeFileSync(join(assets, 'adaptive-icon.png'), rend(svg('', dibujo(0.92)), 1024));
+
+// El fondo va como imagen y no como color plano, que es lo único que acepta
+// `backgroundColor`: de otro modo esta variante perdería justamente el
+// degradado que la emparenta con el icono de Pipí Cucú.
 writeFileSync(
-  join(assets, 'icon.png'),
-  rend(svg(`<rect width="${LIENZO}" height="${LIENZO}" fill="${TINTA}"/>`, dibujo), 1024),
+  join(assets, 'adaptive-background.png'),
+  rend(svg(CIELO, '', DEGRADADO), 1024),
 );
 
-// Android recorta el borde con máscaras distintas según el fabricante, así que
-// el primer plano va achicado: todo lo importante tiene que caber en el 66 %
-// central. El fondo lo pone app.json como color plano.
-writeFileSync(
-  join(assets, 'adaptive-icon.png'),
-  rend(
-    svg('', burbuja({ relleno: CREMA, agujas: TINTA, minutero: TINTA, escala: 0.92 })),
-    1024,
-  ),
-);
-
-// El splash va invertido: el fondo de arranque es el verde agua claro de la
-// app, así que una burbuja crema encima no se vería. Además así la pantalla
-// de arranque es del mismo color que la app y no hay un salto de oscuro a
-// claro al abrir.
-writeFileSync(
-  join(assets, 'splash-icon.png'),
-  rend(svg('', burbuja({ relleno: TINTA, agujas: CREMA, minutero: CREMA })), 1024),
-);
+// El splash: la misma burbuja sobre el verde agua claro del arranque, que es
+// la primera parada del degradado. Así no hay salto de color al abrir.
+writeFileSync(join(assets, 'splash-icon.png'), rend(svg('', dibujo()), 1024));
 
 console.log('assets escritos a partir de la variante', ELEGIDA);
