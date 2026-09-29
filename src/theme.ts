@@ -1,3 +1,4 @@
+import { useSyncExternalStore } from 'react';
 import { useColorScheme } from 'react-native';
 
 /**
@@ -140,10 +141,71 @@ export const fonts = {
 /** Las dos paletas, expuestas para que el test de contraste las mida. */
 export const palettes = { light, dark } as const;
 
-export function usePalette(): Palette {
-  return useColorScheme() === 'dark' ? dark : light;
+/* ------------------------------------------------------------------ *
+ * Cómo se ve: claro, oscuro o automático
+ * ------------------------------------------------------------------ */
+
+export type ThemePreference = 'claro' | 'oscuro' | 'automatico';
+
+/**
+ * La preferencia vive en un store propio y no en un contexto de React a
+ * propósito: así `usePalette()` sigue siendo un import desde `theme.ts` en las
+ * treinta y pico de pantallas y componentes que ya lo usan. Meterla en un
+ * contexto obligaría a que theme.ts importe ese contexto, que a su vez importa
+ * theme.ts para las paletas — un ciclo — o a tocar todos esos imports.
+ */
+let preferencia: ThemePreference = 'automatico';
+const oyentes = new Set<() => void>();
+
+const suscribir = (avisar: () => void): (() => void) => {
+  oyentes.add(avisar);
+  return () => {
+    oyentes.delete(avisar);
+  };
+};
+
+const leer = (): ThemePreference => preferencia;
+
+/** La preferencia actual, fuera de React. */
+export const getThemePreference = leer;
+
+/** Escuchar cambios sin React. Devuelve cómo dejar de escuchar. */
+export const onThemeChange = suscribir;
+
+export function setThemePreference(valor: ThemePreference): void {
+  if (valor === preferencia) return;
+  preferencia = valor;
+  for (const avisar of oyentes) avisar();
+}
+
+export function useThemePreference(): ThemePreference {
+  return useSyncExternalStore(suscribir, leer, leer);
+}
+
+export const THEME_LABELS: Record<ThemePreference, string> = {
+  claro: 'Claro',
+  automatico: 'Automático',
+  oscuro: 'Oscuro',
+};
+
+export const THEME_OPTIONS: ThemePreference[] = ['claro', 'automatico', 'oscuro'];
+
+/**
+ * Automático no decide nada por su cuenta: deja mandar al teléfono, que es lo
+ * que se quiere cuando la pantalla se pone oscura al atardecer. Claro y oscuro
+ * pisan al sistema.
+ */
+export function resolverOscuro(
+  elegido: ThemePreference,
+  sistema: 'light' | 'dark' | null | undefined,
+): boolean {
+  return elegido === 'automatico' ? sistema === 'dark' : elegido === 'oscuro';
 }
 
 export function useIsDark(): boolean {
-  return useColorScheme() === 'dark';
+  return resolverOscuro(useThemePreference(), useColorScheme());
+}
+
+export function usePalette(): Palette {
+  return useIsDark() ? dark : light;
 }

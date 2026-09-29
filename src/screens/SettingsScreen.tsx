@@ -17,6 +17,11 @@ import { AndroidReliabilityActions } from '../components/Reliability';
 import { useMessages } from '../state/MessagesContext';
 import { spacing, usePalette } from '../theme';
 import { Button, Card, Chip, Label, Title, Txt } from '../components/ui';
+import {
+  THEME_LABELS,
+  THEME_OPTIONS,
+  useThemePreference,
+} from '../theme';
 import { Platform } from 'react-native';
 import type { RootStackParamList } from '../navigation/types';
 
@@ -80,7 +85,9 @@ export function SettingsScreen(): React.ReactElement {
     awaitingNotification,
     checkScheduled,
     testNotification,
+    updateTheme,
   } = useMessages();
+  const tema = useThemePreference();
   const [busy, setBusy] = useState(false);
 
   // Ajustes es una pestaña y queda montada, así que un useEffect correría una
@@ -205,6 +212,35 @@ export function SettingsScreen(): React.ReactElement {
             Guardamos el día y la hora que elegiste, no un instante fijo. Si
             cambia el horario de verano, tu mensaje de las 9 sigue saliendo a las
             9.
+          </Txt>
+        </Card>
+      </View>
+
+      <View>
+        <Label>Cómo se ve</Label>
+        <Card>
+          <View
+            style={{ flexDirection: 'row', flexWrap: 'wrap', gap: spacing(1) }}
+          >
+            {THEME_OPTIONS.map((opcion) => (
+              <Chip
+                key={opcion}
+                label={THEME_LABELS[opcion]}
+                selected={tema === opcion}
+                onPress={() => void updateTheme(opcion)}
+              />
+            ))}
+          </View>
+          <Txt
+            style={{
+              color: p.textMuted,
+              fontSize: 14,
+              lineHeight: 20,
+              marginTop: spacing(1.5),
+            }}
+          >
+            En automático manda el teléfono, que es lo que querés si se pone
+            oscuro al atardecer.
           </Txt>
         </Card>
       </View>

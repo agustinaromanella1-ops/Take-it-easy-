@@ -1,5 +1,5 @@
 import React, { useCallback } from 'react';
-import { View, useColorScheme } from 'react-native';
+import { View } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
 import * as SplashScreen from 'expo-splash-screen';
 import { useFonts } from 'expo-font';
@@ -20,6 +20,7 @@ import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { MessagesProvider } from './src/state/MessagesContext';
 import { RootNavigator } from './src/navigation/RootNavigator';
 import { ScreenBackground } from './src/components/ui';
+import { useIsDark } from './src/theme';
 
 // Sostenemos el splash hasta que estén las tipografías: si no, el primer
 // dibujado sale con la fuente del sistema y un instante después salta a la
@@ -32,8 +33,21 @@ const transparent = (base: Theme): Theme => ({
   colors: { ...base.colors, background: 'transparent' },
 });
 
+function Contenido(): React.ReactElement {
+  // Adentro del proveedor: la preferencia ya está cargada y el tema elegido
+  // manda sobre el del sistema.
+  const oscuro = useIsDark();
+  return (
+    <ScreenBackground>
+      <NavigationContainer theme={transparent(oscuro ? DarkTheme : DefaultTheme)}>
+        <RootNavigator />
+      </NavigationContainer>
+      <StatusBar style={oscuro ? 'light' : 'dark'} />
+    </ScreenBackground>
+  );
+}
+
 export default function App(): React.ReactElement | null {
-  const scheme = useColorScheme();
   const [fontsLoaded, fontError] = useFonts({
     Nunito_400Regular,
     Nunito_600SemiBold,
@@ -55,18 +69,11 @@ export default function App(): React.ReactElement | null {
 
   return (
     <SafeAreaProvider>
-      <ScreenBackground>
-        <View style={{ flex: 1 }} onLayout={onReady}>
-          <MessagesProvider>
-            <NavigationContainer
-              theme={transparent(scheme === 'dark' ? DarkTheme : DefaultTheme)}
-            >
-              <RootNavigator />
-            </NavigationContainer>
-          </MessagesProvider>
-        </View>
-      </ScreenBackground>
-      <StatusBar style="auto" />
+      <View style={{ flex: 1 }} onLayout={onReady}>
+        <MessagesProvider>
+          <Contenido />
+        </MessagesProvider>
+      </View>
     </SafeAreaProvider>
   );
 }

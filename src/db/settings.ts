@@ -1,10 +1,12 @@
 import { getDb } from './index';
 import { DEFAULT_QUIET_HOURS, type QuietHours } from '../domain/quietHours';
 import type { DeliverySample } from '../domain/reliability';
+import type { ThemePreference } from '../theme';
 
 const QUIET_HOURS_KEY = 'quietHours';
 const ONBOARDING_KEY = 'onboardingCompleted';
 const DELIVERY_SAMPLES_KEY = 'deliverySamples';
+const THEME_KEY = 'tema';
 
 async function read(key: string): Promise<string | null> {
   const db = await getDb();
@@ -66,4 +68,15 @@ export async function saveDeliverySamples(
   samples: DeliverySample[],
 ): Promise<void> {
   await write(DELIVERY_SAMPLES_KEY, JSON.stringify(samples));
+}
+
+export async function loadThemePreference(): Promise<ThemePreference> {
+  const raw = await read(THEME_KEY);
+  return raw === 'claro' || raw === 'oscuro' ? raw : 'automatico';
+}
+
+export async function saveThemePreference(
+  valor: ThemePreference,
+): Promise<void> {
+  await write(THEME_KEY, valor);
 }

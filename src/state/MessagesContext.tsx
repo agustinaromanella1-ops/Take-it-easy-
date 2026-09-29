@@ -28,6 +28,7 @@ import {
   type Reliability,
 } from '../domain/reliability';
 import { parseBackup, serializeBackup } from '../domain/backup';
+import { setThemePreference, type ThemePreference } from '../theme';
 import type { Template } from '../domain/templates';
 import { whatsappSchemeUrl, whatsappWebUrl } from '../domain/whatsapp';
 import type { NewMessageInput, ScheduledMessage } from '../domain/types';
@@ -98,6 +99,7 @@ interface MessagesValue {
   deleteTemplate: (id: string) => Promise<void>;
 
   updateQuietHours: (hours: QuietHours) => Promise<void>;
+  updateTheme: (valor: ThemePreference) => Promise<void>;
 
   exportBackup: () => Promise<void>;
   importBackup: () => Promise<{ messages: number; templates: number } | null>;
@@ -209,11 +211,15 @@ export function MessagesProvider({
     (async () => {
       await notify.configure();
       const perm = await notify.getPermission();
-      const [hours, samples, onboarded] = await Promise.all([
+      const [hours, samples, onboarded, tema] = await Promise.all([
         settingsRepo.loadQuietHours(),
         settingsRepo.loadDeliverySamples(),
         settingsRepo.loadOnboardingCompleted(),
+        settingsRepo.loadThemePreference(),
       ]);
+      // Antes de marcar la app como lista, así no se dibuja un cuadro en
+      // claro y salta a oscuro.
+      setThemePreference(tema);
       await reconcile();
       if (cancelled) return;
       setPermission(perm);
@@ -540,6 +546,13 @@ export function MessagesProvider({
     setQuietHours(hours);
   }, []);
 
+  const updateTheme = useCallback(async (valor: ThemePreference) => {
+    // Primero se aplica y después se guarda: la pantalla tiene que cambiar en
+    // el acto, no cuando conteste la base.
+    setThemePreference(valor);
+    await settingsRepo.saveThemePreference(valor);
+  }, []);
+
   /**
    * El backup es un archivo que sale por el share sheet del sistema: la usuaria
    * elige dónde guardarlo. No hay servidor de por medio, igual que el resto.
@@ -709,6 +722,7 @@ export function MessagesProvider({
       editTemplate,
       deleteTemplate,
       updateQuietHours,
+      updateTheme,
       exportBackup,
       importBackup,
       completeOnboarding,
@@ -749,6 +763,7 @@ export function MessagesProvider({
     undo,
     undoDelete,
     updateQuietHours,
+    updateTheme,
   ]);
 
   return (
