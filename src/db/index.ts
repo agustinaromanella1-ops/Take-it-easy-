@@ -44,6 +44,15 @@ const MIGRATIONS: string[] = [
   `
   ALTER TABLE messages ADD COLUMN recipientKind TEXT NOT NULL DEFAULT 'contacto';
   `,
+  // v4 — distinguir lo programado de lo que se viene pateando.
+  `
+  ALTER TABLE messages ADD COLUMN postponedAt TEXT;
+  `,
+  // v5 — desde qué WhatsApp sale cada mensaje. Null significa "lo que diga
+  // Ajustes", así que las filas que ya existían no cambian de comportamiento.
+  `
+  ALTER TABLE messages ADD COLUMN whatsappApp TEXT;
+  `,
 ];
 
 async function migrate(db: SQLite.SQLiteDatabase): Promise<void> {

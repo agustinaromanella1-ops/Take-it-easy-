@@ -7,8 +7,8 @@ import type {
 } from '../domain/types';
 
 const COLUMNS = `id, recipientKind, contactName, phoneE164, body, scheduledAt,
-  localAt, timezone, status, createdAt, firedAt, sentAt, recurrenceRule, notes,
-  notificationId`;
+  localAt, timezone, status, createdAt, firedAt, sentAt, postponedAt,
+  whatsappApp, recurrenceRule, notes, notificationId`;
 
 type Row = ScheduledMessage;
 
@@ -48,6 +48,8 @@ export async function create(
     createdAt: new Date().toISOString(),
     firedAt: null,
     sentAt: null,
+    postponedAt: null,
+    whatsappApp: input.whatsappApp ?? null,
     recurrenceRule: input.recurrenceRule ?? null,
     notes: input.notes ?? null,
     notificationId: null,
@@ -55,7 +57,7 @@ export async function create(
 
   await db.runAsync(
     `INSERT INTO messages (${COLUMNS})
-     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
     [
       message.id,
       message.recipientKind,
@@ -69,6 +71,8 @@ export async function create(
       message.createdAt,
       message.firedAt,
       message.sentAt,
+      message.postponedAt,
+      message.whatsappApp,
       message.recurrenceRule,
       message.notes,
       message.notificationId,
@@ -90,6 +94,8 @@ type Patch = Partial<
     | 'status'
     | 'firedAt'
     | 'sentAt'
+    | 'postponedAt'
+    | 'whatsappApp'
     | 'notes'
     | 'notificationId'
     | 'recurrenceRule'
@@ -119,6 +125,9 @@ export async function reschedule(
   id: string,
   localAt: string,
   timezone: string,
+  /** Marca el mensaje como postergado, para distinguirlo del que se programó
+   *  una vez y quedó ahí. */
+  postergado = false,
 ): Promise<void> {
   await update(id, {
     localAt,
@@ -126,6 +135,7 @@ export async function reschedule(
     scheduledAt: wallToUtc(localAt, timezone).toISOString(),
     status: 'scheduled',
     firedAt: null,
+    ...(postergado ? { postponedAt: new Date().toISOString() } : {}),
   });
 }
 
@@ -162,20 +172,22 @@ const VALORES = (m: ScheduledMessage): unknown[] => [
   m.createdAt,
   m.firedAt,
   m.sentAt,
+  m.postponedAt,
+  m.whatsappApp,
   m.recurrenceRule,
   m.notes,
   m.notificationId,
 ];
 
 const INSERTAR = `INSERT OR REPLACE INTO messages (${COLUMNS})
-     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`;
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`;
 
 /** Vuelve a insertar un mensaje tal cual, para el "deshacer" del borrado. */
 export async function restore(message: ScheduledMessage): Promise<void> {
   const db = await getDb();
   await db.runAsync(
     `INSERT OR REPLACE INTO messages (${COLUMNS})
-     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
     [
       message.id,
       message.recipientKind,
@@ -189,6 +201,8 @@ export async function restore(message: ScheduledMessage): Promise<void> {
       message.createdAt,
       message.firedAt,
       message.sentAt,
+      message.postponedAt,
+      message.whatsappApp,
       message.recurrenceRule,
       message.notes,
       message.notificationId,

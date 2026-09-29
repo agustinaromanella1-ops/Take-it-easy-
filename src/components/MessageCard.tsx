@@ -3,6 +3,7 @@ import { Pressable, View } from 'react-native';
 import { previewLines, timeLabel } from '../domain/grouping';
 import { displayName } from '../domain/phone';
 import type { ScheduledMessage } from '../domain/types';
+import { estadoDe, ETIQUETAS, TONOS } from '../domain/estado';
 import { BORDER_WIDTH, SHADOW_OFFSET, radius, spacing, usePalette } from '../theme';
 import { HardShadow, Txt } from './ui';
 
@@ -23,6 +24,13 @@ export function MessageCard({
   const preview = previewLines(message.body);
   const time = message.localAt ? timeLabel(message.localAt) : trailing ?? '';
   const { x, y } = SHADOW_OFFSET.sm;
+
+  const estado = estadoDe(message);
+  const tono = estado ? TONOS[estado] : 'neutro';
+  const colorEstado =
+    tono === 'aviso' ? p.warning : tono === 'listo' ? p.accentInk : p.textMuted;
+  const fondoEstado =
+    tono === 'aviso' ? p.warningSoft : tono === 'listo' ? p.accentSoft : p.surfaceAlt;
 
   return (
     <HardShadow
@@ -77,6 +85,26 @@ export function MessageCard({
         >
           {preview}
         </Txt>
+
+        {estado ? (
+          <View
+            style={{
+              alignSelf: 'flex-start',
+              marginTop: spacing(1.25),
+              backgroundColor: fondoEstado,
+              borderColor: colorEstado,
+              borderWidth: 1.5,
+              borderRadius: radius.pill,
+              paddingVertical: spacing(0.375),
+              paddingHorizontal: spacing(1.25),
+            }}
+          >
+            <Txt style={{ color: colorEstado, fontSize: 12, fontWeight: '700' }}>
+              {message.recipientKind === 'grupo' ? '👥  ' : ''}
+              {ETIQUETAS[estado]}
+            </Txt>
+          </View>
+        ) : null}
       </Pressable>
     </HardShadow>
   );

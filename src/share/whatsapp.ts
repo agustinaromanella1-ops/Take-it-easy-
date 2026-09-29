@@ -1,37 +1,107 @@
-import { Platform, Share } from 'react-native';
+import { Alert, Linking, Platform, Share } from 'react-native';
 import * as IntentLauncher from 'expo-intent-launcher';
+import type { WhatsAppApp } from '../domain/types';
+import { whatsappSchemeUrl, whatsappWebUrl } from '../domain/whatsapp';
 
 /**
- * Abrir WhatsApp con el texto listo cuando el destinatario es un grupo.
+ * Abrir WhatsApp con el texto listo.
  *
- * WhatsApp no publica ninguna forma de abrir un grupo concreto desde afuera:
- * el deep link `wa.me` y el esquema `whatsapp://send` solo aceptan un número
- * de teléfono. Los links de `chat.whatsapp.com` sirven para *unirse* a un
- * grupo, no para abrirlo con un mensaje escrito.
+ * Dos cosas que la plataforma decide por nosotros:
  *
- * Lo que sí se puede es entregarle el texto a WhatsApp y dejar que la usuaria
- * elija el chat —incluido cualquier grupo— de su propia lista. Es un toque más
- * que con un contacto, y es lo máximo que la plataforma permite.
+ * 1. **No se puede abrir un grupo concreto desde afuera.** El deep link
+ *    `wa.me` y el esquema `whatsapp://send` solo aceptan un número, y los
+ *    links de `chat.whatsapp.com` sirven para *unirse* a un grupo, no para
+ *    abrirlo con un mensaje escrito. Para grupos se le entrega el texto a
+ *    WhatsApp y la usuaria elige el chat de su lista.
+ *
+ * 2. **Elegir entre WhatsApp y WhatsApp Business solo se puede en Android.**
+ *    Las dos apps registran el mismo esquema `whatsapp://`, así que un link
+ *    a secas abre la que el sistema prefiera —o un menú, si están las dos—.
+ *    En Android se puede apuntar al paquete y no hay ambigüedad. En iPhone
+ *    no hay forma pública de distinguirlas, y la interfaz lo dice.
  */
 
-const PAQUETE_WHATSAPP = 'com.whatsapp';
+const PAQUETES: Record<WhatsAppApp, string> = {
+  normal: 'com.whatsapp',
+  business: 'com.whatsapp.w4b',
+};
 
-export async function compartirConWhatsApp(texto: string): Promise<void> {
+export const NOMBRES: Record<WhatsAppApp, string> = {
+  normal: 'WhatsApp',
+  business: 'WhatsApp Business',
+};
+
+/** Solo Android puede elegir entre las dos apps. */
+export const puedeElegirApp = (): boolean => Platform.OS === 'android';
+
+/** Abre el chat de un contacto con el texto ya cargado. */
+export async function abrirChat(
+  e164: string,
+  texto: string,
+  app: WhatsAppApp | null,
+): Promise<void> {
+  const esquema = whatsappSchemeUrl(e164, texto);
+  const web = whatsappWebUrl(e164, texto);
+
+  if (Platform.OS === 'android' && app) {
+    try {
+      await IntentLauncher.startActivityAsync('android.intent.action.VIEW', {
+        data: esquema,
+        packageName: PAQUETES[app],
+      });
+      return;
+    } catch {
+      // Esa app no está instalada, o la capa del fabricante no deja apuntar
+      // al paquete: se sigue por el camino común.
+    }
+  }
+
+  try {
+    const abrible = await Linking.canOpenURL(esquema);
+    await Linking.openURL(abrible ? esquema : web);
+  } catch {
+    await Linking.openURL(web);
+  }
+}
+
+/** Entrega el texto a WhatsApp para que la usuaria elija el grupo. */
+export async function compartirConWhatsApp(
+  texto: string,
+  app: WhatsAppApp | null,
+): Promise<void> {
   if (Platform.OS === 'android') {
     try {
-      // Apuntando al paquete de WhatsApp se saltea el menú de "compartir con
-      // qué app" y se abre directo su lista de chats: un paso menos.
+      // Apuntando al paquete se saltea el menú de "compartir con qué app" y
+      // se abre directo la lista de chats de la que corresponda.
       await IntentLauncher.startActivityAsync('android.intent.action.SEND', {
-        packageName: PAQUETE_WHATSAPP,
+        packageName: PAQUETES[app ?? 'normal'],
         type: 'text/plain',
         extra: { 'android.intent.extra.TEXT': texto },
       });
       return;
     } catch {
-      // WhatsApp no instalado, o una capa de fabricante que no deja apuntar
-      // al paquete: se cae al menú de compartir del sistema.
+      // Sin esa app instalada, cae al menú del sistema.
     }
   }
 
   await Share.share({ message: texto });
+}
+
+/**
+ * Pregunta desde qué WhatsApp mandar, para quien tiene las dos y no quiere
+ * fijar una por defecto. Devuelve null si cierra sin elegir.
+ */
+export function preguntarApp(): Promise<WhatsAppApp | null> {
+  return new Promise((resolver) => {
+    Alert.alert(
+      '¿Desde qué WhatsApp?',
+      'Podés fijar una por defecto en Ajustes para que no te pregunte más.',
+      [
+        { text: NOMBRES.normal, onPress: () => resolver('normal') },
+        { text: NOMBRES.business, onPress: () => resolver('business') },
+        { text: 'Cancelar', style: 'cancel', onPress: () => resolver(null) },
+      ],
+      { cancelable: true, onDismiss: () => resolver(null) },
+    );
+  });
 }

@@ -17,6 +17,13 @@ export type MessageStatus =
  */
 export type RecipientKind = 'contacto' | 'grupo';
 
+/**
+ * Desde qué WhatsApp se manda. Quien tiene las dos instaladas no quiere
+ * elegir en un menú del sistema cada vez, y sobre todo no quiere mandar un
+ * mensaje de trabajo desde la cuenta personal por error.
+ */
+export type WhatsAppApp = 'normal' | 'business';
+
 export interface ScheduledMessage {
   id: string;
   recipientKind: RecipientKind;
@@ -41,6 +48,10 @@ export interface ScheduledMessage {
   createdAt: string;
   firedAt: string | null;
   sentAt: string | null;
+  /** Cuándo se corrió por última vez desde el aviso. Marca los postergados. */
+  postponedAt: string | null;
+  /** Desde qué WhatsApp sale. Null: se usa lo que diga Ajustes. */
+  whatsappApp: WhatsAppApp | null;
   recurrenceRule: string | null;
   notes: string | null;
   /** Id de la notificación local agendada, para poder cancelarla. */
@@ -50,6 +61,7 @@ export interface ScheduledMessage {
 /** Lo que hace falta para crear un mensaje. El resto lo completa el repositorio. */
 export interface NewMessageInput {
   recipientKind?: RecipientKind;
+  whatsappApp?: WhatsAppApp | null;
   contactName?: string | null;
   phoneE164: string;
   body: string;
@@ -61,9 +73,10 @@ export interface NewMessageInput {
   recurrenceRule?: string | null;
 }
 
-export const isPending = (m: ScheduledMessage): boolean =>
-  m.status === 'scheduled' || m.status === 'fired';
-
+/**
+ * Terminado desde el punto de vista de los datos. Para saber en qué lista va
+ * un mensaje hay que mirar `estado.ts`: un enviado sigue a la vista un rato.
+ */
 export const isDone = (m: ScheduledMessage): boolean =>
   m.status === 'sent' || m.status === 'skipped';
 

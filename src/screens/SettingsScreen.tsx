@@ -16,6 +16,7 @@ import { describeReliability } from '../domain/reliability';
 import { AndroidReliabilityActions } from '../components/Reliability';
 import { ConsejoDePantalla } from '../components/Ayuda';
 import { describirVersion } from '../domain/actualizacion';
+import { NOMBRES, puedeElegirApp } from '../share/whatsapp';
 import { useMessages } from '../state/MessagesContext';
 import { spacing, usePalette } from '../theme';
 import { Button, Card, Chip, Label, Title, Txt } from '../components/ui';
@@ -93,6 +94,8 @@ export function SettingsScreen(): React.ReactElement {
     hayVersionNueva,
     buscandoVersion,
     buscarVersion,
+    appWhatsApp,
+    updateAppWhatsApp,
   } = useMessages();
   const tema = useThemePreference();
   const [busy, setBusy] = useState(false);
@@ -271,6 +274,48 @@ export function SettingsScreen(): React.ReactElement {
             cambia el horario de verano, tu mensaje de las 9 sigue saliendo a las
             9.
           </Txt>
+        </Card>
+      </View>
+
+      <View>
+        <Label>Desde qué WhatsApp</Label>
+        <Card>
+          {puedeElegirApp() ? (
+            <>
+              <View
+                style={{ flexDirection: 'row', flexWrap: 'wrap', gap: spacing(1) }}
+              >
+                {(['normal', 'business', 'preguntar'] as const).map((opcion) => (
+                  <Chip
+                    key={opcion}
+                    label={
+                      opcion === 'preguntar'
+                        ? 'Preguntar cada vez'
+                        : NOMBRES[opcion]
+                    }
+                    selected={appWhatsApp === opcion}
+                    onPress={() => void updateAppWhatsApp(opcion)}
+                  />
+                ))}
+              </View>
+              <Txt
+                style={{
+                  color: p.textMuted,
+                  fontSize: 14,
+                  lineHeight: 20,
+                  marginTop: spacing(1.5),
+                }}
+              >
+                Cada mensaje puede usar otra distinta: se elige al escribirlo.
+                Esto es lo que se usa cuando el mensaje no lo dice.
+              </Txt>
+            </>
+          ) : (
+            <Txt style={{ color: p.textMuted, fontSize: 14, lineHeight: 20 }}>
+              En iPhone no se puede elegir: las dos apps se anuncian igual ante
+              el sistema y abre la que él decida. En Android sí se puede.
+            </Txt>
+          )}
         </Card>
       </View>
 

@@ -4,6 +4,14 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { groupByDay, pendingCountLabel, type DaySection } from '../domain/grouping';
+import {
+  contarPorEstado,
+  estadoDe,
+  ETIQUETAS,
+  requierenAtencion,
+  TONOS,
+  type EstadoVisible,
+} from '../domain/estado';
 import type { ScheduledMessage } from '../domain/types';
 import { useMessages } from '../state/MessagesContext';
 import { BORDER_WIDTH, radius, spacing, usePalette } from '../theme';
@@ -44,8 +52,24 @@ export function ScheduledListScreen(): React.ReactElement {
   } = useMessages();
   const [ayudaAbierta, setAyudaAbierta] = useState(false);
 
+  const cuenta = useMemo(() => contarPorEstado(pending), [pending]);
+
   const sections = useMemo<DaySection[]>(() => {
-    const grouped = groupByDay(pending, timezone);
+    // Los recién enviados tienen fecha pasada, así que agrupados por día
+    // caerían bajo "Atrasados". Van en su propia sección, al final.
+    const enviados = pending.filter((m) => estadoDe(m) === 'enviado');
+    const enCurso = pending.filter((m) => estadoDe(m) !== 'enviado');
+
+    const grouped = groupByDay(enCurso, timezone);
+
+    if (enviados.length > 0) {
+      grouped.push({
+        key: 'enviados',
+        title: 'Enviados recién',
+        overdue: false,
+        data: enviados,
+      });
+    }
     if (drafts.length > 0) {
       grouped.push({
         key: 'drafts',
@@ -108,6 +132,8 @@ export function ScheduledListScreen(): React.ReactElement {
             {hayVersionNueva && publicacion ? (
               <AvisoDeVersion publicacion={publicacion} />
             ) : null}
+
+            <ResumenDeEstados cuenta={cuenta} />
 
             <ConsejoDePantalla pantalla="programados" />
           </View>
@@ -188,6 +214,83 @@ export function ScheduledListScreen(): React.ReactElement {
           onSkipped={() => void markSkipped(awaitingConfirmation.id)}
           onDismiss={dismissConfirmation}
         />
+      ) : null}
+    </View>
+  );
+}
+
+/**
+ * El resumen de un vistazo: cuántos hay de cada estado.
+ *
+ * Solo aparecen los estados que existen ahora mismo. Mostrar "0 atrasados" es
+ * ruido: lo que importa es ver de un golpe si hay algo reclamando atención.
+ */
+function ResumenDeEstados({
+  cuenta,
+}: {
+  cuenta: Record<EstadoVisible, number>;
+}): React.ReactElement | null {
+  const p = usePalette();
+  const presentes = (Object.keys(cuenta) as EstadoVisible[]).filter(
+    (estado) => cuenta[estado] > 0,
+  );
+
+  if (presentes.length === 0) return null;
+
+  const urgentes = requierenAtencion(cuenta);
+
+  return (
+    <View style={{ marginTop: spacing(1.5) }}>
+      <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: spacing(1) }}>
+        {presentes.map((estado) => {
+          const tono = TONOS[estado];
+          const color =
+            tono === 'aviso' ? p.warning : tono === 'listo' ? p.accentInk : p.textMuted;
+          const fondo =
+            tono === 'aviso'
+              ? p.warningSoft
+              : tono === 'listo'
+                ? p.accentSoft
+                : p.surfaceAlt;
+          return (
+            <View
+              key={estado}
+              style={{
+                flexDirection: 'row',
+                alignItems: 'center',
+                gap: spacing(0.75),
+                backgroundColor: fondo,
+                borderColor: color,
+                borderWidth: 1.5,
+                borderRadius: radius.pill,
+                paddingVertical: spacing(0.5),
+                paddingHorizontal: spacing(1.25),
+              }}
+            >
+              <Txt style={{ color, fontSize: 15, fontWeight: '800' }}>
+                {cuenta[estado]}
+              </Txt>
+              <Txt style={{ color, fontSize: 13, fontWeight: '700' }}>
+                {ETIQUETAS[estado]}
+              </Txt>
+            </View>
+          );
+        })}
+      </View>
+
+      {urgentes > 0 ? (
+        <Txt
+          style={{
+            color: p.warning,
+            fontSize: 13,
+            marginTop: spacing(1),
+            lineHeight: 18,
+          }}
+        >
+          {urgentes === 1
+            ? 'Hay 1 mensaje esperando algo tuyo.'
+            : `Hay ${urgentes} mensajes esperando algo tuyo.`}
+        </Txt>
       ) : null}
     </View>
   );

@@ -2,12 +2,14 @@ import { getDb } from './index';
 import { DEFAULT_QUIET_HOURS, type QuietHours } from '../domain/quietHours';
 import type { DeliverySample } from '../domain/reliability';
 import type { ThemePreference } from '../theme';
+import type { WhatsAppApp } from '../domain/types';
 
 const QUIET_HOURS_KEY = 'quietHours';
 const ONBOARDING_KEY = 'onboardingCompleted';
 const DELIVERY_SAMPLES_KEY = 'deliverySamples';
 const THEME_KEY = 'tema';
 const CONSEJOS_KEY = 'consejosVistos';
+const APP_KEY = 'appWhatsApp';
 
 async function read(key: string): Promise<string | null> {
   const db = await getDb();
@@ -95,4 +97,18 @@ export async function loadConsejosVistos(): Promise<string[]> {
 
 export async function saveConsejosVistos(ids: string[]): Promise<void> {
   await write(CONSEJOS_KEY, JSON.stringify(ids));
+}
+
+/** Qué WhatsApp usar cuando el mensaje no lo dice. 'preguntar' pregunta. */
+export type AppPorDefecto = WhatsAppApp | 'preguntar';
+
+export async function loadAppWhatsApp(): Promise<AppPorDefecto> {
+  const raw = await read(APP_KEY);
+  return raw === 'normal' || raw === 'business' || raw === 'preguntar'
+    ? raw
+    : 'normal';
+}
+
+export async function saveAppWhatsApp(valor: AppPorDefecto): Promise<void> {
+  await write(APP_KEY, valor);
 }

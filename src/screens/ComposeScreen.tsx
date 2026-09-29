@@ -32,6 +32,8 @@ import { BORDER_WIDTH, radius, spacing, usePalette } from '../theme';
 import { Button, Chip, Label, Txt } from '../components/ui';
 import { ChatBubblePreview } from '../components/ChatBubblePreview';
 import { ConsejoDePantalla } from '../components/Ayuda';
+import { NOMBRES, puedeElegirApp } from '../share/whatsapp';
+import type { WhatsAppApp } from '../domain/types';
 import { PromptModal } from '../components/PromptModal';
 import {
   RecipientPicker,
@@ -83,6 +85,7 @@ export function ComposeScreen({
   const [body, setBody] = useState('');
   const [when, setWhen] = useState<WallClock | null>(null);
   const [frequency, setFrequency] = useState<Frequency | null>(null);
+  const [app, setApp] = useState<WhatsAppApp | null>(null);
   const [values, setValues] = useState<Record<string, string>>({});
   const [saving, setSaving] = useState(false);
   const [namingTemplate, setNamingTemplate] = useState(false);
@@ -111,6 +114,7 @@ export function ComposeScreen({
     setBody(fuente.body);
     setWhen(editingId ? fuente.localAt : null);
     setFrequency(parseRule(fuente.recurrenceRule));
+    setApp(fuente.whatsappApp);
   }, [copiaDe, duplicateOf, editingId, fuente]);
 
   useEffect(() => {
@@ -184,6 +188,7 @@ export function ComposeScreen({
           phoneE164: first.e164,
           contactName: first.name,
           recipientKind: first.kind,
+          whatsappApp: app,
           recurrenceRule,
           ...(when && when !== existing.localAt ? { localAt: when } : {}),
         });
@@ -191,6 +196,7 @@ export function ComposeScreen({
         const only = recipients[0];
         if (!only) return;
         await createMessage({
+          whatsappApp: app,
           recipientKind: only.kind,
           contactName: only.name,
           phoneE164: only.e164,
@@ -200,6 +206,7 @@ export function ComposeScreen({
         });
       } else {
         await createForMany(recipients, {
+          whatsappApp: app,
           body: text,
           localAt: when,
           recurrenceRule,
@@ -351,6 +358,29 @@ export function ComposeScreen({
                 />
               </View>
             ))}
+          </View>
+        ) : null}
+
+        {puedeElegirApp() ? (
+          <View>
+            <Label>¿Desde qué WhatsApp?</Label>
+            <View
+              style={{ flexDirection: 'row', flexWrap: 'wrap', gap: spacing(1) }}
+            >
+              <Chip
+                label="La de siempre"
+                selected={app === null}
+                onPress={() => setApp(null)}
+              />
+              {(['normal', 'business'] as const).map((opcion) => (
+                <Chip
+                  key={opcion}
+                  label={NOMBRES[opcion]}
+                  selected={app === opcion}
+                  onPress={() => setApp(opcion)}
+                />
+              ))}
+            </View>
           </View>
         ) : null}
 

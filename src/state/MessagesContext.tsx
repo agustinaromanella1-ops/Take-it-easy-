@@ -36,13 +36,20 @@ import {
 import { buscarPublicacion, compiladaEn } from '../update/github';
 import type { Template } from '../domain/templates';
 import { whatsappSchemeUrl, whatsappWebUrl } from '../domain/whatsapp';
-import { compartirConWhatsApp } from '../share/whatsapp';
+import {
+  abrirChat,
+  compartirConWhatsApp,
+  preguntarApp,
+  puedeElegirApp,
+} from '../share/whatsapp';
 import type {
   NewMessageInput,
   RecipientKind,
   ScheduledMessage,
+  WhatsAppApp,
 } from '../domain/types';
-import { awaitsNotification, isDone, isPending } from '../domain/types';
+import { awaitsNotification, isDone } from '../domain/types';
+import { enHistorial, enListaPrincipal } from '../domain/estado';
 
 interface PendingUndo {
   message: ScheduledMessage;
@@ -59,6 +66,8 @@ interface MessagesValue {
   permission: notify.PermissionState;
   templates: Template[];
   quietHours: QuietHours;
+  /** Qué WhatsApp se usa cuando el mensaje no lo dice. */
+  appWhatsApp: settingsRepo.AppPorDefecto;
   /** Qué tan a horario vienen llegando los avisos en este teléfono. */
   reliability: Reliability;
   onboardingCompleted: boolean;
@@ -96,12 +105,18 @@ interface MessagesValue {
       phoneE164?: string;
       contactName?: string | null;
       recipientKind?: RecipientKind;
+      whatsappApp?: WhatsAppApp | null;
       recurrenceRule?: string | null;
       /** Nueva hora de pared, si cambió. */
       localAt?: string | null;
     },
   ) => Promise<void>;
-  rescheduleMessage: (id: string, localAt: string) => Promise<void>;
+  rescheduleMessage: (
+    id: string,
+    localAt: string,
+    /** True cuando viene del botón "Posponer" del aviso. */
+    postergado?: boolean,
+  ) => Promise<void>;
   deleteMessage: (id: string) => Promise<void>;
   undoDelete: () => Promise<void>;
   dismissUndo: () => void;
@@ -121,6 +136,7 @@ interface MessagesValue {
 
   updateQuietHours: (hours: QuietHours) => Promise<void>;
   updateTheme: (valor: ThemePreference) => Promise<void>;
+  updateAppWhatsApp: (valor: settingsRepo.AppPorDefecto) => Promise<void>;
 
   exportBackup: () => Promise<void>;
   importBackup: () => Promise<{ messages: number; templates: number } | null>;
@@ -158,6 +174,8 @@ export function MessagesProvider({
   const [publicacion, setPublicacion] = useState<Publicacion | null>(null);
   const [buscandoVersion, setBuscandoVersion] = useState(false);
   const [consejosVistos, setConsejosVistos] = useState<string[]>([]);
+  const [appWhatsApp, setAppWhatsApp] =
+    useState<settingsRepo.AppPorDefecto>('normal');
 
   const timezone = useMemo(() => deviceTimezone(), []);
   const undoTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -239,12 +257,13 @@ export function MessagesProvider({
     (async () => {
       await notify.configure();
       const perm = await notify.getPermission();
-      const [hours, samples, onboarded, tema, consejos] = await Promise.all([
+      const [hours, samples, onboarded, tema, consejos, app] = await Promise.all([
         settingsRepo.loadQuietHours(),
         settingsRepo.loadDeliverySamples(),
         settingsRepo.loadOnboardingCompleted(),
         settingsRepo.loadThemePreference(),
         settingsRepo.loadConsejosVistos(),
+        settingsRepo.loadAppWhatsApp(),
       ]);
       // Antes de marcar la app como lista, así no se dibuja un cuadro en
       // claro y salta a oscuro.
@@ -256,6 +275,7 @@ export function MessagesProvider({
       setDeliverySamples(samples);
       setOnboardingCompleted(onboarded);
       setConsejosVistos(consejos);
+      setAppWhatsApp(app);
       await refresh();
       setReady(true);
     })();
@@ -265,14 +285,14 @@ export function MessagesProvider({
   }, [reconcile, refresh]);
 
   const rescheduleMessage = useCallback(
-    async (id: string, localAt: string) => {
+    async (id: string, localAt: string, postergado = false) => {
       const current = await repo.getById(id);
       if (!current) return;
 
       // Cancelamos la notificación vieja antes de agendar la nueva: si no,
       // llegarían dos avisos para el mismo mensaje.
       await notify.cancel(current.notificationId);
-      await repo.reschedule(id, localAt, timezone);
+      await repo.reschedule(id, localAt, timezone, postergado);
 
       const updated = await repo.getById(id);
       if (updated) {
@@ -349,6 +369,7 @@ export function MessagesProvider({
         phoneE164?: string;
         contactName?: string | null;
         recipientKind?: RecipientKind;
+        whatsappApp?: WhatsAppApp | null;
         recurrenceRule?: string | null;
         localAt?: string | null;
       },
@@ -419,21 +440,26 @@ export function MessagesProvider({
       const message = await repo.getById(id);
       if (!message) return;
 
+      // El mensaje manda sobre el ajuste general; si ninguno lo dice y hay
+      // dos apps posibles, se pregunta en el momento.
+      let app: WhatsAppApp | null = message.whatsappApp;
+      if (!app && appWhatsApp !== 'preguntar') app = appWhatsApp;
+      if (!app && puedeElegirApp()) {
+        app = await preguntarApp();
+        if (!app) {
+          openedId.current = null;
+          return;
+        }
+      }
+
       openedId.current = id;
 
       if (message.recipientKind === 'grupo') {
         // No hay forma de abrir un grupo concreto: se le entrega el texto a
         // WhatsApp y la usuaria elige el chat de su propia lista.
-        await compartirConWhatsApp(message.body);
+        await compartirConWhatsApp(message.body, app);
       } else {
-        const scheme = whatsappSchemeUrl(message.phoneE164, message.body);
-        const web = whatsappWebUrl(message.phoneE164, message.body);
-        try {
-          const canOpen = await Linking.canOpenURL(scheme);
-          await Linking.openURL(canOpen ? scheme : web);
-        } catch {
-          await Linking.openURL(web);
-        }
+        await abrirChat(message.phoneE164, message.body, app);
       }
 
       // Un borrador no tiene fecha, y 'fired' sin fecha no cae en ninguna
@@ -444,7 +470,7 @@ export function MessagesProvider({
       }
       await refresh();
     },
-    [refresh],
+    [appWhatsApp, refresh],
   );
 
   const confirmSent = useCallback(
@@ -616,6 +642,14 @@ export function MessagesProvider({
     setQuietHours(hours);
   }, []);
 
+  const updateAppWhatsApp = useCallback(
+    async (valor: settingsRepo.AppPorDefecto) => {
+      setAppWhatsApp(valor);
+      await settingsRepo.saveAppWhatsApp(valor);
+    },
+    [],
+  );
+
   const updateTheme = useCallback(async (valor: ThemePreference) => {
     // Primero se aplica y después se guarda: la pantalla tiene que cambiar en
     // el acto, no cuando conteste la base.
@@ -732,7 +766,7 @@ export function MessagesProvider({
           );
 
           if (response.actionIdentifier === notify.ACTION_SNOOZE) {
-            await rescheduleMessage(id, snoozeOneHour(timezone));
+            await rescheduleMessage(id, snoozeOneHour(timezone), true);
             return;
           }
           await openInWhatsApp(id);
@@ -765,17 +799,20 @@ export function MessagesProvider({
   );
 
   const value = useMemo<MessagesValue>(() => {
-    const pending = messages.filter(isPending);
+    // Por estado visible y no por la columna `status`: un enviado recién
+    // sigue en la lista principal un rato antes de irse al historial.
+    const pending = messages.filter((m) => enListaPrincipal(m));
     return {
       ready,
       messages,
       pending,
       drafts: messages.filter((m) => m.status === 'draft'),
-      history: messages.filter(isDone),
+      history: messages.filter((m) => enHistorial(m)),
       timezone,
       permission,
       templates,
       quietHours,
+      appWhatsApp,
       reliability: assessReliability(deliverySamples),
       onboardingCompleted,
       osScheduled,
@@ -805,6 +842,7 @@ export function MessagesProvider({
       deleteTemplate,
       updateQuietHours,
       updateTheme,
+      updateAppWhatsApp,
       exportBackup,
       importBackup,
       completeOnboarding,
@@ -855,6 +893,8 @@ export function MessagesProvider({
     timezone,
     undo,
     undoDelete,
+    appWhatsApp,
+    updateAppWhatsApp,
     updateQuietHours,
     updateTheme,
   ]);

@@ -56,7 +56,7 @@ const isMessage = (value: unknown): value is ScheduledMessage => {
   if (!obligatorios) return false;
 
   const nulables = (
-    ['contactName', 'localAt', 'scheduledAt', 'firedAt', 'sentAt', 'recurrenceRule', 'notes', 'notificationId'] as const
+    ['contactName', 'localAt', 'scheduledAt', 'firedAt', 'sentAt', 'postponedAt', 'recurrenceRule', 'notes', 'notificationId'] as const
   ).every((k) => opcional(m[k]));
 
   if (!nulables) return false;
@@ -84,6 +84,11 @@ const normalizar = (m: ScheduledMessage): ScheduledMessage => ({
   scheduledAt: m.scheduledAt ?? null,
   firedAt: m.firedAt ?? null,
   sentAt: m.sentAt ?? null,
+  postponedAt: m.postponedAt ?? null,
+  whatsappApp:
+    m.whatsappApp === 'normal' || m.whatsappApp === 'business'
+      ? m.whatsappApp
+      : null,
   recurrenceRule: m.recurrenceRule ?? null,
   notes: m.notes ?? null,
   notificationId: null,
