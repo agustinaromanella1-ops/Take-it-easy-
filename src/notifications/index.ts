@@ -7,7 +7,14 @@ import type { ScheduledMessage } from '../domain/types';
 export const CATEGORY_ID = 'scheduled-message';
 export const ACTION_OPEN = 'open-whatsapp';
 export const ACTION_SNOOZE = 'snooze-1h';
-const CHANNEL_ID = 'scheduled-messages';
+import { CANALES, CANAL_VIEJO, type Sonido } from '../domain/sonido';
+
+/**
+ * El sonido elegido. Vive acá y no se pasa por parámetro porque scheduleFor
+ * se llama desde media docena de lugares y ninguno decide el sonido: lo
+ * decide Ajustes, una vez, para toda la app.
+ */
+let sonidoActivo: Sonido = 'predeterminado';
 /** Marca del aviso de prueba, para poder excluirlo de la cuenta. */
 const TEST_FLAG = 'esPrueba';
 
@@ -21,15 +28,39 @@ Notifications.setNotificationHandler({
   }),
 });
 
-export async function configure(): Promise<void> {
+export async function configure(sonido: Sonido = 'predeterminado'): Promise<void> {
+  sonidoActivo = sonido;
+
   if (Platform.OS === 'android') {
-    await Notifications.setNotificationChannelAsync(CHANNEL_ID, {
+    // Se crea solo el canal de la opción elegida. Crear los tres dejaría tres
+    // entradas en los ajustes del sistema y no se sabría cuál toca.
+    await Notifications.setNotificationChannelAsync(CANALES[sonido], {
       name: 'Mensajes programados',
       importance: Notifications.AndroidImportance.HIGH,
-      vibrationPattern: [0, 250, 250, 250],
+      // Sin declararlo, el canal puede quedar mudo: por eso estaba saliendo
+      // sin sonido. 'default' es el tono de notificación del teléfono.
+      sound: sonido === 'predeterminado' ? 'default' : null,
+      vibrationPattern: sonido === 'silencioso' ? undefined : [0, 250, 250, 250],
+      enableVibrate: sonido !== 'silencioso',
       lockscreenVisibility:
         Notifications.AndroidNotificationVisibility.PRIVATE,
     });
+
+    // Los canales de las otras opciones y el de la primera versión se borran,
+    // para que en los ajustes del sistema quede una sola entrada.
+    const sobrantes = [
+      CANAL_VIEJO,
+      ...Object.entries(CANALES)
+        .filter(([clave]) => clave !== sonido)
+        .map(([, id]) => id),
+    ];
+    for (const id of sobrantes) {
+      try {
+        await Notifications.deleteNotificationChannelAsync(id);
+      } catch {
+        // No existía: nada que borrar.
+      }
+    }
   }
 
   await Notifications.setNotificationCategoryAsync(CATEGORY_ID, [
@@ -86,6 +117,9 @@ export async function scheduleFor(
       body: previewLines(message.body),
       data: { messageId: message.id },
       categoryIdentifier: CATEGORY_ID,
+      // En iOS el sonido va por notificación, no por canal. Un booleano
+      // alcanza: true es el tono de notificación del teléfono.
+      sound: sonidoActivo === 'predeterminado',
     },
     // El canal va en el disparador, no en el contenido. Puesto en el
     // contenido se ignora sin avisar, y el aviso termina en el canal por
@@ -94,7 +128,9 @@ export async function scheduleFor(
     trigger: {
       type: Notifications.SchedulableTriggerInputTypes.DATE,
       date,
-      ...(Platform.OS === 'android' ? { channelId: CHANNEL_ID } : {}),
+      ...(Platform.OS === 'android'
+        ? { channelId: CANALES[sonidoActivo] }
+        : {}),
     },
   });
 }
@@ -126,12 +162,15 @@ export async function scheduleTest(seconds: number): Promise<void> {
       title: 'Prueba de aviso',
       body: 'Si estás leyendo esto con la app cerrada, los avisos funcionan.',
       data: { [TEST_FLAG]: true },
+      sound: sonidoActivo === 'predeterminado',
     },
     trigger: {
       type: Notifications.SchedulableTriggerInputTypes.TIME_INTERVAL,
       seconds,
       repeats: false,
-      ...(Platform.OS === 'android' ? { channelId: CHANNEL_ID } : {}),
+      ...(Platform.OS === 'android'
+        ? { channelId: CANALES[sonidoActivo] }
+        : {}),
     },
   });
 }

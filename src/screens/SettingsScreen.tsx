@@ -17,6 +17,7 @@ import { AndroidReliabilityActions } from '../components/Reliability';
 import { ConsejoDePantalla } from '../components/Ayuda';
 import { describirVersion } from '../domain/actualizacion';
 import { NOMBRES, puedeElegirApp } from '../share/whatsapp';
+import { SONIDOS, SONIDO_DETALLES, SONIDO_LABELS } from '../domain/sonido';
 import { useMessages } from '../state/MessagesContext';
 import { spacing, usePalette } from '../theme';
 import { Button, Card, Chip, Label, Title, Txt } from '../components/ui';
@@ -96,6 +97,8 @@ export function SettingsScreen(): React.ReactElement {
     buscarVersion,
     appWhatsApp,
     updateAppWhatsApp,
+    sonido,
+    updateSonido,
   } = useMessages();
   const tema = useThemePreference();
   const [busy, setBusy] = useState(false);
@@ -345,6 +348,48 @@ export function SettingsScreen(): React.ReactElement {
             En automático manda el teléfono, que es lo que querés si se pone
             oscuro al atardecer.
           </Txt>
+        </Card>
+      </View>
+
+      <View>
+        <Label>Sonido del aviso</Label>
+        <Card>
+          <View
+            style={{ flexDirection: 'row', flexWrap: 'wrap', gap: spacing(1) }}
+          >
+            {SONIDOS.map((opcion) => (
+              <Chip
+                key={opcion}
+                label={SONIDO_LABELS[opcion]}
+                selected={sonido === opcion}
+                onPress={() => void updateSonido(opcion)}
+              />
+            ))}
+          </View>
+          <Txt
+            style={{
+              color: p.textMuted,
+              fontSize: 14,
+              lineHeight: 20,
+              marginTop: spacing(1.5),
+            }}
+          >
+            {SONIDO_DETALLES[sonido]}
+          </Txt>
+          {Platform.OS === 'android' ? (
+            <Txt
+              style={{
+                color: p.textMuted,
+                fontSize: 13,
+                lineHeight: 19,
+                marginTop: spacing(1),
+              }}
+            >
+              El tono es el de notificación de tu teléfono. Para cambiarlo por
+              otro, o subirle el volumen, se hace desde los ajustes de
+              notificaciones de Android.
+            </Txt>
+          ) : null}
         </Card>
       </View>
 

@@ -50,6 +50,7 @@ import type {
 } from '../domain/types';
 import { awaitsNotification, isDone } from '../domain/types';
 import { enHistorial, enListaPrincipal } from '../domain/estado';
+import type { Sonido } from '../domain/sonido';
 
 interface PendingUndo {
   message: ScheduledMessage;
@@ -68,6 +69,8 @@ interface MessagesValue {
   quietHours: QuietHours;
   /** Qué WhatsApp se usa cuando el mensaje no lo dice. */
   appWhatsApp: settingsRepo.AppPorDefecto;
+  /** Cómo suena el aviso. */
+  sonido: Sonido;
   /** Qué tan a horario vienen llegando los avisos en este teléfono. */
   reliability: Reliability;
   onboardingCompleted: boolean;
@@ -137,6 +140,7 @@ interface MessagesValue {
   updateQuietHours: (hours: QuietHours) => Promise<void>;
   updateTheme: (valor: ThemePreference) => Promise<void>;
   updateAppWhatsApp: (valor: settingsRepo.AppPorDefecto) => Promise<void>;
+  updateSonido: (valor: Sonido) => Promise<void>;
 
   exportBackup: () => Promise<void>;
   importBackup: () => Promise<{ messages: number; templates: number } | null>;
@@ -176,6 +180,7 @@ export function MessagesProvider({
   const [consejosVistos, setConsejosVistos] = useState<string[]>([]);
   const [appWhatsApp, setAppWhatsApp] =
     useState<settingsRepo.AppPorDefecto>('normal');
+  const [sonido, setSonido] = useState<Sonido>('predeterminado');
 
   const timezone = useMemo(() => deviceTimezone(), []);
   const undoTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -255,15 +260,17 @@ export function MessagesProvider({
   useEffect(() => {
     let cancelled = false;
     (async () => {
-      await notify.configure();
+      // El canal se crea con el sonido elegido antes de agendar nada.
+      await notify.configure(await settingsRepo.loadSonido());
       const perm = await notify.getPermission();
-      const [hours, samples, onboarded, tema, consejos, app] = await Promise.all([
+      const [hours, samples, onboarded, tema, consejos, app, son] = await Promise.all([
         settingsRepo.loadQuietHours(),
         settingsRepo.loadDeliverySamples(),
         settingsRepo.loadOnboardingCompleted(),
         settingsRepo.loadThemePreference(),
         settingsRepo.loadConsejosVistos(),
         settingsRepo.loadAppWhatsApp(),
+        settingsRepo.loadSonido(),
       ]);
       // Antes de marcar la app como lista, así no se dibuja un cuadro en
       // claro y salta a oscuro.
@@ -276,6 +283,7 @@ export function MessagesProvider({
       setOnboardingCompleted(onboarded);
       setConsejosVistos(consejos);
       setAppWhatsApp(app);
+      setSonido(son);
       await refresh();
       setReady(true);
     })();
@@ -642,6 +650,28 @@ export function MessagesProvider({
     setQuietHours(hours);
   }, []);
 
+  /**
+   * Cambiar el sonido no alcanza con guardar la preferencia: en Android el
+   * sonido vive en el canal, y los avisos ya agendados apuntan al canal
+   * viejo. Hay que volver a agendarlos todos para que suenen distinto.
+   */
+  const updateSonido = useCallback(
+    async (valor: Sonido) => {
+      setSonido(valor);
+      await settingsRepo.saveSonido(valor);
+      await notify.configure(valor);
+
+      for (const m of await repo.listAll()) {
+        if (!awaitsNotification(m)) continue;
+        await notify.cancel(m.notificationId);
+        const notificationId = await notify.scheduleFor(m);
+        await repo.update(m.id, { notificationId });
+      }
+      await refresh();
+    },
+    [refresh],
+  );
+
   const updateAppWhatsApp = useCallback(
     async (valor: settingsRepo.AppPorDefecto) => {
       setAppWhatsApp(valor);
@@ -813,6 +843,7 @@ export function MessagesProvider({
       templates,
       quietHours,
       appWhatsApp,
+      sonido,
       reliability: assessReliability(deliverySamples),
       onboardingCompleted,
       osScheduled,
@@ -843,6 +874,7 @@ export function MessagesProvider({
       updateQuietHours,
       updateTheme,
       updateAppWhatsApp,
+      updateSonido,
       exportBackup,
       importBackup,
       completeOnboarding,
@@ -894,6 +926,8 @@ export function MessagesProvider({
     undo,
     undoDelete,
     appWhatsApp,
+    sonido,
+    updateSonido,
     updateAppWhatsApp,
     updateQuietHours,
     updateTheme,

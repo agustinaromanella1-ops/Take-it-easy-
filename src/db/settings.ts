@@ -3,6 +3,7 @@ import { DEFAULT_QUIET_HOURS, type QuietHours } from '../domain/quietHours';
 import type { DeliverySample } from '../domain/reliability';
 import type { ThemePreference } from '../theme';
 import type { WhatsAppApp } from '../domain/types';
+import { esSonido, type Sonido } from '../domain/sonido';
 
 const QUIET_HOURS_KEY = 'quietHours';
 const ONBOARDING_KEY = 'onboardingCompleted';
@@ -10,6 +11,7 @@ const DELIVERY_SAMPLES_KEY = 'deliverySamples';
 const THEME_KEY = 'tema';
 const CONSEJOS_KEY = 'consejosVistos';
 const APP_KEY = 'appWhatsApp';
+const SONIDO_KEY = 'sonido';
 
 async function read(key: string): Promise<string | null> {
   const db = await getDb();
@@ -111,4 +113,13 @@ export async function loadAppWhatsApp(): Promise<AppPorDefecto> {
 
 export async function saveAppWhatsApp(valor: AppPorDefecto): Promise<void> {
   await write(APP_KEY, valor);
+}
+
+export async function loadSonido(): Promise<Sonido> {
+  const raw = await read(SONIDO_KEY);
+  return esSonido(raw) ? raw : 'predeterminado';
+}
+
+export async function saveSonido(valor: Sonido): Promise<void> {
+  await write(SONIDO_KEY, valor);
 }
