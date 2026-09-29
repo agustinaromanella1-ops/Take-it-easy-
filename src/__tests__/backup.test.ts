@@ -3,6 +3,7 @@ import type { ScheduledMessage } from '../domain/types';
 
 const message: ScheduledMessage = {
   id: 'm1',
+  recipientKind: 'contacto',
   contactName: 'Sofi',
   phoneE164: '+5491123456789',
   body: 'hola',
@@ -118,5 +119,50 @@ describe('validación de los campos que la base exige', () => {
       messages: [{ ...message, status: 'draft', localAt: null, scheduledAt: null }],
     });
     expect(parseBackup(archivo).messages).toHaveLength(1);
+  });
+});
+
+describe('mensajes a grupos', () => {
+  const base = { version: 1, templates: [] };
+  const grupo = {
+    ...message,
+    recipientKind: 'grupo',
+    contactName: 'Familia',
+    phoneE164: '',
+  };
+
+  it('acepta un grupo sin número pero con nombre', () => {
+    const parsed = parseBackup(JSON.stringify({ ...base, messages: [grupo] }));
+    expect(parsed.messages[0]?.recipientKind).toBe('grupo');
+  });
+
+  it('rechaza un grupo sin nombre: no se sabría a quién iba', () => {
+    expect(() =>
+      parseBackup(
+        JSON.stringify({ ...base, messages: [{ ...grupo, contactName: null }] }),
+      ),
+    ).toThrow(/formato que no reconocemos/);
+  });
+
+  it('rechaza un contacto sin número', () => {
+    expect(() =>
+      parseBackup(
+        JSON.stringify({ ...base, messages: [{ ...message, phoneE164: '' }] }),
+      ),
+    ).toThrow(/formato que no reconocemos/);
+  });
+
+  it('rechaza un tipo de destinatario inventado', () => {
+    expect(() =>
+      parseBackup(
+        JSON.stringify({ ...base, messages: [{ ...message, recipientKind: 'paloma' }] }),
+      ),
+    ).toThrow(/formato que no reconocemos/);
+  });
+
+  it('un backup viejo sin la columna se toma como contacto', () => {
+    const { recipientKind, ...viejo } = message;
+    const parsed = parseBackup(JSON.stringify({ ...base, messages: [viejo] }));
+    expect(parsed.messages[0]?.recipientKind).toBe('contacto');
   });
 });

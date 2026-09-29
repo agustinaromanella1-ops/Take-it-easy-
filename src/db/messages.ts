@@ -6,8 +6,8 @@ import type {
   ScheduledMessage,
 } from '../domain/types';
 
-const COLUMNS = `id, contactName, phoneE164, body, scheduledAt, localAt,
-  timezone, status, createdAt, firedAt, sentAt, recurrenceRule, notes,
+const COLUMNS = `id, recipientKind, contactName, phoneE164, body, scheduledAt,
+  localAt, timezone, status, createdAt, firedAt, sentAt, recurrenceRule, notes,
   notificationId`;
 
 type Row = ScheduledMessage;
@@ -37,6 +37,7 @@ export async function create(
 
   const message: ScheduledMessage = {
     id: newId(),
+    recipientKind: input.recipientKind ?? 'contacto',
     contactName: input.contactName ?? null,
     phoneE164: input.phoneE164,
     body: input.body,
@@ -54,9 +55,10 @@ export async function create(
 
   await db.runAsync(
     `INSERT INTO messages (${COLUMNS})
-     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
     [
       message.id,
+      message.recipientKind,
       message.contactName,
       message.phoneE164,
       message.body,
@@ -91,6 +93,7 @@ type Patch = Partial<
     | 'notes'
     | 'notificationId'
     | 'recurrenceRule'
+    | 'recipientKind'
   >
 >;
 
@@ -148,6 +151,7 @@ interface Ejecutor {
 
 const VALORES = (m: ScheduledMessage): unknown[] => [
   m.id,
+  m.recipientKind,
   m.contactName,
   m.phoneE164,
   m.body,
@@ -164,16 +168,17 @@ const VALORES = (m: ScheduledMessage): unknown[] => [
 ];
 
 const INSERTAR = `INSERT OR REPLACE INTO messages (${COLUMNS})
-     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`;
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`;
 
 /** Vuelve a insertar un mensaje tal cual, para el "deshacer" del borrado. */
 export async function restore(message: ScheduledMessage): Promise<void> {
   const db = await getDb();
   await db.runAsync(
     `INSERT OR REPLACE INTO messages (${COLUMNS})
-     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
     [
       message.id,
+      message.recipientKind,
       message.contactName,
       message.phoneE164,
       message.body,

@@ -17,6 +17,7 @@ const message = (
   overrides: Partial<ScheduledMessage> = {},
 ): ScheduledMessage => ({
   id,
+  recipientKind: 'contacto',
   contactName: null,
   phoneE164: '+5491123456789',
   body: 'hola',

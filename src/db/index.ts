@@ -39,6 +39,11 @@ const MIGRATIONS: string[] = [
     value TEXT NOT NULL
   );
   `,
+  // v3 — mensajes a grupos. Lo que ya existía es de contactos, que es el
+  // valor por defecto, así que la migración no toca ninguna fila.
+  `
+  ALTER TABLE messages ADD COLUMN recipientKind TEXT NOT NULL DEFAULT 'contacto';
+  `,
 ];
 
 async function migrate(db: SQLite.SQLiteDatabase): Promise<void> {

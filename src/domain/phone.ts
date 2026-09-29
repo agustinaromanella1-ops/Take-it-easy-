@@ -94,12 +94,16 @@ export function toWhatsAppDigits(e164: string): string {
   return e164.replace(/[^\d]/g, '');
 }
 
-/** Etiqueta corta para la lista: el nombre si lo hay, si no el número. */
+/**
+ * Etiqueta corta para la lista: el nombre si lo hay, si no el número.
+ * Un grupo no tiene número, así que siempre cae en el nombre.
+ */
 export function displayName(
   contactName: string | null,
   e164: string,
 ): string {
   if (contactName && contactName.trim()) return contactName.trim();
+  if (!e164) return 'Sin destinatario';
   const parsed = parsePhoneNumberFromString(e164);
   return parsed ? parsed.formatInternational() : e164;
 }

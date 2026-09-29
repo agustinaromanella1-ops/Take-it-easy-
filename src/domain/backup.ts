@@ -45,6 +45,7 @@ const isMessage = (value: unknown): value is ScheduledMessage => {
 
   const obligatorios =
     texto(m['id']) &&
+    // Un grupo no tiene número: la columna existe pero va vacía.
     texto(m['phoneE164']) &&
     texto(m['body']) &&
     texto(m['timezone']) &&
@@ -63,6 +64,13 @@ const isMessage = (value: unknown): value is ScheduledMessage => {
   // Un mensaje con fecha pendiente pero sin localAt no cae en ninguna lista:
   // lo cuenta el contador de pendientes y no lo dibuja ninguna pantalla, así
   // que no se puede abrir ni cancelar nunca más.
+  // Un grupo se identifica solo por su nombre; sin nombre no se sabría a
+  // quién iba y la tarjeta quedaría sin título.
+  const kind = m['recipientKind'] ?? 'contacto';
+  if (kind !== 'contacto' && kind !== 'grupo') return false;
+  if (kind === 'grupo' && !texto(m['contactName'])) return false;
+  if (kind === 'contacto' && m['phoneE164'] === '') return false;
+
   const conFecha = m['status'] === 'scheduled' || m['status'] === 'fired';
   return !conFecha || texto(m['localAt']);
 };
@@ -70,6 +78,7 @@ const isMessage = (value: unknown): value is ScheduledMessage => {
 /** Completa con null lo que el archivo no traiga, para poder insertarlo. */
 const normalizar = (m: ScheduledMessage): ScheduledMessage => ({
   ...m,
+  recipientKind: m.recipientKind ?? 'contacto',
   contactName: m.contactName ?? null,
   localAt: m.localAt ?? null,
   scheduledAt: m.scheduledAt ?? null,

@@ -6,10 +6,22 @@ export type MessageStatus =
   | 'sent' // confirmado como enviado
   | 'skipped'; // la usuaria decidió no mandarlo
 
+/**
+ * A quién va el mensaje.
+ *
+ * Un contacto se abre directo en su chat con el texto ya puesto. Un grupo no:
+ * WhatsApp no publica ninguna forma de abrir un grupo concreto desde afuera,
+ * así que el grupo se guarda solo como nombre —para saber de qué mensaje se
+ * trata— y al momento de mandarlo se abre el selector de chats de WhatsApp con
+ * el texto listo. Es un toque más y no se puede hacer mejor.
+ */
+export type RecipientKind = 'contacto' | 'grupo';
+
 export interface ScheduledMessage {
   id: string;
+  recipientKind: RecipientKind;
   contactName: string | null;
-  /** Siempre en E.164, ej "+5491112345678". */
+  /** En E.164, ej "+5491112345678". Vacío cuando el destinatario es un grupo. */
   phoneE164: string;
   body: string;
   /**
@@ -37,6 +49,7 @@ export interface ScheduledMessage {
 
 /** Lo que hace falta para crear un mensaje. El resto lo completa el repositorio. */
 export interface NewMessageInput {
+  recipientKind?: RecipientKind;
   contactName?: string | null;
   phoneE164: string;
   body: string;

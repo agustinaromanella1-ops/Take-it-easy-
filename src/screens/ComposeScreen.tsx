@@ -33,7 +33,11 @@ import { Button, Chip, Label, Txt } from '../components/ui';
 import { ChatBubblePreview } from '../components/ChatBubblePreview';
 import { ConsejoDePantalla } from '../components/Ayuda';
 import { PromptModal } from '../components/PromptModal';
-import { RecipientPicker, type Recipient } from '../components/RecipientPicker';
+import {
+  RecipientPicker,
+  claveDe,
+  type Recipient,
+} from '../components/RecipientPicker';
 import { WhenPicker } from '../components/WhenPicker';
 import type { RootStackParamList } from '../navigation/types';
 
@@ -94,7 +98,15 @@ export function ComposeScreen({
     // Duplicar es "lo mismo para otra persona", así que el destinatario se
     // elige de nuevo. Reenviar es "de nuevo a esta persona" y lo conserva.
     setRecipients(
-      duplicateOf ? [] : [{ name: fuente.contactName, e164: fuente.phoneE164 }],
+      duplicateOf
+        ? []
+        : [
+            {
+              kind: fuente.recipientKind,
+              name: fuente.contactName,
+              e164: fuente.phoneE164,
+            },
+          ],
     );
     setBody(fuente.body);
     setWhen(editingId ? fuente.localAt : null);
@@ -124,7 +136,7 @@ export function ComposeScreen({
 
   const addRecipient = (recipient: Recipient) =>
     setRecipients((current) =>
-      current.some((r) => r.e164 === recipient.e164)
+      current.some((r) => claveDe(r) === claveDe(recipient))
         ? current
         : editingId
           ? [recipient]
@@ -137,8 +149,8 @@ export function ComposeScreen({
   const offerToSaveTemplate = () => setNamingTemplate(true);
 
   const save = async () => {
-    const parsedAll = recipients.map((r) => parsePhone(r.e164));
-    if (parsedAll.some((x) => !x.ok)) {
+    const contactos = recipients.filter((r) => r.kind === 'contacto');
+    if (contactos.some((r) => !parsePhone(r.e164).ok)) {
       Alert.alert('Revisá los números', 'Hay un teléfono que no pudimos interpretar.');
       return;
     }
@@ -171,6 +183,7 @@ export function ComposeScreen({
           body: text,
           phoneE164: first.e164,
           contactName: first.name,
+          recipientKind: first.kind,
           recurrenceRule,
           ...(when && when !== existing.localAt ? { localAt: when } : {}),
         });
@@ -178,6 +191,7 @@ export function ComposeScreen({
         const only = recipients[0];
         if (!only) return;
         await createMessage({
+          recipientKind: only.kind,
           contactName: only.name,
           phoneE164: only.e164,
           body: text,
@@ -213,8 +227,8 @@ export function ComposeScreen({
           selected={recipients}
           allowMultiple={!editingId}
           onAdd={addRecipient}
-          onRemove={(e164) =>
-            setRecipients((current) => current.filter((r) => r.e164 !== e164))
+          onRemove={(clave) =>
+            setRecipients((current) => current.filter((r) => claveDe(r) !== clave))
           }
         />
 

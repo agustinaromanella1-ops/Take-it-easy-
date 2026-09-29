@@ -9,13 +9,20 @@ import {
   formatAsYouType,
   parsePhone,
 } from '../domain/phone';
+import type { RecipientKind } from '../domain/types';
 import { BORDER_WIDTH, radius, spacing, usePalette } from '../theme';
 import { Chip, Label, Txt } from './ui';
 
 export interface Recipient {
+  kind: RecipientKind;
   name: string | null;
+  /** Vacío cuando es un grupo: WhatsApp no los identifica por número. */
   e164: string;
 }
+
+/** Clave estable para listas y borrados: un grupo no tiene número. */
+export const claveDe = (r: Recipient): string =>
+  r.kind === 'grupo' ? `grupo:${r.name ?? ''}` : r.e164;
 
 export function RecipientPicker({
   selected,
@@ -32,6 +39,8 @@ export function RecipientPicker({
   const [country, setCountry] = useState<CountryCode>(DEFAULT_COUNTRY);
   const [raw, setRaw] = useState('');
   const [showCountries, setShowCountries] = useState(false);
+  const [kind, setKind] = useState<RecipientKind>('contacto');
+  const [grupo, setGrupo] = useState('');
 
   const parsed = parsePhone(raw, country);
 
@@ -39,6 +48,7 @@ export function RecipientPicker({
     onAdd(recipient);
     if (allowMultiple) setRaw('');
   };
+
 
   const pickFromContacts = async () => {
     const { status } = await Contacts.requestPermissionsAsync();
@@ -67,7 +77,7 @@ export function RecipientPicker({
     }
 
     setRaw(allowMultiple ? '' : number);
-    commit({ name: contact.name ?? null, e164: fromContact.e164 });
+    commit({ kind: 'contacto', name: contact.name ?? null, e164: fromContact.e164 });
   };
 
   const onChangeRaw = (text: string) => {
@@ -76,15 +86,34 @@ export function RecipientPicker({
     if (next.ok && next.e164) {
       // En modo simple el número tipeado es el destinatario; en modo múltiple
       // hace falta confirmarlo con "Agregar" para poder cargar varios.
-      if (!allowMultiple) commit({ name: null, e164: next.e164 });
+      if (!allowMultiple) commit({ kind: 'contacto', name: null, e164: next.e164 });
     } else if (!allowMultiple && selected.length > 0) {
-      onRemove(selected[0]?.e164 ?? '');
+      onRemove(claveDe(selected[0] ?? { kind: 'contacto', name: null, e164: '' }));
     }
   };
 
   return (
     <View>
       <Label>¿A quién?</Label>
+
+      <View
+        style={{
+          flexDirection: 'row',
+          gap: spacing(1),
+          marginBottom: spacing(1.5),
+        }}
+      >
+        <Chip
+          label="Un contacto"
+          selected={kind === 'contacto'}
+          onPress={() => setKind('contacto')}
+        />
+        <Chip
+          label="Un grupo"
+          selected={kind === 'grupo'}
+          onPress={() => setKind('grupo')}
+        />
+      </View>
 
       {selected.length > 0 ? (
         <View
@@ -97,10 +126,10 @@ export function RecipientPicker({
         >
           {selected.map((r) => (
             <Pressable
-              key={r.e164}
+              key={claveDe(r)}
               accessibilityRole="button"
               accessibilityLabel={`Quitar ${r.name ?? r.e164}`}
-              onPress={() => onRemove(r.e164)}
+              onPress={() => onRemove(claveDe(r))}
               style={{
                 flexDirection: 'row',
                 alignItems: 'center',
@@ -112,7 +141,7 @@ export function RecipientPicker({
               }}
             >
               <Txt style={{ color: p.text, fontSize: 15, fontWeight: '600' }}>
-                {r.name ?? r.e164}
+                {r.kind === 'grupo' ? `👥 ${r.name ?? ''}` : (r.name ?? r.e164)}
               </Txt>
               <Txt style={{ color: p.textMuted, fontSize: 15 }}>✕</Txt>
             </Pressable>
@@ -120,6 +149,58 @@ export function RecipientPicker({
         </View>
       ) : null}
 
+      {kind === 'grupo' ? (
+        <View>
+          <TextInput
+            value={grupo}
+            onChangeText={setGrupo}
+            placeholder="Nombre del grupo, ej: Familia"
+            placeholderTextColor={p.textMuted}
+            accessibilityLabel="Nombre del grupo"
+            onSubmitEditing={() => {
+              if (grupo.trim()) commit({ kind: 'grupo', name: grupo.trim(), e164: '' });
+              setGrupo('');
+            }}
+            style={{
+              borderWidth: BORDER_WIDTH,
+              borderColor: p.border,
+              backgroundColor: p.surface,
+              borderRadius: radius.md,
+              paddingHorizontal: spacing(1.5),
+              paddingVertical: spacing(1.5),
+              fontSize: 16,
+              color: p.text,
+            }}
+          />
+          <Txt
+            style={{
+              color: p.textMuted,
+              fontSize: 13,
+              lineHeight: 19,
+              marginTop: spacing(1),
+            }}
+          >
+            El nombre es para que sepas de qué mensaje se trata. WhatsApp no
+            deja abrir un grupo desde afuera, así que a la hora del aviso se
+            abre tu lista de chats con el texto ya escrito y elegís el grupo.
+          </Txt>
+          {grupo.trim() ? (
+            <Pressable
+              accessibilityRole="button"
+              onPress={() => {
+                commit({ kind: 'grupo', name: grupo.trim(), e164: '' });
+                setGrupo('');
+              }}
+              style={{ marginTop: spacing(1) }}
+            >
+              <Txt style={{ color: p.accent, fontSize: 15, fontWeight: '700' }}>
+                ＋ Agregar "{grupo.trim()}"
+              </Txt>
+            </Pressable>
+          ) : null}
+        </View>
+      ) : (
+      <>
       <View style={{ flexDirection: 'row', gap: spacing(1) }}>
         <Pressable
           accessibilityRole="button"
@@ -203,7 +284,7 @@ export function RecipientPicker({
           <Pressable
             accessibilityRole="button"
             onPress={() => {
-              if (parsed.e164) commit({ name: null, e164: parsed.e164 });
+              if (parsed.e164) commit({ kind: 'contacto', name: null, e164: parsed.e164 });
             }}
           >
             <Txt style={{ color: p.accent, fontSize: 15, fontWeight: '700' }}>
@@ -225,6 +306,8 @@ export function RecipientPicker({
           del +54.
         </Txt>
       ) : null}
+      </>
+      )}
     </View>
   );
 }

@@ -67,6 +67,14 @@ describe('displayName', () => {
     expect(displayName('Sofi', '+5491123456789')).toBe('Sofi');
   });
 
+  it('un grupo se identifica por su nombre, que es lo único que tiene', () => {
+    expect(displayName('Familia', '')).toBe('Familia');
+  });
+
+  it('sin nombre ni número lo dice, en vez de mostrar una tarjeta vacía', () => {
+    expect(displayName(null, '')).toBe('Sin destinatario');
+  });
+
   it('cae al número formateado si no hay nombre', () => {
     expect(displayName(null, '+5491123456789')).toBe('+54 9 11 2345 6789');
     expect(displayName('   ', '+5491123456789')).toBe('+54 9 11 2345 6789');

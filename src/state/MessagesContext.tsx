@@ -36,7 +36,12 @@ import {
 import { buscarPublicacion, compiladaEn } from '../update/github';
 import type { Template } from '../domain/templates';
 import { whatsappSchemeUrl, whatsappWebUrl } from '../domain/whatsapp';
-import type { NewMessageInput, ScheduledMessage } from '../domain/types';
+import { compartirConWhatsApp } from '../share/whatsapp';
+import type {
+  NewMessageInput,
+  RecipientKind,
+  ScheduledMessage,
+} from '../domain/types';
 import { awaitsNotification, isDone, isPending } from '../domain/types';
 
 interface PendingUndo {
@@ -81,7 +86,7 @@ interface MessagesValue {
   createMessage: (input: NewMessageInput) => Promise<ScheduledMessage>;
   /** Un mensaje individual por destinatario: nunca una difusión. */
   createForMany: (
-    recipients: { name: string | null; e164: string }[],
+    recipients: { kind: RecipientKind; name: string | null; e164: string }[],
     input: Omit<NewMessageInput, 'phoneE164' | 'contactName'>,
   ) => Promise<number>;
   editMessage: (
@@ -90,6 +95,7 @@ interface MessagesValue {
       body?: string;
       phoneE164?: string;
       contactName?: string | null;
+      recipientKind?: RecipientKind;
       recurrenceRule?: string | null;
       /** Nueva hora de pared, si cambió. */
       localAt?: string | null;
@@ -319,12 +325,13 @@ export function MessagesProvider({
    */
   const createForMany = useCallback(
     async (
-      recipients: { name: string | null; e164: string }[],
+      recipients: { kind: RecipientKind; name: string | null; e164: string }[],
       input: Omit<NewMessageInput, 'phoneE164' | 'contactName'>,
     ) => {
       for (const recipient of recipients) {
         await createMessage({
           ...input,
+          recipientKind: recipient.kind,
           phoneE164: recipient.e164,
           contactName: recipient.name,
         });
@@ -341,6 +348,7 @@ export function MessagesProvider({
         body?: string;
         phoneE164?: string;
         contactName?: string | null;
+        recipientKind?: RecipientKind;
         recurrenceRule?: string | null;
         localAt?: string | null;
       },
@@ -411,15 +419,21 @@ export function MessagesProvider({
       const message = await repo.getById(id);
       if (!message) return;
 
-      const scheme = whatsappSchemeUrl(message.phoneE164, message.body);
-      const web = whatsappWebUrl(message.phoneE164, message.body);
-
       openedId.current = id;
-      try {
-        const canOpen = await Linking.canOpenURL(scheme);
-        await Linking.openURL(canOpen ? scheme : web);
-      } catch {
-        await Linking.openURL(web);
+
+      if (message.recipientKind === 'grupo') {
+        // No hay forma de abrir un grupo concreto: se le entrega el texto a
+        // WhatsApp y la usuaria elige el chat de su propia lista.
+        await compartirConWhatsApp(message.body);
+      } else {
+        const scheme = whatsappSchemeUrl(message.phoneE164, message.body);
+        const web = whatsappWebUrl(message.phoneE164, message.body);
+        try {
+          const canOpen = await Linking.canOpenURL(scheme);
+          await Linking.openURL(canOpen ? scheme : web);
+        } catch {
+          await Linking.openURL(web);
+        }
       }
 
       // Un borrador no tiene fecha, y 'fired' sin fecha no cae en ninguna

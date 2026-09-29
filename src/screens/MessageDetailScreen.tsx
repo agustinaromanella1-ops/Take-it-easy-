@@ -134,7 +134,11 @@ export function MessageDetailScreen({
 
       <View style={{ gap: spacing(1) }}>
         <Button
-          label="Abrir WhatsApp con el mensaje"
+          label={
+            message.recipientKind === 'grupo'
+              ? 'Mandar al grupo por WhatsApp'
+              : 'Abrir WhatsApp con el mensaje'
+          }
           onPress={() => void openInWhatsApp(message.id)}
         />
         <Txt
@@ -145,7 +149,9 @@ export function MessageDetailScreen({
             lineHeight: 18,
           }}
         >
-          Se abre el chat con el texto ya escrito. El envío lo confirmás vos.
+          {message.recipientKind === 'grupo'
+            ? 'Se abre tu lista de chats con el texto ya escrito: elegís el grupo y enviás. WhatsApp no deja abrir un grupo desde afuera.'
+            : 'Se abre el chat con el texto ya escrito. El envío lo confirmás vos.'}
         </Txt>
       </View>
 
