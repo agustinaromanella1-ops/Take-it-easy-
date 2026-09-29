@@ -75,6 +75,8 @@ interface MessagesValue {
       phoneE164?: string;
       contactName?: string | null;
       recurrenceRule?: string | null;
+      /** Nueva hora de pared, si cambió. */
+      localAt?: string | null;
     },
   ) => Promise<void>;
   rescheduleMessage: (id: string, localAt: string) => Promise<void>;
@@ -310,20 +312,33 @@ export function MessagesProvider({
         phoneE164?: string;
         contactName?: string | null;
         recurrenceRule?: string | null;
+        localAt?: string | null;
       },
     ) => {
-      await repo.update(id, patch);
-      // El texto viaja en la notificación, así que la reagendamos para que el
-      // aviso muestre lo que realmente se va a mandar.
+      const { localAt, ...campos } = patch;
+
+      const anterior = await repo.getById(id);
+      await notify.cancel(anterior?.notificationId ?? null);
+
+      await repo.update(id, campos);
+      // La hora va junto con el resto en una sola pasada. Reagendar por
+      // separado programaba un aviso a la hora vieja para cancelarlo al
+      // instante y programar un tercero: dos llamadas al sistema de más y un
+      // rato con un aviso a una hora que ya se había cambiado.
+      if (localAt !== undefined && localAt !== null) {
+        await repo.reschedule(id, localAt, timezone);
+      }
+
+      // El texto y el destinatario viajan en la notificación, así que se
+      // reagenda aunque solo haya cambiado el mensaje.
       const updated = await repo.getById(id);
       if (updated && updated.status === 'scheduled') {
-        await notify.cancel(updated.notificationId);
         const notificationId = await notify.scheduleFor(updated);
         await repo.update(id, { notificationId });
       }
       await refresh();
     },
-    [refresh],
+    [refresh, timezone],
   );
 
   const dismissUndo = useCallback(() => {
@@ -447,6 +462,7 @@ export function MessagesProvider({
           await repo.update(id, { notificationId });
         }
       } else {
+        await repo.update(id, { notificationId: null });
         await repo.setStatus(id, 'skipped');
       }
 
@@ -560,17 +576,22 @@ export function MessagesProvider({
     // roto, tira un error entendible y no se importa nada a medias.
     const backup = parseBackup(raw);
 
-    // Las filas que se van a pisar traen notificationId; si las sobrescribimos
-    // sin cancelar, ese aviso queda huérfano —ya no hay id para cancelarlo— y
-    // reconcile() agenda uno nuevo encima: llegan dos.
-    for (const existente of await repo.listAll()) {
-      await notify.cancel(existente.notificationId);
-    }
+    // Los ids de aviso de antes de importar. Se cancelan DESPUÉS de que la
+    // importación salga bien: si se cancelaran primero y la transacción
+    // fallara, la base quedaría intacta pero sin ningún aviso agendado.
+    const previos = (await repo.listAll()).map((m) => m.notificationId);
 
     await repo.replaceAllMessages(backup.messages);
     await templatesRepo.replaceAllTemplates(backup.templates);
-    // Los mensajes importados llegan sin notificación agendada; reconcile les
-    // vuelve a poner una a los que siguen siendo futuros.
+
+    for (const id of previos) {
+      await notify.cancel(id);
+    }
+    // Y se limpian los ids de TODAS las filas, no solo de las que el archivo
+    // pisó: una fila que el backup no traía conserva un id ya cancelado, y
+    // con ese id puesto reconcile la da por agendada y no vuelve a agendarla.
+    await repo.clearAllNotificationIds();
+
     await reconcile();
     await refresh();
 
@@ -594,8 +615,10 @@ export function MessagesProvider({
         return;
       }
       void (async () => {
+        // Se pregunta porque fuimos nosotros los que abrimos WhatsApp, no por
+        // el estado: un borrador no pasa a 'fired' y así igual se confirma.
         const message = await repo.getById(id);
-        if (message && message.status === 'fired') {
+        if (message && !isDone(message)) {
           setAwaitingConfirmation(message);
         }
         await refresh();

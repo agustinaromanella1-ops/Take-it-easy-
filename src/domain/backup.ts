@@ -33,22 +33,52 @@ const ESTADOS: MessageStatus[] = [
   'skipped',
 ];
 
+const texto = (v: unknown): v is string => typeof v === 'string';
+/** Las columnas que aceptan null tienen que ser null, no faltar: un
+ *  `undefined` no es un valor que SQLite sepa ligar y rompe la inserción. */
+const opcional = (v: unknown): v is string | null | undefined =>
+  v === null || v === undefined || typeof v === 'string';
+
 const isMessage = (value: unknown): value is ScheduledMessage => {
   if (typeof value !== 'object' || value === null) return false;
   const m = value as Record<string, unknown>;
-  return (
-    typeof m['id'] === 'string' &&
-    typeof m['phoneE164'] === 'string' &&
-    typeof m['body'] === 'string' &&
-    typeof m['timezone'] === 'string' &&
-    // createdAt es NOT NULL en la tabla y el estado tiene que ser uno de los
-    // que el resto del código sabe manejar: sin estas dos, un archivo
-    // malformado rompe recién a mitad de la importación.
-    typeof m['createdAt'] === 'string' &&
-    typeof m['status'] === 'string' &&
-    (ESTADOS as string[]).includes(m['status'])
-  );
+
+  const obligatorios =
+    texto(m['id']) &&
+    texto(m['phoneE164']) &&
+    texto(m['body']) &&
+    texto(m['timezone']) &&
+    texto(m['createdAt']) &&
+    texto(m['status']) &&
+    (ESTADOS as string[]).includes(m['status'] as string);
+
+  if (!obligatorios) return false;
+
+  const nulables = (
+    ['contactName', 'localAt', 'scheduledAt', 'firedAt', 'sentAt', 'recurrenceRule', 'notes', 'notificationId'] as const
+  ).every((k) => opcional(m[k]));
+
+  if (!nulables) return false;
+
+  // Un mensaje con fecha pendiente pero sin localAt no cae en ninguna lista:
+  // lo cuenta el contador de pendientes y no lo dibuja ninguna pantalla, así
+  // que no se puede abrir ni cancelar nunca más.
+  const conFecha = m['status'] === 'scheduled' || m['status'] === 'fired';
+  return !conFecha || texto(m['localAt']);
 };
+
+/** Completa con null lo que el archivo no traiga, para poder insertarlo. */
+const normalizar = (m: ScheduledMessage): ScheduledMessage => ({
+  ...m,
+  contactName: m.contactName ?? null,
+  localAt: m.localAt ?? null,
+  scheduledAt: m.scheduledAt ?? null,
+  firedAt: m.firedAt ?? null,
+  sentAt: m.sentAt ?? null,
+  recurrenceRule: m.recurrenceRule ?? null,
+  notes: m.notes ?? null,
+  notificationId: null,
+});
 
 const isTemplate = (value: unknown): value is Template => {
   if (typeof value !== 'object' || value === null) return false;
@@ -98,7 +128,7 @@ export function parseBackup(raw: string): BackupFile {
     version: file['version'],
     exportedAt:
       typeof file['exportedAt'] === 'string' ? file['exportedAt'] : '',
-    messages,
+    messages: messages.map(normalizar),
     templates,
   };
 }

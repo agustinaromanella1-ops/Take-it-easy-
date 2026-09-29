@@ -55,7 +55,7 @@ export function HistoryScreen(): React.ReactElement {
                   : ''
             }
             onPress={() =>
-              navigation.navigate('Compose', { duplicateOf: item.id })
+              navigation.navigate('Compose', { resendOf: item.id })
             }
           />
         )}

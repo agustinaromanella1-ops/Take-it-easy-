@@ -141,6 +141,31 @@ export async function remove(id: string): Promise<void> {
   await db.runAsync('DELETE FROM messages WHERE id = ?', [id]);
 }
 
+/** Lo mínimo que necesitamos de una conexión o de una transacción. */
+interface Ejecutor {
+  runAsync: (sql: string, params: unknown[]) => Promise<unknown>;
+}
+
+const VALORES = (m: ScheduledMessage): unknown[] => [
+  m.id,
+  m.contactName,
+  m.phoneE164,
+  m.body,
+  m.scheduledAt,
+  m.localAt,
+  m.timezone,
+  m.status,
+  m.createdAt,
+  m.firedAt,
+  m.sentAt,
+  m.recurrenceRule,
+  m.notes,
+  m.notificationId,
+];
+
+const INSERTAR = `INSERT OR REPLACE INTO messages (${COLUMNS})
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`;
+
 /** Vuelve a insertar un mensaje tal cual, para el "deshacer" del borrado. */
 export async function restore(message: ScheduledMessage): Promise<void> {
   const db = await getDb();
@@ -195,9 +220,26 @@ export async function replaceAllMessages(
   messages: ScheduledMessage[],
 ): Promise<void> {
   const db = await getDb();
-  await db.withTransactionAsync(async () => {
+  // Exclusiva y no la común: expo-sqlite documenta que withTransactionAsync no
+  // controla el orden de los await, así que un aviso que suena a mitad de la
+  // importación mete su cambio de estado adentro de esta transacción y se
+  // pierde si después hay que revertir.
+  await db.withExclusiveTransactionAsync(async (txn) => {
     for (const message of messages) {
-      await restore({ ...message, notificationId: null });
+      await (txn as unknown as Ejecutor).runAsync(INSERTAR, VALORES({
+        ...message,
+        notificationId: null,
+      }));
     }
   });
+}
+
+/**
+ * Borra los ids de notificación de todas las filas. Se usa después de
+ * importar: los avisos viejos ya se cancelaron y sus ids no sirven más, así
+ * que hay que dejarlos en null para que reconcile vuelva a agendar.
+ */
+export async function clearAllNotificationIds(): Promise<void> {
+  const db = await getDb();
+  await db.runAsync('UPDATE messages SET notificationId = NULL', []);
 }

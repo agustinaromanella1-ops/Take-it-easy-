@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { Platform, View } from 'react-native';
 import DateTimePicker, {
   DateTimePickerAndroid,
@@ -27,12 +27,27 @@ export function WhenPicker({
 }): React.ReactElement {
   const p = usePalette();
   const [iosPickerVisible, setIosPickerVisible] = useState(false);
-  /** Qué atajo está elegido, por id: el valor en sí se recalcula y no sirve. */
+  /**
+   * Qué atajo se tocó. No alcanza con comparar el valor contra el del atajo:
+   * "En 2 horas" se recalcula y a los pocos minutos ya no coincide consigo
+   * mismo. Pero tampoco alcanza con recordar el id, porque el valor puede
+   * cambiarlo otro control —el aviso de horario permitido, por ejemplo—; por
+   * eso se guarda también lo último que emitimos y la marca se limpia si el
+   * valor dejó de ser ese.
+   */
   const [elegido, setElegido] = useState<string | null>(null);
+  const emitido = useRef<WallClock | null>(null);
+
+  useEffect(() => {
+    if (value !== emitido.current) setElegido(null);
+  }, [value]);
 
   // Sin memorizar: si la pantalla queda abierta un rato, "En 2 horas"
   // apuntaría a un momento ya pasado y el guardado lo rechazaría.
   const options = quickOptions(timezone);
+  // Al editar un mensaje cuya hora coincide exactamente con un atajo, se marca
+  // ese atajo aunque nadie lo haya tocado en esta pantalla.
+  const marcado = elegido ?? options.find((o) => o.wall === value)?.id ?? null;
 
   const openCustomPicker = () => {
     const base = value ? parseISO(value) : new Date();
@@ -78,13 +93,18 @@ export function WhenPicker({
           <Chip
             key={o.id}
             label={o.label}
-            selected={elegido === o.id}
+            selected={marcado === o.id}
             onPress={() => {
               // Recalculado al tocar, no al dibujar: entre una cosa y la otra
               // pudo pasar el tiempo suficiente para que el valor sea pasado.
               const fresco = quickOptions(timezone).find((x) => x.id === o.id);
+              // Si el atajo venció entre el dibujado y el toque, ya no está
+              // en la lista nueva. Caer al valor viejo sería agendar en el
+              // pasado, que es justo lo que este recálculo evita.
+              if (!fresco) return;
+              emitido.current = fresco.wall;
               setElegido(o.id);
-              onChange((fresco ?? o).wall);
+              onChange(fresco.wall);
             }}
           />
         ))}
@@ -92,6 +112,7 @@ export function WhenPicker({
           label="Otro momento…"
           onPress={() => {
             setElegido(null);
+            emitido.current = null;
             openCustomPicker();
           }}
         />

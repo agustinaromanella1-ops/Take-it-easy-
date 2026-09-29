@@ -52,21 +52,26 @@ export function ComposeScreen({
     createMessage,
     createForMany,
     editMessage,
-    rescheduleMessage,
     saveTemplate,
   } = useMessages();
 
   const editingId = route.params?.id ?? null;
   const duplicateOf = route.params?.duplicateOf ?? null;
+  const resendOf = route.params?.resendOf ?? null;
+  /** De dónde salen los datos iniciales. Editar manda sobre las otras dos. */
+  const copiaDe = editingId ?? duplicateOf ?? resendOf;
 
   const existing = useMemo(
-    () => messages.find((m) => m.id === editingId) ?? null,
+    () => (editingId ? messages.find((m) => m.id === editingId) ?? null : null),
     [editingId, messages],
   );
-  /** Duplicar no crea nada: se copian los datos y recién al guardar hay fila. */
+  // Copiar no crea nada: los datos se cargan en el formulario y recién al
+  // guardar hay una fila.
   const fuente = useMemo(
-    () => messages.find((m) => m.id === (editingId ?? duplicateOf)) ?? null,
-    [duplicateOf, editingId, messages],
+    () =>
+      existing ??
+      (copiaDe ? messages.find((m) => m.id === copiaDe) ?? null : null),
+    [copiaDe, existing, messages],
   );
 
   const [recipients, setRecipients] = useState<Recipient[]>([]);
@@ -82,20 +87,18 @@ export function ComposeScreen({
   // aviso mientras se escribía pisaba el texto tipeado con el guardado.
   const cargado = useRef<string | null>(null);
   useEffect(() => {
-    const clave = editingId ?? duplicateOf;
-    if (!fuente || !clave || cargado.current === clave) return;
-    cargado.current = clave;
+    if (!fuente || !copiaDe || cargado.current === copiaDe) return;
+    cargado.current = copiaDe;
 
+    // Duplicar es "lo mismo para otra persona", así que el destinatario se
+    // elige de nuevo. Reenviar es "de nuevo a esta persona" y lo conserva.
     setRecipients(
-      // Al duplicar, el destinatario se elige de nuevo: es el punto de duplicar.
-      duplicateOf
-        ? []
-        : [{ name: fuente.contactName, e164: fuente.phoneE164 }],
+      duplicateOf ? [] : [{ name: fuente.contactName, e164: fuente.phoneE164 }],
     );
     setBody(fuente.body);
-    setWhen(duplicateOf ? null : fuente.localAt);
+    setWhen(editingId ? fuente.localAt : null);
     setFrequency(parseRule(fuente.recurrenceRule));
-  }, [duplicateOf, editingId, fuente]);
+  }, [copiaDe, duplicateOf, editingId, fuente]);
 
   useEffect(() => {
     navigation.setOptions({
@@ -103,9 +106,11 @@ export function ComposeScreen({
         ? 'Editar mensaje'
         : duplicateOf
           ? 'Duplicar mensaje'
-          : 'Nuevo mensaje',
+          : resendOf
+            ? 'Volver a mandarlo'
+            : 'Nuevo mensaje',
     });
-  }, [duplicateOf, editingId, navigation]);
+  }, [duplicateOf, editingId, navigation, resendOf]);
 
   const variables = useMemo(() => extractVariables(body), [body]);
   const rendered = useMemo(
@@ -172,10 +177,8 @@ export function ComposeScreen({
           phoneE164: first.e164,
           contactName: first.name,
           recurrenceRule,
+          ...(when && when !== existing.localAt ? { localAt: when } : {}),
         });
-        if (when && when !== existing.localAt) {
-          await rescheduleMessage(existing.id, when);
-        }
       } else if (recipients.length === 1) {
         const only = recipients[0];
         if (!only) return;

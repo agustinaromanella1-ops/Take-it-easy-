@@ -46,9 +46,10 @@ export default function App(): React.ReactElement | null {
   // mucho peor que verse distinta.
   const listo = fontsLoaded || fontError !== null;
 
+  // Solo se llama desde la vista que se dibuja cuando `listo` ya es cierto.
   const onReady = useCallback(() => {
-    if (listo) void SplashScreen.hideAsync();
-  }, [listo]);
+    void SplashScreen.hideAsync();
+  }, []);
 
   if (!listo) return null;
 

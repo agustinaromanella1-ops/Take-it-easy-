@@ -28,8 +28,23 @@ const template = {
 describe('backup', () => {
   it('hace ida y vuelta sin perder datos', () => {
     const parsed = parseBackup(serializeBackup([message], [template]));
-    expect(parsed.messages).toEqual([message]);
+    // El id de notificación no sobrevive a propósito: apunta a un aviso
+    // agendado en el teléfono que exportó, y en este no existe.
+    expect(parsed.messages).toEqual([{ ...message, notificationId: null }]);
     expect(parsed.templates).toEqual([template]);
+  });
+
+  it('completa con null los campos opcionales que el archivo no traiga', () => {
+    const { contactName, notes, ...incompleto } = message;
+    const parsed = parseBackup(
+      JSON.stringify({ version: 1, messages: [incompleto], templates: [] }),
+    );
+    // Un campo ausente llega como undefined, que SQLite no sabe ligar.
+    expect(parsed.messages[0]).toMatchObject({
+      contactName: null,
+      notes: null,
+      notificationId: null,
+    });
   });
 
   it('rechaza un archivo que no es JSON', () => {
@@ -85,5 +100,23 @@ describe('validación de los campos que la base exige', () => {
       const archivo = JSON.stringify({ ...base, messages: [{ ...message, status }] });
       expect(parseBackup(archivo).messages).toHaveLength(1);
     }
+  });
+
+  it('rechaza un programado sin fecha, que no caería en ninguna lista', () => {
+    for (const status of ['scheduled', 'fired']) {
+      const archivo = JSON.stringify({
+        ...base,
+        messages: [{ ...message, status, localAt: null }],
+      });
+      expect(() => parseBackup(archivo)).toThrow(/formato que no reconocemos/);
+    }
+  });
+
+  it('un borrador sin fecha sí es válido', () => {
+    const archivo = JSON.stringify({
+      ...base,
+      messages: [{ ...message, status: 'draft', localAt: null, scheduledAt: null }],
+    });
+    expect(parseBackup(archivo).messages).toHaveLength(1);
   });
 });
