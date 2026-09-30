@@ -25,3 +25,13 @@ dist-ssr
 
 # Rastro de compilación de TypeScript
 *.tsbuildinfo
+
+# Claves de firma. La de Play no se versiona nunca: si se filtra, cualquiera
+# puede publicar una actualización de la app haciéndose pasar por vos.
+# `prueba.keystore` es la excepción a propósito —es pública, sirve sólo para
+# que los APK de prueba se puedan instalar uno encima del otro— y por eso se
+# la nombra a mano más abajo.
+*.keystore
+*.jks
+*.p12
+!android/app/prueba.keystore
