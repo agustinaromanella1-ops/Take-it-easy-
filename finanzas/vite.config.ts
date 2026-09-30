@@ -106,6 +106,8 @@ export default defineConfig({
         ],
         cleanupOutdatedCaches: true,
         navigateFallback: '/index.html',
+        // El servicio para compartir no es una página: nunca se responde con la app.
+        navigateFallbackDenylist: [/^\/api\//],
       },
       devOptions: { enabled: false },
     }),
@@ -115,6 +117,6 @@ export default defineConfig({
   test: {
     globals: true,
     environment: 'node',
-    include: ['src/**/*.test.ts'],
+    include: ['src/**/*.test.ts', 'server/**/*.test.ts'],
   },
 });

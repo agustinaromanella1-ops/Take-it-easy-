@@ -21,7 +21,9 @@ export type Ventana =
   | { tipo: 'asignar'; movimientoId: string }
   | { tipo: 'resumen'; tarjetaId: string }
   | { tipo: 'importar' }
-  | { tipo: 'escenarios'; cuentaId: string };
+  | { tipo: 'escenarios'; cuentaId: string }
+  | { tipo: 'inversion' }
+  | { tipo: 'compartir' };
 
 export type Pestana = 'hoy' | 'plata' | 'planes' | 'ajustes';
 

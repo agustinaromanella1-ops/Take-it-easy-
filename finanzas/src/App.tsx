@@ -17,6 +17,8 @@ import { Explicacion } from './components/Explicacion';
 import { Escenarios } from './components/Escenarios';
 import { Importar } from './components/Importar';
 import { LeerResumen } from './components/LeerResumen';
+import { Inversion } from './components/Inversion';
+import { Compartir } from './components/Compartir';
 import { Celebracion } from './components/Companero';
 import { Hormiga } from './components/Hormiga';
 import { BarraActualizar, Deshacer, NoSeGuarda } from './components/Barras';
@@ -206,5 +208,9 @@ function VentanaAbierta({ v }: { v: Ventana }) {
       return <Importar />;
     case 'resumen':
       return <LeerResumen tarjetaId={v.tarjetaId} />;
+    case 'inversion':
+      return <Inversion />;
+    case 'compartir':
+      return <Compartir />;
   }
 }

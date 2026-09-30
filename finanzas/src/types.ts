@@ -178,6 +178,11 @@ export interface Preferencias {
   recordatorioMin: number;
   /** Dictado por voz: apagado por defecto porque el navegador puede mandar el audio afuera. */
   voz: boolean;
+  /**
+   * Gasto del día a día por mes que escribe la persona, para el plan del mes.
+   * `null` = se estima con lo anotado.
+   */
+  gastoVariable: Cents | null;
   /** Se toca de a uno y casi nunca: gana quien guarda. */
   updatedAt: Instante;
 }

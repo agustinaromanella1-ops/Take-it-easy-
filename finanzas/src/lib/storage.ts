@@ -41,6 +41,7 @@ export function preferenciasPorDefecto(): Preferencias {
     calendarioConDetalle: false,
     recordatorioMin: 24 * 60,
     voz: false,
+    gastoVariable: null,
     updatedAt: EPOCA,
   };
 }
@@ -277,6 +278,7 @@ function parsePreferencias(x: unknown): Preferencias {
     calendarioConDetalle: bool(x.calendarioConDetalle, d.calendarioConDetalle),
     recordatorioMin: min !== null && min >= 0 && min <= 7 * 24 * 60 ? min : d.recordatorioMin,
     voz: bool(x.voz, d.voz),
+    gastoVariable: importeNulo(x.gastoVariable),
     updatedAt: sello(x.updatedAt),
   };
 }

@@ -322,7 +322,7 @@ await verificar('ocho trucos, y los aprendidos se pueden volver a ver', async ()
 await verificar('datos de ejemplo con préstamo, sin romper nada', async () => {
   await p.getByRole('button', { name: 'Ver con datos de ejemplo' }).click();
   await ir('Mis planes');
-  await p.getByText('Préstamo personal').first().waitFor();
+  await p.getByText('Préstamo personal', { exact: true }).first().waitFor();
   await p.screenshot({ path: join(DIR, '24-mis-planes-ejemplo.png'), fullPage: true });
   await sinScroll('mis planes');
   await p.getByRole('button', { name: 'Salir del ejemplo' }).click();

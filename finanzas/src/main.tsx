@@ -4,6 +4,7 @@ import '@fontsource/atkinson-hyperlegible/400.css';
 import '@fontsource/atkinson-hyperlegible/700.css';
 import './styles.css';
 import App from './App';
+import { VistaCompartida } from './pages/VistaCompartida';
 import { aplicarTema, leerTema, seguirAlSistema } from './lib/tema';
 import { aplicarAnimaciones, leerAnimaciones } from './lib/movimiento';
 import { setupPWA } from './pwa';
@@ -19,7 +20,8 @@ const root = document.getElementById('root');
 if (root) {
   createRoot(root).render(
     <StrictMode>
-      <App />
+      {/* Quien recibe un enlace compartido ve solo eso: sin la app, sin sus datos. */}
+      {window.location.pathname === '/ver' ? <VistaCompartida /> : <App />}
     </StrictMode>,
   );
 }

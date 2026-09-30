@@ -263,6 +263,13 @@ export function Ajustes({ onVerEjemplo }: { onVerEjemplo: () => void }) {
         )}
       </Card>
 
+      <Card titulo="Compartir con alguien de confianza">
+        <p>Una persona que elijas puede mirar, sin tocar, lo que decidas. Va cifrado, y se corta cuando quieras.</p>
+        <button className="btn" onClick={() => abrir({ tipo: 'compartir' })}>
+          Compartir
+        </button>
+      </Card>
+
       <Card titulo="Probar">
         {esEjemplo ? (
           <p>Estás mirando datos de ejemplo. Para salir, usá la franja de arriba.</p>
@@ -281,6 +288,9 @@ export function Ajustes({ onVerEjemplo }: { onVerEjemplo: () => void }) {
           Versión del {new Date(__COMPILADA__).toLocaleDateString('es-AR', { day: 'numeric', month: 'long', year: 'numeric' })}. Es una herramienta
           de organización, no un tratamiento ni asesoramiento financiero. Está pensada a partir de dificultades frecuentes con el TDAH y todavía
           tiene que probarse con personas reales.
+        </p>
+        <p>
+          <a href="/privacidad.html">Privacidad: qué queda en tu teléfono y qué no</a>
         </p>
         <button
           className="btn chico"

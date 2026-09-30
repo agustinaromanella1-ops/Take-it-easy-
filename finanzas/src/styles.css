@@ -1493,3 +1493,37 @@ html[data-animaciones='nunca'] *::after {
 .escenario:first-child {
   border-top: 0;
 }
+
+/* ---------- Etapa 3: glosario y compartir ---------- */
+
+.glosario div {
+  padding: 10px 0;
+  border-top: 1px solid var(--borde);
+}
+
+.glosario div:first-child {
+  border-top: 0;
+}
+
+.glosario dt {
+  font-weight: 700;
+}
+
+.glosario dd {
+  margin: 4px 0 0;
+}
+
+.enlace-compartido {
+  font-family: ui-monospace, monospace;
+  font-size: 0.85rem;
+  overflow-wrap: anywhere;
+  background: var(--superficie-2);
+  border-radius: var(--radio-chico);
+  padding: 8px 10px;
+}
+
+.vista-compartida {
+  max-width: var(--ancho);
+  margin: 0 auto;
+  padding: calc(16px + env(safe-area-inset-top)) 16px 32px;
+}

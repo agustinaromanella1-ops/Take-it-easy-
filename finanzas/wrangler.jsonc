@@ -1,0 +1,19 @@
+// Salchi en Cloudflare Workers: la app estática y el servicio para compartir,
+// en el mismo origen. Ver COMPARTIR.md.
+{
+  "name": "salchi",
+  "main": "server/worker.js",
+  "compatibility_date": "2026-09-01",
+  "assets": {
+    "directory": "./dist",
+    "binding": "ASSETS",
+    // Toda ruta que no es un archivo es la app (incluida /ver). No hace falta
+    // un _redirects: pedirlo por los dos caminos hace que Cloudflare rechace
+    // el despliegue por bucle infinito (ya pasó en Pipí Cucú).
+    "not_found_handling": "single-page-application",
+    "run_worker_first": ["/api/*"]
+  }
+  // Para prender "Compartir", crear el espacio y descomentar esto con su id:
+  //   npx wrangler kv namespace create COMPARTIDOS
+  // "kv_namespaces": [{ "binding": "COMPARTIDOS", "id": "PONER_EL_ID" }]
+}

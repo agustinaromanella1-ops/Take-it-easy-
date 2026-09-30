@@ -4,7 +4,9 @@ import { useVentanas } from '../components/Ventanas';
 import { Card, Progreso } from '../components/ui';
 import { mesesCubiertos, proximoHito, reservado } from '../lib/finanzas/metas';
 import { formatMoney } from '../lib/money';
-import { formatDateMedium } from '../lib/dates';
+import { formatDateMedium, today } from '../lib/dates';
+import { ritmoDeMeta } from '../lib/finanzas/plan';
+import { PlanDelMes } from '../components/PlanDelMes';
 import { esDeuda, esPrestamo, saldo } from '../lib/finanzas/saldos';
 import { formatTasa } from '../lib/finanzas/escenarios';
 
@@ -62,7 +64,14 @@ export function MisPlanes() {
         </button>
       )}
 
+      <PlanDelMes />
       <Deudas />
+      <Card titulo="Aprender sobre inversión">
+        <p>Antes de invertir, algunas preguntas; después, un simulador que muestra también cómo se puede perder. No recomienda productos.</p>
+        <button className="btn" onClick={() => abrir({ tipo: 'inversion' })}>
+          Abrir
+        </button>
+      </Card>
     </div>
   );
 }
@@ -119,6 +128,7 @@ function TarjetaMeta({ meta, puedeDestacar = false }: { meta: Meta; puedeDestaca
   const hay = reservado(meta, data.aportes);
   const hito = meta.esReserva ? proximoHito(meta, hay) : meta.objetivo;
   const meses = mesesCubiertos(meta, hay);
+  const ritmo = meta.esReserva ? null : ritmoDeMeta(meta, data, today());
   const virtual = data.aportes.filter((a) => a.metaId === meta.id && a.forma === 'virtual').reduce((s, a) => s + a.importe, 0);
 
   return (
@@ -140,6 +150,12 @@ function TarjetaMeta({ meta, puedeDestacar = false }: { meta: Meta; puedeDestaca
       )}
       {virtual > 0 && <p className="susurro">{formatMoney(virtual, meta.moneda)} están apartados dentro de la app, en tus cuentas de siempre.</p>}
       {meses !== null && <p className="susurro">Cubre unos {meses.toLocaleString('es-AR')} meses de gastos esenciales, según tu estimación de {formatMoney(meta.esencialesPorMes ?? 0, meta.moneda)} por mes.</p>}
+      {ritmo && ritmo.meses > 0 && (
+        <p className="susurro">
+          Al ritmo de los últimos tres meses (unos {formatMoney(ritmo.porMes, meta.moneda)} por mes), llegarías en {ritmo.meses}{' '}
+          {ritmo.meses === 1 ? 'mes' : 'meses'}. Es una cuenta, no un compromiso.
+        </p>
+      )}
       {meta.fecha && <p className="susurro">Para más o menos el {formatDateMedium(meta.fecha)}. Si no llega, se mueve.</p>}
       {meta.pasoChico && <p>Próximo paso: {meta.pasoChico}</p>}
       <div className="acciones">
