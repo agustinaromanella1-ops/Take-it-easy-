@@ -31,6 +31,10 @@ const msg = (extra: Partial<ScheduledMessage> = {}): ScheduledMessage => ({
   recurrenceRule: null,
   notes: null,
   notificationId: null,
+  attachmentFile: null,
+  attachmentName: null,
+  attachmentMime: null,
+  attachmentBytes: null,
   ...extra,
 });
 

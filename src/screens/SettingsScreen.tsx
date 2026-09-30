@@ -137,9 +137,13 @@ export function SettingsScreen(): React.ReactElement {
     try {
       const result = await importBackup();
       if (!result) return;
+      const perdidos =
+        result.adjuntosPerdidos > 0
+          ? `\n\nOjo: ${result.adjuntosPerdidos === 1 ? 'un mensaje tenía' : `${result.adjuntosPerdidos} mensajes tenían`} un archivo adjunto que no está en este teléfono. El backup guarda el texto, no los archivos: hay que volver a adjuntarlos.`
+          : '';
       Alert.alert(
         'Backup importado',
-        `Se agregaron ${result.messages} mensajes y ${result.templates} plantillas.`,
+        `Se agregaron ${result.messages} mensajes y ${result.templates} plantillas.${perdidos}`,
       );
     } catch (error) {
       Alert.alert(

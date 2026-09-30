@@ -56,10 +56,15 @@ const isMessage = (value: unknown): value is ScheduledMessage => {
   if (!obligatorios) return false;
 
   const nulables = (
-    ['contactName', 'localAt', 'scheduledAt', 'firedAt', 'sentAt', 'postponedAt', 'recurrenceRule', 'notes', 'notificationId'] as const
+    ['contactName', 'localAt', 'scheduledAt', 'firedAt', 'sentAt', 'postponedAt', 'recurrenceRule', 'notes', 'notificationId', 'attachmentFile', 'attachmentName', 'attachmentMime'] as const
   ).every((k) => opcional(m[k]));
 
   if (!nulables) return false;
+
+  const bytes = m['attachmentBytes'];
+  if (bytes !== null && bytes !== undefined && typeof bytes !== 'number') {
+    return false;
+  }
 
   // Un mensaje con fecha pendiente pero sin localAt no cae en ninguna lista:
   // lo cuenta el contador de pendientes y no lo dibuja ninguna pantalla, así
@@ -92,6 +97,15 @@ const normalizar = (m: ScheduledMessage): ScheduledMessage => ({
   recurrenceRule: m.recurrenceRule ?? null,
   notes: m.notes ?? null,
   notificationId: null,
+  // El backup lleva el NOMBRE del adjunto, no el archivo: meter fotos y PDFs
+  // adentro del JSON lo volvería de cientos de megas. Quien importa se
+  // encarga de comprobar si el archivo sigue estando en este teléfono; si no
+  // está, limpia estas columnas y avisa cuántos mensajes se quedaron sin él.
+  attachmentFile: m.attachmentFile ?? null,
+  attachmentName: m.attachmentName ?? null,
+  attachmentMime: m.attachmentMime ?? null,
+  attachmentBytes:
+    typeof m.attachmentBytes === 'number' ? m.attachmentBytes : null,
 });
 
 const isTemplate = (value: unknown): value is Template => {

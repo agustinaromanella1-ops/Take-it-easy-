@@ -59,7 +59,8 @@
           }
         }
       ],
-      "./plugins/withConsultasWhatsApp"
+      "./plugins/withConsultasWhatsApp",
+      "./plugins/withSinProveedorDePortapapeles"
     ],
     "backgroundColor": "#f1ecf9",
     "androidStatusBar": {

@@ -1,3 +1,5 @@
+import type { Adjunto } from './adjunto';
+
 /** Estados por los que pasa un mensaje. Ver README para el diagrama de transiciones. */
 export type MessageStatus =
   | 'draft' // escrito, todavía sin fecha
@@ -56,6 +58,46 @@ export interface ScheduledMessage {
   notes: string | null;
   /** Id de la notificación local agendada, para poder cancelarla. */
   notificationId: string | null;
+  /**
+   * El adjunto va en cuatro columnas planas y no en un objeto porque el
+   * repositorio lee las filas de SQLite directo a este tipo, sin traductor.
+   * Para trabajar con él está `adjuntoDe`.
+   */
+  attachmentFile: string | null;
+  attachmentName: string | null;
+  attachmentMime: string | null;
+  attachmentBytes: number | null;
+}
+
+/** Junta las cuatro columnas en el objeto con el que trabaja el dominio. */
+export function adjuntoDe(m: {
+  attachmentFile: string | null;
+  attachmentName: string | null;
+  attachmentMime: string | null;
+  attachmentBytes: number | null;
+}): Adjunto | null {
+  if (!m.attachmentFile) return null;
+  return {
+    archivo: m.attachmentFile,
+    nombre: m.attachmentName ?? m.attachmentFile,
+    mime: m.attachmentMime ?? 'application/octet-stream',
+    bytes: m.attachmentBytes ?? 0,
+  };
+}
+
+/** El camino inverso: el objeto desarmado en las columnas que guarda la base. */
+export function columnasDeAdjunto(
+  a: Adjunto | null,
+): Pick<
+  ScheduledMessage,
+  'attachmentFile' | 'attachmentName' | 'attachmentMime' | 'attachmentBytes'
+> {
+  return {
+    attachmentFile: a?.archivo ?? null,
+    attachmentName: a?.nombre ?? null,
+    attachmentMime: a?.mime ?? null,
+    attachmentBytes: a?.bytes ?? null,
+  };
 }
 
 /** Lo que hace falta para crear un mensaje. El resto lo completa el repositorio. */
@@ -71,6 +113,8 @@ export interface NewMessageInput {
   notes?: string | null;
   /** Regla de repetición, ej "FREQ=WEEKLY". Null para un mensaje único. */
   recurrenceRule?: string | null;
+  /** Archivo ya copiado a la carpeta de la app. Ver `src/files/adjuntos.ts`. */
+  adjunto?: Adjunto | null;
 }
 
 /**

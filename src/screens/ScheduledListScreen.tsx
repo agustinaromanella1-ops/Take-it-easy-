@@ -43,6 +43,7 @@ export function ScheduledListScreen(): React.ReactElement {
     undoDelete,
     dismissUndo,
     awaitingConfirmation,
+    textoCopiado,
     confirmSent,
     markSkipped,
     dismissConfirmation,
@@ -224,6 +225,7 @@ export function ScheduledListScreen(): React.ReactElement {
       {awaitingConfirmation ? (
         <ConfirmSentSheet
           message={awaitingConfirmation}
+          textoCopiado={textoCopiado}
           onSent={() => void confirmSent(awaitingConfirmation.id)}
           onSkipped={() => void markSkipped(awaitingConfirmation.id)}
           onDismiss={dismissConfirmation}

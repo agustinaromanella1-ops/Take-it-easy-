@@ -19,6 +19,10 @@ const message: ScheduledMessage = {
   recurrenceRule: null,
   notes: null,
   notificationId: 'n1',
+  attachmentFile: null,
+  attachmentName: null,
+  attachmentMime: null,
+  attachmentBytes: null,
 };
 
 const template = {
@@ -166,5 +170,56 @@ describe('mensajes a grupos', () => {
     const { recipientKind, ...viejo } = message;
     const parsed = parseBackup(JSON.stringify({ ...base, messages: [viejo] }));
     expect(parsed.messages[0]?.recipientKind).toBe('contacto');
+  });
+
+  it('el adjunto viaja como ficha, no como archivo', () => {
+    const conAdjunto = {
+      ...message,
+      attachmentFile: 'abc-receta.pdf',
+      attachmentName: 'receta.pdf',
+      attachmentMime: 'application/pdf',
+      attachmentBytes: 84_000,
+    };
+    const parsed = parseBackup(
+      JSON.stringify({ ...base, messages: [conAdjunto] }),
+    );
+    // Quien importa decide qué hacer con esto mirando si el archivo sigue
+    // estando en el teléfono; el dominio solo conserva la ficha.
+    expect(parsed.messages[0]).toMatchObject({
+      attachmentFile: 'abc-receta.pdf',
+      attachmentName: 'receta.pdf',
+      attachmentMime: 'application/pdf',
+      attachmentBytes: 84_000,
+    });
+  });
+
+  it('un backup de antes de los adjuntos deja las columnas en null', () => {
+    const {
+      attachmentFile,
+      attachmentName,
+      attachmentMime,
+      attachmentBytes,
+      ...viejo
+    } = message;
+    const parsed = parseBackup(
+      JSON.stringify({ ...base, messages: [viejo] }),
+    );
+    expect(parsed.messages[0]).toMatchObject({
+      attachmentFile: null,
+      attachmentName: null,
+      attachmentMime: null,
+      attachmentBytes: null,
+    });
+  });
+
+  it('rechaza un tamaño de adjunto que no es un número', () => {
+    expect(() =>
+      parseBackup(
+        JSON.stringify({
+          ...base,
+          messages: [{ ...message, attachmentBytes: 'mucho' }],
+        }),
+      ),
+    ).toThrow(/formato que no reconocemos/);
   });
 });

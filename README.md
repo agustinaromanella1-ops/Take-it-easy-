@@ -121,9 +121,11 @@ src/
     quietHours.ts  franja horaria permitida
     templates.ts   variables {nombre} y su reemplazo
     backup.ts      exportar e importar, con validación del archivo
+    adjunto.ts     el archivo que va con el mensaje: tipos, límites, nombres
     reliability.ts puntualidad medida de los avisos
     whatsapp.ts  armado de los deep links
   db/          SQLite local con migraciones versionadas
+  files/       copias propias de los archivos adjuntos y su limpieza
   notifications/  agendado y cancelación de avisos locales
   state/       MessagesContext: une base, notificaciones y ciclo de vida
   components/  UI reutilizable (ui.tsx tiene Txt, HardShadow y los controles)
@@ -224,14 +226,32 @@ Lo que todavía falta antes de que la app llegue a gente que no seas vos:
 - **Backup** — exporta un archivo JSON con mensajes y plantillas por el share sheet del
   sistema, y lo vuelve a importar. El archivo se valida entero antes de tocar la base, así
   un backup corrupto falla con un mensaje claro en vez de dejar datos a medio importar.
+  Los adjuntos viajan como ficha (nombre, tipo, peso) y no como archivo: al importar, los
+  que sigan estando en el teléfono se conservan y de los que no, se avisa cuántos son.
+- **Archivo adjunto** — una foto, un PDF, lo que sea. Se copia a una carpeta de la app
+  apenas se elige, porque el permiso de lectura que da el selector del sistema se vence y
+  el archivo original puede desaparecer antes de la hora del mensaje. Las copias que ya no
+  menciona ningún mensaje se borran en el arranque siguiente. Ver abajo qué cede esto.
 
 ## Qué sigue sin estar (y por qué)
 
-- **Adjuntar imágenes.** El deep link de WhatsApp solo acepta texto: no hay forma de abrir
-  un chat con una imagen precargada. Lo más cerca que se puede llegar es el share sheet del
-  sistema (`expo-sharing`), que deja elegir el chat pero no permite adjuntar la imagen y el
-  texto juntos ni volver a la app para confirmar. Sería una experiencia distinta a la del
-  resto, así que preferimos no simularla.
+- **Mandar un adjunto de un solo toque.** Se puede adjuntar, pero no por el camino directo.
+  El deep link de WhatsApp (`whatsapp://send`, `wa.me`) solo acepta un número y un texto, y
+  entregar un archivo a otra app exige un `content://` con permiso de lectura. En Expo eso
+  lo hace `expo-sharing`, que siempre abre el menú del sistema: no acepta un paquete
+  concreto —así que con adjunto no se puede elegir entre WhatsApp y WhatsApp Business desde
+  la app— y su intent lleva el archivo pero no el texto. `expo-intent-launcher`, que sí
+  acepta un paquete, no sirve: pasa los extras por un Bundle de strings y `EXTRA_STREAM`
+  tiene que ser un `Uri` parcelable. Por eso, con archivo: se abre la lista de chats de
+  WhatsApp y el texto queda en el portapapeles para pegarlo de epígrafe. En iPhone el texto
+  y el archivo van juntos por la hoja de compartir y WhatsApp suele tomarlo de epígrafe,
+  pero igual se copia porque "suele" no es "siempre".
+- **Elegir la foto desde la galería.** El selector es el de documentos, no el de fotos. En
+  Android el de documentos entra igual a las fotos y no pide ningún permiso; el de la
+  galería obliga a declarar `READ_MEDIA_IMAGES`, que en Google Play arrastra un formulario
+  de justificación. En iPhone, en cambio, esto significa que hay que ir por Archivos: el
+  carrete no aparece. El día que haga falta, la salida es `expo-image-picker` y el
+  formulario.
 - **Sincronización entre dispositivos.** Necesita un servidor donde guardar los mensajes, y
   eso choca de frente con la decisión de que el contenido no salga del teléfono. El backup
   manual cubre el caso de cambiar de celular sin romper esa promesa. Si en algún momento la

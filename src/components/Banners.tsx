@@ -1,7 +1,7 @@
 import React from 'react';
 import { Linking, Modal, Pressable, View } from 'react-native';
 import { displayName } from '../domain/phone';
-import type { ScheduledMessage } from '../domain/types';
+import { adjuntoDe, type ScheduledMessage } from '../domain/types';
 import { BORDER_WIDTH, radius, spacing, usePalette } from '../theme';
 import { Button, Title, Txt } from './ui';
 
@@ -99,17 +99,21 @@ export function UndoToast({
  */
 export function ConfirmSentSheet({
   message,
+  textoCopiado,
   onSent,
   onSkipped,
   onDismiss,
 }: {
   message: ScheduledMessage;
+  /** El texto quedó en el portapapeles porque el mensaje lleva archivo. */
+  textoCopiado: boolean;
   onSent: () => void;
   onSkipped: () => void;
   onDismiss: () => void;
 }): React.ReactElement {
   const p = usePalette();
   const who = displayName(message.contactName, message.phoneE164);
+  const conArchivo = adjuntoDe(message) !== null;
 
   return (
     <Modal transparent animationType="fade" onRequestClose={onDismiss}>
@@ -140,6 +144,23 @@ export function ConfirmSentSheet({
             Nos sirve para saber si lo guardamos en el historial o lo dejamos
             pendiente.
           </Txt>
+          {conArchivo && textoCopiado ? (
+            <View
+              style={{
+                backgroundColor: p.accentSoft,
+                borderColor: p.accent,
+                borderWidth: 1.5,
+                borderRadius: radius.md,
+                padding: spacing(1.5),
+              }}
+            >
+              <Txt style={{ color: p.text, fontSize: 14, lineHeight: 20 }}>
+                📋 El texto te quedó copiado. Si todavía no lo pegaste como
+                epígrafe del archivo, mantené apretado el cuadro de escribir de
+                WhatsApp y elegí "Pegar".
+              </Txt>
+            </View>
+          ) : null}
           <Button label="Sí, lo mandé" onPress={onSent} />
           <Button
             label="No, todavía no"

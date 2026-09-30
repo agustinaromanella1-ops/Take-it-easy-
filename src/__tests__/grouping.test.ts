@@ -33,6 +33,10 @@ const message = (
   recurrenceRule: null,
   notes: null,
   notificationId: null,
+  attachmentFile: null,
+  attachmentName: null,
+  attachmentMime: null,
+  attachmentBytes: null,
   ...overrides,
 });
 

@@ -11,6 +11,8 @@ import { useMessages } from '../state/MessagesContext';
 import { spacing, usePalette } from '../theme';
 import { Button, Card, Chip, Label, Title, Txt } from '../components/ui';
 import { ChatBubblePreview } from '../components/ChatBubblePreview';
+import { adjuntoDe } from '../domain/types';
+import { emojiDe, formatearTamano, tipoLegible } from '../domain/adjunto';
 import type { RootStackParamList } from '../navigation/types';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'Detail'>;
@@ -38,6 +40,7 @@ export function MessageDetailScreen({
   if (!message) return null;
 
   const who = displayName(message.contactName, message.phoneE164);
+  const adjunto = adjuntoDe(message);
   const recurrence = describeRule(message.recurrenceRule, message.localAt);
   const overdue =
     message.localAt !== null && isPast(message.localAt, message.timezone);
@@ -123,6 +126,23 @@ export function MessageDetailScreen({
         time={message.localAt ? timeLabel(message.localAt) : '--:--'}
       />
 
+      {adjunto ? (
+        <Card style={{ flexDirection: 'row', alignItems: 'center', gap: spacing(1.25) }}>
+          <Txt style={{ fontSize: 22 }}>{emojiDe(adjunto.mime)}</Txt>
+          <View style={{ flex: 1 }}>
+            <Txt
+              numberOfLines={1}
+              style={{ color: p.text, fontSize: 15, fontWeight: '700' }}
+            >
+              {adjunto.nombre}
+            </Txt>
+            <Txt style={{ color: p.textMuted, fontSize: 13 }}>
+              {tipoLegible(adjunto.mime)} · {formatearTamano(adjunto.bytes)}
+            </Txt>
+          </View>
+        </Card>
+      ) : null}
+
       {overdue ? (
         <Card style={{ backgroundColor: p.warningSoft, borderColor: p.warning }}>
           <Txt style={{ color: p.text, fontSize: 15, lineHeight: 21 }}>
@@ -135,9 +155,11 @@ export function MessageDetailScreen({
       <View style={{ gap: spacing(1) }}>
         <Button
           label={
-            message.recipientKind === 'grupo'
-              ? 'Mandar al grupo por WhatsApp'
-              : 'Abrir WhatsApp con el mensaje'
+            adjunto
+              ? 'Mandar el archivo por WhatsApp'
+              : message.recipientKind === 'grupo'
+                ? 'Mandar al grupo por WhatsApp'
+                : 'Abrir WhatsApp con el mensaje'
           }
           onPress={() => void openInWhatsApp(message.id)}
         />
@@ -149,9 +171,11 @@ export function MessageDetailScreen({
             lineHeight: 18,
           }}
         >
-          {message.recipientKind === 'grupo'
-            ? 'Se abre tu lista de chats con el texto ya escrito: elegís el grupo y enviás. WhatsApp no deja abrir un grupo desde afuera.'
-            : 'Se abre el chat con el texto ya escrito. El envío lo confirmás vos.'}
+          {adjunto
+            ? 'Se abre la lista de chats de WhatsApp con el archivo: elegís a quién y pegás el texto de epígrafe, que te queda copiado. WhatsApp no deja mandar archivos directo a un chat desde otra app.'
+            : message.recipientKind === 'grupo'
+              ? 'Se abre tu lista de chats con el texto ya escrito: elegís el grupo y enviás. WhatsApp no deja abrir un grupo desde afuera.'
+              : 'Se abre el chat con el texto ya escrito. El envío lo confirmás vos.'}
         </Txt>
       </View>
 

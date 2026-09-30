@@ -2,7 +2,8 @@ import React from 'react';
 import { Pressable, View } from 'react-native';
 import { previewLines, timeLabel } from '../domain/grouping';
 import { displayName } from '../domain/phone';
-import type { ScheduledMessage } from '../domain/types';
+import { adjuntoDe, type ScheduledMessage } from '../domain/types';
+import { emojiDe } from '../domain/adjunto';
 import { estadoDe, ETIQUETAS, TONOS } from '../domain/estado';
 import { BORDER_WIDTH, SHADOW_OFFSET, radius, spacing, usePalette } from '../theme';
 import { HardShadow, Txt, coloresDeTono } from './ui';
@@ -25,6 +26,7 @@ export function MessageCard({
   const [pressed, setPressed] = React.useState(false);
   const who = displayName(message.contactName, message.phoneE164);
   const preview = previewLines(message.body);
+  const adjunto = adjuntoDe(message);
   const time = message.localAt ? timeLabel(message.localAt) : trailing ?? '';
   const { x, y } = SHADOW_OFFSET.sm;
 
@@ -87,6 +89,20 @@ export function MessageCard({
         >
           {preview}
         </Txt>
+
+        {adjunto ? (
+          <Txt
+            numberOfLines={1}
+            style={{
+              color: p.textMuted,
+              fontSize: 13,
+              fontWeight: '700',
+              marginTop: spacing(0.5),
+            }}
+          >
+            {emojiDe(adjunto.mime)}  {adjunto.nombre}
+          </Txt>
+        ) : null}
 
         {estado ? (
           <View

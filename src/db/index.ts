@@ -53,6 +53,20 @@ const MIGRATIONS: string[] = [
   `
   ALTER TABLE messages ADD COLUMN whatsappApp TEXT;
   `,
+  // v6 a v9 — archivo adjunto. Se guarda el NOMBRE del archivo dentro de la
+  // carpeta de adjuntos, no la ruta: en iOS la carpeta de la app cambia de
+  // nombre en cada actualización y una ruta absoluta guardada hoy apunta a
+  // la nada mañana.
+  //
+  // Van en cuatro pasos y no en uno solo con las cuatro sentencias porque
+  // execAsync no las envuelve en una transacción: cortándose en la tercera,
+  // el paso quedaría sin marcar y al reintentarlo la primera fallaría con
+  // "duplicate column name". Eso es exactamente lo que la marca por paso
+  // viene a evitar.
+  'ALTER TABLE messages ADD COLUMN attachmentFile TEXT;',
+  'ALTER TABLE messages ADD COLUMN attachmentName TEXT;',
+  'ALTER TABLE messages ADD COLUMN attachmentMime TEXT;',
+  'ALTER TABLE messages ADD COLUMN attachmentBytes INTEGER;',
 ];
 
 async function migrate(db: SQLite.SQLiteDatabase): Promise<void> {

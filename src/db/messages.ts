@@ -5,10 +5,51 @@ import type {
   NewMessageInput,
   ScheduledMessage,
 } from '../domain/types';
+import { columnasDeAdjunto } from '../domain/types';
 
-const COLUMNS = `id, recipientKind, contactName, phoneE164, body, scheduledAt,
-  localAt, timezone, status, createdAt, firedAt, sentAt, postponedAt,
-  whatsappApp, recurrenceRule, notes, notificationId`;
+/** Lo que SQLite sabe ligar a un `?`. */
+type Valor = string | number | null;
+
+/**
+ * Obliga a que la lista de columnas traiga TODAS las de `ScheduledMessage`.
+ *
+ * Si falta alguna, `keyof ScheduledMessage extends T[number]` es falso, el
+ * parámetro pasa a ser `never` y la llamada no compila. Antes las columnas,
+ * los signos de pregunta y los valores eran tres listas paralelas escritas a
+ * mano: agregar un campo y olvidarse de una daba un INSERT con los valores
+ * corridos, que guarda datos en la columna equivocada sin fallar.
+ */
+const todasLasColumnas = <T extends readonly (keyof ScheduledMessage)[]>(
+  campos: T & (keyof ScheduledMessage extends T[number] ? unknown : never),
+): T => campos;
+
+const CAMPOS = todasLasColumnas([
+  'id',
+  'recipientKind',
+  'contactName',
+  'phoneE164',
+  'body',
+  'scheduledAt',
+  'localAt',
+  'timezone',
+  'status',
+  'createdAt',
+  'firedAt',
+  'sentAt',
+  'postponedAt',
+  'whatsappApp',
+  'recurrenceRule',
+  'notes',
+  'notificationId',
+  'attachmentFile',
+  'attachmentName',
+  'attachmentMime',
+  'attachmentBytes',
+] as const);
+
+const COLUMNS = CAMPOS.join(', ');
+const PLACEHOLDERS = CAMPOS.map(() => '?').join(', ');
+const VALORES = (m: ScheduledMessage): Valor[] => CAMPOS.map((c) => m[c]);
 
 type Row = ScheduledMessage;
 
@@ -53,30 +94,12 @@ export async function create(
     recurrenceRule: input.recurrenceRule ?? null,
     notes: input.notes ?? null,
     notificationId: null,
+    ...columnasDeAdjunto(input.adjunto ?? null),
   };
 
   await db.runAsync(
-    `INSERT INTO messages (${COLUMNS})
-     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-    [
-      message.id,
-      message.recipientKind,
-      message.contactName,
-      message.phoneE164,
-      message.body,
-      message.scheduledAt,
-      message.localAt,
-      message.timezone,
-      message.status,
-      message.createdAt,
-      message.firedAt,
-      message.sentAt,
-      message.postponedAt,
-      message.whatsappApp,
-      message.recurrenceRule,
-      message.notes,
-      message.notificationId,
-    ],
+    `INSERT INTO messages (${COLUMNS}) VALUES (${PLACEHOLDERS})`,
+    VALORES(message),
   );
 
   return message;
@@ -100,6 +123,10 @@ type Patch = Partial<
     | 'notificationId'
     | 'recurrenceRule'
     | 'recipientKind'
+    | 'attachmentFile'
+    | 'attachmentName'
+    | 'attachmentMime'
+    | 'attachmentBytes'
   >
 >;
 
@@ -160,58 +187,15 @@ export async function remove(id: string): Promise<void> {
 
 /** Lo mínimo que necesitamos de una conexión o de una transacción. */
 interface Ejecutor {
-  runAsync: (sql: string, params: unknown[]) => Promise<unknown>;
+  runAsync: (sql: string, params: Valor[]) => Promise<unknown>;
 }
 
-const VALORES = (m: ScheduledMessage): unknown[] => [
-  m.id,
-  m.recipientKind,
-  m.contactName,
-  m.phoneE164,
-  m.body,
-  m.scheduledAt,
-  m.localAt,
-  m.timezone,
-  m.status,
-  m.createdAt,
-  m.firedAt,
-  m.sentAt,
-  m.postponedAt,
-  m.whatsappApp,
-  m.recurrenceRule,
-  m.notes,
-  m.notificationId,
-];
-
-const INSERTAR = `INSERT OR REPLACE INTO messages (${COLUMNS})
-     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`;
+const INSERTAR = `INSERT OR REPLACE INTO messages (${COLUMNS}) VALUES (${PLACEHOLDERS})`;
 
 /** Vuelve a insertar un mensaje tal cual, para el "deshacer" del borrado. */
 export async function restore(message: ScheduledMessage): Promise<void> {
   const db = await getDb();
-  await db.runAsync(
-    `INSERT OR REPLACE INTO messages (${COLUMNS})
-     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-    [
-      message.id,
-      message.recipientKind,
-      message.contactName,
-      message.phoneE164,
-      message.body,
-      message.scheduledAt,
-      message.localAt,
-      message.timezone,
-      message.status,
-      message.createdAt,
-      message.firedAt,
-      message.sentAt,
-      message.postponedAt,
-      message.whatsappApp,
-      message.recurrenceRule,
-      message.notes,
-      message.notificationId,
-    ],
-  );
+  await db.runAsync(INSERTAR, VALORES(message));
 }
 
 /**

@@ -93,6 +93,15 @@ jobs:
           done
           echo "Sin permisos de más."
 
+          # El proveedor exportado de expo-clipboard: lo saca un plugin, y
+          # esto comprueba que el plugin haya hecho efecto. Ver
+          # plugins/withSinProveedorDePortapapeles.js.
+          if grep -q "ClipboardFileProvider" "$MERGED"; then
+            echo "::error::El APK quedó con el ContentProvider exportado de expo-clipboard"
+            exit 1
+          fi
+          echo "Sin proveedores de más."
+
       - name: Ponerle un nombre reconocible
         run: cp android/app/build/outputs/apk/release/app-release.apk listo-para-enviar.apk
 

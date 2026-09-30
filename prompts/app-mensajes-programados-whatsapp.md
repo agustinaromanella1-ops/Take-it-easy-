@@ -97,8 +97,11 @@ Que el copy de toda la app refleje esa promesa.
 - Mismo texto a varios destinatarios (cada uno como mensaje individual, nunca como difusión masiva).
 - Ventana de "horario permitido": nunca programar fuera de, por ejemplo, 9 a 21 h, y si elegís
   una hora fuera de esa franja que te sugiera la siguiente hora válida.
-- Adjuntar una imagen (ojo: el deep link de WhatsApp no soporta adjuntos, habría que resolverlo
-  con el share sheet del sistema).
+- Adjuntar una imagen o un documento. Ojo: el deep link de WhatsApp no soporta adjuntos, así
+  que hay que resolverlo con el share sheet del sistema, y eso cambia el flujo —se abre la
+  lista de chats en vez del chat de la persona, y el texto no viaja con el archivo—. Hecho
+  en v2: ver la sección "Qué sigue sin estar" del README para el detalle de por qué no se
+  puede mejor.
 - Backup y sincronización entre dispositivos.
 
 ## MODELO DE DATOS

@@ -1,5 +1,8 @@
 import { Alert, Linking, Platform, Share } from 'react-native';
+import * as Clipboard from 'expo-clipboard';
 import * as IntentLauncher from 'expo-intent-launcher';
+import * as Sharing from 'expo-sharing';
+import type { Adjunto } from '../domain/adjunto';
 import type { WhatsAppApp } from '../domain/types';
 import { whatsappSchemeUrl, whatsappWebUrl } from '../domain/whatsapp';
 
@@ -19,6 +22,15 @@ import { whatsappSchemeUrl, whatsappWebUrl } from '../domain/whatsapp';
  *    a secas abre la que el sistema prefiera —o un menú, si están las dos—.
  *    En Android se puede apuntar al paquete y no hay ambigüedad. En iPhone
  *    no hay forma pública de distinguirlas, y la interfaz lo dice.
+ *
+ * 3. **Con un archivo adjunto no se puede ni apuntar al paquete ni mandar el
+ *    texto.** Entregar un archivo a otra app exige un `content://` con
+ *    permiso de lectura, y eso en Expo lo hace `expo-sharing`, que siempre
+ *    abre el menú del sistema: no acepta un paquete concreto, y su intent
+ *    lleva el archivo pero no el texto. Así que con adjunto el texto se copia
+ *    al portapapeles para pegarlo de epígrafe, y la app se elige en el menú.
+ *    `expo-intent-launcher`, que sí acepta un paquete, no sirve: pasa los
+ *    extras por un Bundle de strings y `EXTRA_STREAM` tiene que ser un Uri.
  */
 
 const PAQUETES: Record<WhatsAppApp, string> = {
@@ -85,6 +97,57 @@ export async function compartirConWhatsApp(
   }
 
   await Share.share({ message: texto });
+}
+
+/**
+ * Manda un mensaje con archivo. Devuelve si el texto quedó en el portapapeles,
+ * para poder avisarlo.
+ *
+ * En iPhone el texto y el archivo viajan juntos en la hoja de compartir y
+ * WhatsApp suele tomar el texto como epígrafe; igual se copia, porque
+ * "suele" no es "siempre" y perder el mensaje escrito sería lo peor que
+ * puede pasar acá.
+ */
+export async function compartirArchivo(
+  uri: string,
+  adjunto: Adjunto,
+  texto: string,
+  app: WhatsAppApp | null,
+): Promise<{ textoCopiado: boolean; compartido: boolean }> {
+  let textoCopiado = false;
+  if (texto.trim()) {
+    try {
+      await Clipboard.setStringAsync(texto);
+      textoCopiado = true;
+    } catch {
+      // Sin portapapeles el archivo igual sale; el texto se puede copiar a
+      // mano desde el detalle del mensaje.
+    }
+  }
+
+  if (Platform.OS === 'ios') {
+    try {
+      await Share.share({ message: texto, url: uri });
+      return { textoCopiado, compartido: true };
+    } catch {
+      // Cae a la hoja de expo-sharing, que manda el archivo solo.
+    }
+  }
+
+  if (!(await Sharing.isAvailableAsync())) {
+    // No debería pasar en un teléfono, pero fallar en silencio sería peor:
+    // la usuaria vería el mensaje marcado como mandado y nada abierto.
+    return { textoCopiado, compartido: false };
+  }
+
+  await Sharing.shareAsync(uri, {
+    mimeType: adjunto.mime,
+    // El menú del sistema no se puede saltear con un adjunto, así que por
+    // lo menos el título recuerda cuál de las dos apps eligió.
+    dialogTitle: app ? `Elegí ${NOMBRES[app]}` : 'Elegí WhatsApp',
+  });
+
+  return { textoCopiado, compartido: true };
 }
 
 /**

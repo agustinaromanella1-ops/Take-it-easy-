@@ -2,7 +2,8 @@ import * as Notifications from 'expo-notifications';
 import { Platform } from 'react-native';
 import { displayName } from '../domain/phone';
 import { previewLines } from '../domain/grouping';
-import type { ScheduledMessage } from '../domain/types';
+import { emojiDe } from '../domain/adjunto';
+import { adjuntoDe, type ScheduledMessage } from '../domain/types';
 
 export const CATEGORY_ID = 'scheduled-message';
 export const ACTION_OPEN = 'open-whatsapp';
@@ -76,8 +77,9 @@ export async function configure(
     }
   }
 
-  return canalCambio;
-
+  // Sin esto los avisos salen sin los botones "Abrir WhatsApp" y "Posponer
+  // 1 hora": la categoría hay que registrarla, y acá había un `return` de
+  // más que dejaba este bloque inalcanzable.
   await Notifications.setNotificationCategoryAsync(CATEGORY_ID, [
     {
       identifier: ACTION_OPEN,
@@ -127,11 +129,17 @@ export async function scheduleFor(
   if (date.getTime() <= Date.now()) return null;
 
   const who = displayName(message.contactName, message.phoneE164);
+  const adjunto = adjuntoDe(message);
+  // El adjunto cambia lo que hay que hacer al tocar el aviso —se abre la
+  // lista de chats en vez del chat— así que conviene saberlo desde el aviso.
+  const cuerpo = adjunto
+    ? `${emojiDe(adjunto.mime)} ${adjunto.nombre}\n${previewLines(message.body)}`
+    : previewLines(message.body);
 
   return Notifications.scheduleNotificationAsync({
     content: {
       title: `Mensaje para ${who}`,
-      body: previewLines(message.body),
+      body: cuerpo,
       data: { messageId: message.id },
       categoryIdentifier: CATEGORY_ID,
       // En iOS el sonido va por notificación, no por canal. Un booleano

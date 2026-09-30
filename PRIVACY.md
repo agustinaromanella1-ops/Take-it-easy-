@@ -1,6 +1,6 @@
 # Política de privacidad — Listo para enviar
 
-**Última actualización:** 29 de septiembre de 2026
+**Última actualización:** 30 de septiembre de 2026
 
 ## Resumen
 
@@ -22,6 +22,11 @@ una base de datos SQLite privada de la app:
 - **Tus plantillas** y tus preferencias (zona horaria, horario permitido).
 - **Marcas de tiempo de entrega de las notificaciones**, que la app usa para detectar si los
   avisos están llegando tarde y avisarte. Son solo fechas: no incluyen contenido.
+- **Los archivos que adjuntás a un mensaje.** Cuando adjuntás una foto o un documento, la
+  app se guarda una copia en su propia carpeta privada, para que el archivo siga estando el
+  día del mensaje aunque para entonces lo hayas movido o borrado. Esa copia no sale del
+  teléfono hasta que vos mismo mandás el mensaje por WhatsApp, y se borra sola cuando ya no
+  queda ningún mensaje que la use.
 
 Cuando desinstalás la app, todo esto se borra con ella.
 
@@ -67,6 +72,11 @@ La función de backup genera un archivo con tus mensajes y plantillas y te deja 
 guardarlo con el menú de compartir del sistema. Ese archivo no se sube a ningún lado: el
 destino lo elegís vos. Si lo guardás en un servicio en la nube, pasa a regirse por las
 condiciones de ese servicio.
+
+El backup **no incluye los archivos adjuntos**, solo su nombre, tipo y peso: meter fotos y
+PDFs adentro volvería el archivo de cientos de megas. Al importar en el mismo teléfono, los
+adjuntos que sigan estando se conservan; viniendo de otro, la app te dice cuántos mensajes
+se quedaron sin su archivo para que los vuelvas a adjuntar.
 
 ## Terceros
 

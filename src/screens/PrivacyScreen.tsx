@@ -30,8 +30,12 @@ const SECTIONS: { title: string; body: string }[] = [
     body: 'Esta app no es oficial ni está asociada a WhatsApp ni a Meta. No se conecta a sus servidores ni accede a tus conversaciones. Solo abre WhatsApp con un enlace público, con el texto ya cargado, para que vos toques enviar.',
   },
   {
+    title: 'Los archivos que adjuntás',
+    body: 'Cuando adjuntás una foto o un documento, la app se guarda una copia en su carpeta privada para que el archivo siga estando el día del mensaje, aunque para entonces lo hayas movido o borrado. Esa copia no sale del teléfono hasta que vos mandás el mensaje, y se borra sola cuando ya no queda ningún mensaje que la use.',
+  },
+  {
     title: 'Backups',
-    body: 'El archivo de backup lo guardás vos donde quieras con el menú de compartir. No se sube a ningún lado. Si elegís guardarlo en la nube, pasa a regirse por las condiciones de ese servicio.',
+    body: 'El archivo de backup lo guardás vos donde quieras con el menú de compartir. No se sube a ningún lado. Si elegís guardarlo en la nube, pasa a regirse por las condiciones de ese servicio. No incluye los archivos adjuntos, solo su nombre: al importar en otro teléfono, la app te dice cuántos mensajes se quedaron sin su archivo.',
   },
 ];
 
@@ -74,7 +78,7 @@ export function PrivacyScreen(): React.ReactElement {
 
       <View>
         <Txt style={{ color: p.textMuted, fontSize: 13, lineHeight: 19 }}>
-          Última actualización: 29 de septiembre de 2026.
+          Última actualización: 30 de septiembre de 2026.
         </Txt>
       </View>
     </ScrollView>

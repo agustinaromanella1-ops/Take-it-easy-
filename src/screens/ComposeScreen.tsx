@@ -31,6 +31,9 @@ import { useMessages } from '../state/MessagesContext';
 import { BORDER_WIDTH, radius, spacing, usePalette } from '../theme';
 import { Button, Chip, Label, Txt } from '../components/ui';
 import { ChatBubblePreview } from '../components/ChatBubblePreview';
+import { AdjuntoPicker } from '../components/AdjuntoPicker';
+import { adjuntoDe } from '../domain/types';
+import type { Adjunto } from '../domain/adjunto';
 import { ConsejoDePantalla } from '../components/Ayuda';
 import { NOMBRES, puedeElegirApp } from '../share/whatsapp';
 import type { WhatsAppApp } from '../domain/types';
@@ -86,6 +89,7 @@ export function ComposeScreen({
   const [when, setWhen] = useState<WallClock | null>(null);
   const [frequency, setFrequency] = useState<Frequency | null>(null);
   const [app, setApp] = useState<WhatsAppApp | null>(null);
+  const [adjunto, setAdjunto] = useState<Adjunto | null>(null);
   const [values, setValues] = useState<Record<string, string>>({});
   const [saving, setSaving] = useState(false);
   const [namingTemplate, setNamingTemplate] = useState(false);
@@ -115,6 +119,10 @@ export function ComposeScreen({
     setWhen(editingId ? fuente.localAt : null);
     setFrequency(parseRule(fuente.recurrenceRule));
     setApp(fuente.whatsappApp);
+    // Duplicar y reenviar comparten la copia del archivo con el original:
+    // no se copia de nuevo. El archivo se borra recién cuando no queda
+    // ningún mensaje que lo mencione.
+    setAdjunto(adjuntoDe(fuente));
   }, [copiaDe, duplicateOf, editingId, fuente]);
 
   useEffect(() => {
@@ -185,6 +193,7 @@ export function ComposeScreen({
         if (!first) return;
         await editMessage(existing.id, {
           body: text,
+          adjunto,
           phoneE164: first.e164,
           contactName: first.name,
           recipientKind: first.kind,
@@ -197,6 +206,7 @@ export function ComposeScreen({
         if (!only) return;
         await createMessage({
           whatsappApp: app,
+          adjunto,
           recipientKind: only.kind,
           contactName: only.name,
           phoneE164: only.e164,
@@ -207,6 +217,7 @@ export function ComposeScreen({
       } else {
         await createForMany(recipients, {
           whatsappApp: app,
+          adjunto,
           body: text,
           localAt: when,
           recurrenceRule,
@@ -323,6 +334,8 @@ export function ComposeScreen({
           ) : null}
         </View>
 
+        <AdjuntoPicker adjunto={adjunto} onChange={setAdjunto} />
+
         {variables.length > 0 ? (
           <View>
             <Label>Completar</Label>
@@ -381,6 +394,20 @@ export function ComposeScreen({
                 />
               ))}
             </View>
+            {adjunto ? (
+              <Txt
+                style={{
+                  color: p.textMuted,
+                  fontSize: 13,
+                  lineHeight: 19,
+                  marginTop: spacing(1),
+                }}
+              >
+                Con archivo adjunto esto queda como sugerencia: la app la
+                terminás eligiendo en el menú que abre el sistema, porque
+                mandar un archivo apuntando a una app concreta no se puede.
+              </Txt>
+            ) : null}
           </View>
         ) : null}
 

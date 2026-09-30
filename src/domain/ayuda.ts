@@ -36,6 +36,12 @@ export const CONSEJOS: Consejo[] = [
     texto: 'Guardalo como plantilla con el enlace de abajo del texto. La próxima vez la elegís y completás solo lo que cambia.',
   },
   {
+    id: 'adjuntos',
+    pantalla: 'nuevo',
+    titulo: 'También podés mandar un archivo',
+    texto: 'Una foto, un PDF, lo que sea. Ojo: con archivo, WhatsApp abre su lista de chats en vez del chat de la persona, y el texto te queda copiado para pegarlo abajo. No hay forma de hacerlo de un toque: WhatsApp no lo permite.',
+  },
+  {
     id: 'llaves',
     pantalla: 'plantillas',
     titulo: 'Lo que va entre llaves',

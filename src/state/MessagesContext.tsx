@@ -7,7 +7,7 @@ import React, {
   useRef,
   useState,
 } from 'react';
-import { AppState } from 'react-native';
+import { Alert, AppState } from 'react-native';
 import * as Notifications from 'expo-notifications';
 import * as FileSystem from 'expo-file-system';
 import * as Sharing from 'expo-sharing';
@@ -37,17 +37,20 @@ import { buscarPublicacion, compiladaEn } from '../update/github';
 import type { Template } from '../domain/templates';
 import {
   abrirChat,
+  compartirArchivo,
   compartirConWhatsApp,
   preguntarApp,
   puedeElegirApp,
 } from '../share/whatsapp';
+import * as adjuntos from '../files/adjuntos';
+import type { Adjunto } from '../domain/adjunto';
 import type {
   NewMessageInput,
   RecipientKind,
   ScheduledMessage,
   WhatsAppApp,
 } from '../domain/types';
-import { awaitsNotification, isDone } from '../domain/types';
+import { adjuntoDe, awaitsNotification, columnasDeAdjunto, isDone } from '../domain/types';
 import { enHistorial, enListaPrincipal } from '../domain/estado';
 import type { Sonido } from '../domain/sonido';
 
@@ -92,6 +95,8 @@ interface MessagesValue {
   awaitingNotification: number;
   /** Mensaje que se abrió en WhatsApp y todavía no confirmamos si salió. */
   awaitingConfirmation: ScheduledMessage | null;
+  /** El texto del último mensaje con adjunto quedó en el portapapeles. */
+  textoCopiado: boolean;
   undo: PendingUndo | null;
 
   createMessage: (input: NewMessageInput) => Promise<ScheduledMessage>;
@@ -111,6 +116,8 @@ interface MessagesValue {
       recurrenceRule?: string | null;
       /** Nueva hora de pared, si cambió. */
       localAt?: string | null;
+      /** `null` explícito saca el adjunto; ausente lo deja como está. */
+      adjunto?: Adjunto | null;
     },
   ) => Promise<void>;
   rescheduleMessage: (
@@ -142,7 +149,12 @@ interface MessagesValue {
   updateSonido: (valor: Sonido) => Promise<void>;
 
   exportBackup: () => Promise<void>;
-  importBackup: () => Promise<{ messages: number; templates: number } | null>;
+  importBackup: () => Promise<{
+    messages: number;
+    templates: number;
+    /** Mensajes cuyo archivo adjunto no está en este teléfono. */
+    adjuntosPerdidos: number;
+  } | null>;
 
   completeOnboarding: () => Promise<void>;
   reiniciarTutorial: () => Promise<void>;
@@ -180,6 +192,8 @@ export function MessagesProvider({
   const [appWhatsApp, setAppWhatsApp] =
     useState<settingsRepo.AppPorDefecto>('normal');
   const [sonido, setSonido] = useState<Sonido>('predeterminado');
+  /** Si al último envío con adjunto el texto quedó copiado para pegarlo. */
+  const [textoCopiado, setTextoCopiado] = useState(false);
 
   const timezone = useMemo(() => deviceTimezone(), []);
   const undoTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -295,6 +309,18 @@ export function MessagesProvider({
       // sonido por defecto: quien eligió "En silencio" igual escucharía el
       // tono. reconcile no los toca porque ya tienen notificationId.
       if (canalCambio) await reagendarTodo();
+      // Las copias de archivos que ya no menciona ningún mensaje se borran
+      // acá y no al borrar el mensaje: el borrado se puede deshacer durante
+      // unos segundos, y en el arranque no hay ninguno pendiente.
+      try {
+        const enUso = (await repo.listAll())
+          .map((m) => m.attachmentFile)
+          .filter((n): n is string => n !== null);
+        await adjuntos.limpiarHuerfanos(enUso);
+      } catch {
+        // Dejar un archivo de más ocupando lugar es mucho mejor que no
+        // poder abrir la app.
+      }
       if (cancelled) return;
       setPermission(perm);
       setQuietHours(hours);
@@ -399,9 +425,15 @@ export function MessagesProvider({
         whatsappApp?: WhatsAppApp | null;
         recurrenceRule?: string | null;
         localAt?: string | null;
+        /** `null` explícito saca el adjunto; ausente lo deja como está. */
+        adjunto?: Adjunto | null;
       },
     ) => {
-      const { localAt, ...campos } = patch;
+      const { localAt, adjunto, ...resto } = patch;
+      const campos =
+        adjunto === undefined
+          ? resto
+          : { ...resto, ...columnasDeAdjunto(adjunto) };
 
       const anterior = await repo.getById(id);
       await notify.cancel(anterior?.notificationId ?? null);
@@ -467,11 +499,28 @@ export function MessagesProvider({
       const message = await repo.getById(id);
       if (!message) return;
 
+      // El archivo se comprueba antes que nada. Comprobándolo después de
+      // marcar el mensaje, un adjunto perdido dejaba el mensaje en 'fired'
+      // —o sea, "ya te avisamos, falta mandarlo"— sin haber abierto nada.
+      const adjunto = adjuntoDe(message);
+      if (adjunto && !(await adjuntos.existe(adjunto))) {
+        // Pasa al restaurar un backup en otro teléfono: el archivo no viaja
+        // adentro del JSON, solo su nombre.
+        Alert.alert(
+          'Falta el archivo',
+          `No encontramos "${adjunto.nombre}". Editá el mensaje y volvé a adjuntarlo, o sacale el adjunto para mandar solo el texto.`,
+        );
+        return;
+      }
+
       // El mensaje manda sobre el ajuste general; si ninguno lo dice y hay
       // dos apps posibles, se pregunta en el momento.
       let app: WhatsAppApp | null = message.whatsappApp;
       if (!app && appWhatsApp !== 'preguntar') app = appWhatsApp;
-      if (!app && puedeElegirApp()) {
+      // Con adjunto no se pregunta: la elección la hace el menú del sistema
+      // un segundo después, y preguntar dos veces lo mismo confunde. Lo que
+      // esté elegido se usa solo para el título de ese menú.
+      if (!app && !adjunto && puedeElegirApp()) {
         app = await preguntarApp();
         if (!app) {
           openedId.current = null;
@@ -491,11 +540,29 @@ export function MessagesProvider({
       }
       await refresh();
 
-      if (message.recipientKind === 'grupo') {
+      if (adjunto) {
+        // Con archivo no se puede abrir el chat de nadie: WhatsApp solo
+        // acepta un archivo por la hoja de compartir, y ahí se elige el chat.
+        const { textoCopiado, compartido } = await compartirArchivo(
+          adjuntos.uriDe(adjunto.archivo),
+          adjunto,
+          message.body,
+          app,
+        );
+        setTextoCopiado(textoCopiado);
+        if (!compartido) {
+          Alert.alert(
+            'No pudimos abrir WhatsApp con el archivo',
+            'Este teléfono no tiene el menú de compartir del sistema. Podés sacarle el adjunto al mensaje y mandar solo el texto.',
+          );
+        }
+      } else if (message.recipientKind === 'grupo') {
+        setTextoCopiado(false);
         // No hay forma de abrir un grupo concreto: se le entrega el texto a
         // WhatsApp y la usuaria elige el chat de su propia lista.
         await compartirConWhatsApp(message.body, app);
       } else {
+        setTextoCopiado(false);
         await abrirChat(message.phoneE164, message.body, app);
       }
     },
@@ -756,12 +823,27 @@ export function MessagesProvider({
     // roto, tira un error entendible y no se importa nada a medias.
     const backup = parseBackup(raw);
 
+    // El backup guarda el nombre del adjunto, no el archivo. Restaurando en
+    // el mismo teléfono la copia sigue estando y el mensaje queda completo;
+    // viniendo de otro no está, y entonces hay que limpiar las columnas —un
+    // mensaje que apunta a un archivo inexistente falla recién al mandarlo—
+    // y decir cuántos quedaron sin él.
+    let adjuntosPerdidos = 0;
+    const mensajes = await Promise.all(
+      backup.messages.map(async (m) => {
+        const adjunto = adjuntoDe(m);
+        if (!adjunto || (await adjuntos.existe(adjunto))) return m;
+        adjuntosPerdidos += 1;
+        return { ...m, ...columnasDeAdjunto(null) };
+      }),
+    );
+
     // Los ids de aviso de antes de importar. Se cancelan DESPUÉS de que la
     // importación salga bien: si se cancelaran primero y la transacción
     // fallara, la base quedaría intacta pero sin ningún aviso agendado.
     const previos = (await repo.listAll()).map((m) => m.notificationId);
 
-    await repo.replaceAllMessages(backup.messages);
+    await repo.replaceAllMessages(mensajes);
     await templatesRepo.replaceAllTemplates(backup.templates);
 
     for (const id of previos) {
@@ -776,8 +858,9 @@ export function MessagesProvider({
     await refresh();
 
     return {
-      messages: backup.messages.length,
+      messages: mensajes.length,
       templates: backup.templates.length,
+      adjuntosPerdidos,
     };
   }, [reagendarTodo, reconcile, refresh]);
 
@@ -887,6 +970,7 @@ export function MessagesProvider({
       consejosVistos,
       awaitingNotification: messages.filter((m) => awaitsNotification(m)).length,
       awaitingConfirmation,
+      textoCopiado,
       undo,
       createMessage,
       createForMany,
@@ -920,6 +1004,7 @@ export function MessagesProvider({
     };
   }, [
     awaitingConfirmation,
+    textoCopiado,
     buscandoVersion,
     buscarVersion,
     checkScheduled,
