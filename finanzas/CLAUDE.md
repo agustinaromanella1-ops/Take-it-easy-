@@ -14,6 +14,7 @@ npm run typecheck
 npm run build && npx vite preview --port 4174 &
 node e2e/etapa1.mjs          # punta a punta, con fecha fija y OCR real
 node e2e/etapa2.mjs          # préstamos, importar, capturas, resumen, atajos
+node e2e/etapa3.mjs          # plan, inversión, compartir (levanta sus servidores)
 node scripts/contraste.mjs   # si tocás un color
 node scripts/iconos.mjs      # si cambia el dibujo del perro
 ```
@@ -55,7 +56,7 @@ tener un botón real que la dispare.
 un pago después de confirmar el saldo lo restaría dos veces. Las listas de cada paso se fijan al
 entrar al paso.
 
-**Privacidad**: nada de `fetch` a otros orígenes, analítica ni CDNs (la única excepción, el dictado, la hace el navegador, viene apagada y se avisa). La política de contenido de
+**Privacidad**: nada de `fetch` a otros orígenes, analítica ni CDNs. El único `fetch` es a `/api/compartidos`, del mismo origen, y lleva solo bloques cifrados en el teléfono (ver `COMPARTIR.md`). El dictado lo hace el navegador, viene apagado y se avisa. La política de contenido de
 `vite.config.ts` lo bloquea en la compilación, y `e2e/etapa1.mjs` lo verifica. El lector de texto
 se sirve desde `public/ocr/`. Las imágenes de metas solo como `data:`.
 
@@ -77,3 +78,19 @@ chips elegidos llevan ✓), foco inicial con `data-autofoco` en los cuadros, mov
 **En Playwright, el nombre accesible de un campo incluye todo lo que hay dentro de su `<label>`**
 (la ayuda, la opción elegida de un desplegable). Para esos, buscá por rol con una expresión o por
 selector, no con `getByLabel` exacto.
+
+**Compartir: la clave nunca sale del "#".** El servidor recibe solo el bloque cifrado y el hash del
+token. Si agregás algo a la vista compartida (`lib/compartir/vista.ts`), que sea lo mínimo: nada de
+notas, ids ni nombres de cuentas que no hagan falta. La vista se abre en `/ver` sin montar la app ni
+tocar el almacenamiento de quien mira, y vuelve a leer si cambia el "#" (abrir otro enlace en la
+misma pestaña no recarga la página).
+
+**Inversión es educativa y no negocia eso.** Sin productos, sin tasas del mercado, sin
+"recomendamos", sin botones para operar. Los números de ejemplo dicen que son ejemplo. Toda
+simulación muestra el valor en pesos de hoy y el peor momento del camino.
+
+**Nada de integraciones bancarias sin verificar** (ver `INTEGRACIONES.md`): cualquier fuente externa
+entra por el flujo de revisión del importador, nunca escribe sola en los datos.
+
+**`pkill -f` con un patrón que aparece en el mismo comando se mata a sí mismo.** Para liberar los
+puertos de las pruebas, `fuser -k 4175/tcp`.

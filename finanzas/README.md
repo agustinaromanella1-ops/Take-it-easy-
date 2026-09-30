@@ -17,19 +17,23 @@ código en tiempo de ejecución: lo que se reutilizó se copió y adaptó.
 cd finanzas
 npm install
 npm run dev          # http://localhost:5173
-npm test             # 113 pruebas unitarias
+npm test             # 134 pruebas unitarias (app y servidor)
 npm run typecheck
 npm run build        # compila en dist/ (HTML estático, sin servidor)
 ```
 
-De punta a punta (35 + 19 verificaciones, con el lector de texto de verdad):
+De punta a punta (35 + 19 + 14 verificaciones, con el lector de texto de verdad):
 
 ```bash
 npm run build && npx vite preview --port 4174 &
 node e2e/etapa1.mjs          # deja capturas en e2e/capturas/
 node e2e/etapa2.mjs
+node e2e/etapa3.mjs          # levanta solo sus dos servidores locales
 node scripts/contraste.mjs   # contraste de todos los pares de colores
 ```
+
+`node scripts/servidor-local.mjs` sirve la app compilada con el servicio para compartir en memoria,
+como lo hace el Worker de Cloudflare. Ver `COMPARTIR.md`.
 
 Playwright no es dependencia del proyecto. Si `import { chromium } from 'playwright'` falla:
 `ln -s /opt/node22/lib/node_modules/playwright node_modules/playwright` (y `playwright-core`).
@@ -101,10 +105,30 @@ Todo esto está implementado y probado; no hay botones que no hagan nada.
   dice antes de prenderlo.
 - **Ocho trucos**, y los aprendidos se pueden volver a ver desde Ajustes.
 
+## Qué suma la etapa 3
+
+- **Plan del mes** (Mis planes): lo cobrado y lo esperado, lo que vence (compromisos, resúmenes y
+  cuotas de préstamos) y el día a día (el promedio de lo anotado, redondeado, o un número que
+  escribís). El margen que queda, con los supuestos a la vista. Es un plan: no mueve plata.
+- **Cuándo se llega a una meta** al ritmo real de los aportes de los últimos tres meses. Sin
+  aportes, no hay pronóstico.
+- **Aprender sobre inversión**: preguntas para pensar antes (la reserva, las deudas caras, el
+  plazo, qué harías ante una caída), un simulador con escenarios que incluyen pérdidas, el valor en
+  pesos de hoy y el peor momento del camino, y un glosario con señales de estafa. Sin productos,
+  sin tasas del mercado, sin recomendaciones, sin operar.
+- **Compartir con alguien de confianza**: vos elegís qué ve (lo disponible, lo que vence, las metas,
+  los movimientos), de solo lectura. Va cifrado desde el teléfono y el servidor no puede leerlo;
+  "Mostrarle lo de hoy" lo actualiza, "Dejar de compartir" lo corta, y vence solo a los 30 días.
+  Necesita el Worker con su almacenamiento (`COMPARTIR.md`); si no está, la app lo dice.
+- **Integraciones bancarias**: no hay, a propósito. `INTEGRACIONES.md` explica por qué y qué
+  habría que verificar antes de sumar una.
+- **Política de privacidad** en `/privacidad.html`, enlazada desde Ajustes.
+
 ## Privacidad
 
 Nada sale del dispositivo: sin servidor, sin cuentas, sin analítica. La única excepción es el
-dictado por voz, que viene apagado y avisa antes de prenderse. La compilación agrega una
+dictado por voz y compartir con alguien, que vienen apagados y avisan antes. Lo compartido viaja
+cifrado y el servidor no puede leerlo. La compilación agrega una
 política de contenido con `connect-src 'self'`, así que el navegador bloquea cualquier pedido a
 otro origen aunque una dependencia lo intente. La prueba de punta a punta verifica que no haya
 ninguno. El lector de texto y la tipografía se sirven desde la app.
@@ -114,14 +138,14 @@ teléfono, se pierden. Por eso la copia está a un toque en Ajustes.
 
 ## Qué NO está (y no aparenta estar)
 
-- Notificaciones del sistema: sin servidor no hay forma confiable. El calendario es lo que avisa
-  con la app cerrada, y Ajustes lo dice.
-- Compartir una imagen hacia la app: necesita que el service worker reciba archivos; por ahora se
-  comparte texto.
-- Resúmenes en PDF leídos directo: se copia el texto del PDF y se pega.
-- Lectura de comprobantes con IA: necesita un backend propio. No hay.
+- Notificaciones del sistema: sin servidor que las mande no hay forma confiable. El calendario es
+  lo que avisa con la app cerrada, y Ajustes lo dice.
+- Conexión con bancos: ver `INTEGRACIONES.md`.
+- Sincronizar entre dispositivos propios: compartir es de solo lectura, no una copia viva.
+- Compartir una imagen hacia la app; resúmenes en PDF leídos directo (se pega el texto).
 - Intereses calculados solos en préstamos y tarjetas: el saldo real lo da el banco.
-- Etapa 3: compartir con otra persona, integraciones bancarias, inversión educativa.
+- Límite de pedidos por IP en el servicio para compartir: se configura en Cloudflare antes de
+  abrirlo a mucha gente.
 
 ## Contraste
 
@@ -139,6 +163,7 @@ Medido con `node scripts/contraste.mjs` sobre los tokens de `src/styles.css`. Al
 
 - `src/lib/finanzas/`: el motor (saldos, tarjeta, préstamo, disponible, duplicados, pendientes, metas, escenarios).
 - `src/lib/importar/`: el importador de CSV.
+- `src/lib/compartir/` y `server/`: cifrado, vista compartida y el servicio (Worker).
 - `src/lib/texto/`: el analizador de frases y las categorías.
 - `src/lib/comprobantes/`: extracción de campos (pura, probada) y el lector de texto.
 - `src/lib/huellitas/`, `src/lib/hormiga.ts`, `src/lib/pausa.ts`: las reglas del juego y del regreso.
