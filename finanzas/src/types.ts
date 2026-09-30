@@ -177,8 +177,7 @@ export type AccionHuellita =
   | 'actualizar-saldo'
   | 'anotar'
   | 'retomar'
-  | 'comprobante'
-  | 'revision-breve';
+  | 'comprobante';
 
 export interface Huellitas {
   /** Almohadillas llenas de la huella actual (0 a 4). */

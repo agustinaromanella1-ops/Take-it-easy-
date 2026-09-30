@@ -5,7 +5,7 @@ import { esPausa } from './pausa';
 import type { AccionHuellita, Huellitas } from '../types';
 
 const T = '2026-09-15T12:00:00.000Z';
-const TODAS: AccionHuellita[] = ['anotar', 'actualizar-saldo', 'confirmar-compromiso', 'revisar-movimientos', 'comprobante', 'retomar', 'revision-breve'];
+const TODAS: AccionHuellita[] = ['anotar', 'actualizar-saldo', 'confirmar-compromiso', 'revisar-movimientos', 'comprobante', 'retomar'];
 
 describe('huellitas', () => {
   it('cada clase de acción suma una sola vez por día: anotar diez gastos no vale más que uno', () => {
@@ -75,5 +75,22 @@ describe('pausa', () => {
     expect(esPausa('2026-09-08', '2026-09-15')).toBe(true);
     expect(esPausa('2026-09-09', '2026-09-15')).toBe(false);
     expect(esPausa(null, '2026-09-15')).toBe(false);
+  });
+});
+
+import { meta as fabricaMeta, aporte } from './fabrica';
+import { mesesCubiertos, proximoHito, reservado } from './finanzas/metas';
+
+describe('metas', () => {
+  it('lo reservado sale de los aportes, incluidos los usos', () => {
+    const m = fabricaMeta();
+    const aps = [aporte({ metaId: m.id, cuentaId: 'c', importe: 50_000_00 }), aporte({ metaId: m.id, cuentaId: 'c', importe: -20_000_00 })];
+    expect(reservado(m, aps)).toBe(30_000_00);
+  });
+  it('hitos y meses cubiertos, redondeando para abajo', () => {
+    const r = fabricaMeta({ esReserva: true, objetivo: 100_000_00, hitos: [300_000_00], esencialesPorMes: 200_000_00 });
+    expect(proximoHito(r, 150_000_00)).toBe(300_000_00);
+    expect(proximoHito(r, 400_000_00)).toBeNull();
+    expect(mesesCubiertos(r, 390_000_00)).toBe(1.9);
   });
 });

@@ -98,7 +98,7 @@ const TIPOS_MOV: readonly TipoMovimiento[] = ['gasto', 'ingreso', 'transferencia
 const ORIGENES: readonly OrigenMovimiento[] = ['manual', 'texto', 'comprobante', 'ajuste'];
 const RECURRENCIAS: readonly Recurrencia[] = ['ninguna', 'mensual'];
 const ACCIONES: readonly AccionHuellita[] = [
-  'revisar-movimientos', 'confirmar-compromiso', 'actualizar-saldo', 'anotar', 'retomar', 'comprobante', 'revision-breve',
+  'revisar-movimientos', 'confirmar-compromiso', 'actualizar-saldo', 'anotar', 'retomar', 'comprobante',
 ];
 
 function parseCuenta(r: unknown): Cuenta | null {
