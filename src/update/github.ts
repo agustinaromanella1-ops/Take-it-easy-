@@ -22,10 +22,24 @@ export async function buscarPublicacion(): Promise<Publicacion | null> {
   try {
     // Sin corte, en una red mala la promesa queda colgada y el cartel de
     // "buscando" no se apaga nunca.
-    const respuesta = await fetch(PUBLICACION, {
-      signal: AbortSignal.timeout(8000),
-      headers: { Accept: 'application/vnd.github+json' },
-    });
+    //
+    // A mano y no con AbortSignal.timeout: React Native trae el polyfill de
+    // `abort-controller`, que no tiene ese método estático. TypeScript lo
+    // acepta porque la config incluye los tipos del DOM, así que la llamada
+    // tiraba TypeError en el teléfono, el catch se lo tragaba y la búsqueda
+    // de versión devolvía null siempre, en todos los dispositivos.
+    const corte = new AbortController();
+    const reloj = setTimeout(() => corte.abort(), 8000);
+
+    let respuesta: Response;
+    try {
+      respuesta = await fetch(PUBLICACION, {
+        signal: corte.signal,
+        headers: { Accept: 'application/vnd.github+json' },
+      });
+    } finally {
+      clearTimeout(reloj);
+    }
     if (!respuesta.ok) return null;
 
     const datos: unknown = await respuesta.json();

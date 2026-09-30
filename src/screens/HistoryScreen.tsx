@@ -9,6 +9,7 @@ import { useMessages } from '../state/MessagesContext';
 import { spacing, usePalette } from '../theme';
 import { MessageCard } from '../components/MessageCard';
 import { EmptyState, Title, Txt } from '../components/ui';
+import { useAhora } from '../state/useAhora';
 import type { RootStackParamList } from '../navigation/types';
 
 type Nav = NativeStackNavigationProp<RootStackParamList>;
@@ -18,6 +19,7 @@ export function HistoryScreen(): React.ReactElement {
   const insets = useSafeAreaInsets();
   const navigation = useNavigation<Nav>();
   const { history } = useMessages();
+  const ahora = useAhora();
 
   const sorted = [...history].sort((a, b) => {
     const at = a.sentAt ?? a.createdAt;
@@ -46,6 +48,7 @@ export function HistoryScreen(): React.ReactElement {
         }
         renderItem={({ item }) => (
           <MessageCard
+            ahora={ahora}
             message={{ ...item, localAt: null }}
             trailing={
               item.status === 'skipped'

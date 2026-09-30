@@ -39,7 +39,12 @@ export function RecipientPicker({
   const [country, setCountry] = useState<CountryCode>(DEFAULT_COUNTRY);
   const [raw, setRaw] = useState('');
   const [showCountries, setShowCountries] = useState(false);
-  const [kind, setKind] = useState<RecipientKind>('contacto');
+  // Arranca en lo que ya hay. Empezando siempre en 'contacto', al editar un
+  // mensaje de grupo se mostraba el campo de teléfono, y escribir un dígito
+  // ahí borraba el grupo sin decir nada.
+  const [kind, setKind] = useState<RecipientKind>(
+    selected[0]?.kind ?? 'contacto',
+  );
   const [grupo, setGrupo] = useState('');
 
   const parsed = parsePhone(raw, country);

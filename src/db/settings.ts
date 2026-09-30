@@ -106,9 +106,13 @@ export type AppPorDefecto = WhatsAppApp | 'preguntar';
 
 export async function loadAppWhatsApp(): Promise<AppPorDefecto> {
   const raw = await read(APP_KEY);
+  // Por defecto se pregunta. Asumir 'normal' forzaba el paquete com.whatsapp
+  // en todos los mensajes de quien nunca tocó el ajuste: alguien que manda
+  // siempre desde Business habría empezado a mandar desde la cuenta personal
+  // sin aviso, que es exactamente el error que esta función evita.
   return raw === 'normal' || raw === 'business' || raw === 'preguntar'
     ? raw
-    : 'normal';
+    : 'preguntar';
 }
 
 export async function saveAppWhatsApp(valor: AppPorDefecto): Promise<void> {

@@ -38,9 +38,12 @@ jobs:
       - name: Revisar que el JavaScript empaquete
         run: npx expo export --platform android --output-dir .expo/export-check
 
-      # La app compara esta fecha contra la del archivo publicado para saber
-      # si hay una versión nueva. Sin esto, extra.buildTime queda en null y la
-      # app simplemente no ofrece actualizar, que es lo correcto en desarrollo.
+      # La app compara esta fecha contra la de subida del archivo publicado
+      # para saber si hay una versión nueva. Se graba acá y no antes de
+      # compilar: una build de release tarda entre diez y treinta minutos, y
+      # con la fecha del principio el archivo recién subido quedaba "más
+      # nuevo" que la app que lo contiene. Recién instalada, la app se
+      # anunciaba a sí misma como desactualizada y el aviso no se iba nunca.
       - name: Grabar la fecha de compilación
         run: |
           node -e "

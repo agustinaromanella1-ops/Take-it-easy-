@@ -24,7 +24,8 @@ import {
   ConsejoDePantalla,
   HojaDeAyuda,
 } from '../components/Ayuda';
-import { EmptyState, HardShadow, Title, Txt } from '../components/ui';
+import { EmptyState, HardShadow, Title, Txt, coloresDeTono } from '../components/ui';
+import { useAhora } from '../state/useAhora';
 import type { RootStackParamList } from '../navigation/types';
 
 type Nav = NativeStackNavigationProp<RootStackParamList>;
@@ -51,16 +52,28 @@ export function ScheduledListScreen(): React.ReactElement {
     publicacion,
   } = useMessages();
   const [ayudaAbierta, setAyudaAbierta] = useState(false);
+  // Una sola hora para toda la pantalla, que además se actualiza sola: el
+  // estado depende del reloj y con la hora del primer dibujado un mensaje
+  // ya enviado podía terminar listado como atrasado.
+  const ahora = useAhora();
 
-  const cuenta = useMemo(() => contarPorEstado(pending), [pending]);
+  const cuenta = useMemo(() => contarPorEstado(pending, ahora), [ahora, pending]);
+  /** Lo que de verdad queda por hacer: el enviado reciente no cuenta. */
+  const porHacer = pending.length - cuenta.enviado;
 
   const sections = useMemo<DaySection[]>(() => {
     // Los recién enviados tienen fecha pasada, así que agrupados por día
     // caerían bajo "Atrasados". Van en su propia sección, al final.
-    const enviados = pending.filter((m) => estadoDe(m) === 'enviado');
-    const enCurso = pending.filter((m) => estadoDe(m) !== 'enviado');
+    const enviados = pending.filter((m) => estadoDe(m, ahora) === 'enviado');
+    // Los que perdieron estado con el paso del tiempo —un enviado que ya
+    // cumplió su hora a la vista— salen de la lista en vez de caer en
+    // "Atrasados" por tener fecha pasada.
+    const enCurso = pending.filter((m) => {
+      const estado = estadoDe(m, ahora);
+      return estado !== null && estado !== 'enviado';
+    });
 
-    const grouped = groupByDay(enCurso, timezone);
+    const grouped = groupByDay(enCurso, timezone, ahora);
 
     if (enviados.length > 0) {
       grouped.push({
@@ -79,7 +92,7 @@ export function ScheduledListScreen(): React.ReactElement {
       });
     }
     return grouped;
-  }, [drafts, pending, timezone]);
+  }, [ahora, drafts, pending, timezone]);
 
   const openDetail = (m: ScheduledMessage) =>
     navigation.navigate('Detail', { id: m.id });
@@ -113,7 +126,7 @@ export function ScheduledListScreen(): React.ReactElement {
                     marginTop: spacing(0.5),
                   }}
                 >
-                  {pendingCountLabel(pending.length)}
+                  {pendingCountLabel(porHacer)}
                 </Txt>
               </View>
               <BotonAyuda onPress={() => setAyudaAbierta(true)} />
@@ -158,6 +171,7 @@ export function ScheduledListScreen(): React.ReactElement {
             message={item}
             overdue={section.overdue}
             trailing="Sin fecha"
+            ahora={ahora}
             onPress={() => openDetail(item)}
           />
         )}
@@ -243,15 +257,7 @@ function ResumenDeEstados({
     <View style={{ marginTop: spacing(1.5) }}>
       <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: spacing(1) }}>
         {presentes.map((estado) => {
-          const tono = TONOS[estado];
-          const color =
-            tono === 'aviso' ? p.warning : tono === 'listo' ? p.accentInk : p.textMuted;
-          const fondo =
-            tono === 'aviso'
-              ? p.warningSoft
-              : tono === 'listo'
-                ? p.accentSoft
-                : p.surfaceAlt;
+          const { texto: color, fondo } = coloresDeTono(p, TONOS[estado]);
           return (
             <View
               key={estado}

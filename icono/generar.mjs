@@ -145,15 +145,39 @@ console.log('hoja de 48 px');
 /** La variante que se publica. Cambiar acá para volver a la otra. */
 const ELEGIDA = 'b-atardecer';
 
-/** Burbuja en tinta, agujas en crema y el minutero en coral. */
-const dibujo = (escala = 1) =>
-  burbuja({ relleno: TINTA, agujas: CREMA, minutero: CORAL, escala });
+/**
+ * Los parámetros de cada variante viven acá y los usan tanto las vistas
+ * previas como los archivos finales. Antes el bloque de abajo dibujaba la
+ * variante b a mano: cambiar ELEGIDA no cambiaba nada y el script decía que
+ * sí, así que seguir el README para cambiar de icono publicaba el otro.
+ */
+const RECETAS = {
+  'a-tinta': {
+    fondo: `<rect width="${LIENZO}" height="${LIENZO}" fill="${TINTA}"/>`,
+    defs: '',
+    figura: { relleno: CREMA, agujas: TINTA, minutero: TINTA },
+    /** Sobre el splash claro la burbuja va en tinta, y al revés en oscuro. */
+    splashClaro: { relleno: TINTA, agujas: CREMA, minutero: CREMA },
+    splashOscuro: { relleno: CREMA, agujas: TINTA, minutero: TINTA },
+  },
+  'b-atardecer': {
+    fondo: `<rect width="${LIENZO}" height="${LIENZO}" fill="url(#cielo)"/>`,
+    defs: DEGRADADO,
+    figura: { relleno: TINTA, agujas: CREMA, minutero: CORAL },
+    splashClaro: { relleno: TINTA, agujas: CREMA, minutero: CORAL },
+    splashOscuro: { relleno: CREMA, agujas: TINTA, minutero: CORAL },
+  },
+};
 
-const CIELO = `<rect width="${LIENZO}" height="${LIENZO}" fill="url(#cielo)"/>`;
+const receta = RECETAS[ELEGIDA];
+const dibujo = (escala = 1) => burbuja({ ...receta.figura, escala });
 
 // iOS y el icono de respaldo: cuadrado lleno, sin transparencia ni esquinas
 // redondeadas propias. La máscara la aplica el sistema.
-writeFileSync(join(assets, 'icon.png'), rend(svg(CIELO, dibujo(), DEGRADADO), 1024));
+writeFileSync(
+  join(assets, 'icon.png'),
+  rend(svg(receta.fondo, dibujo(), receta.defs), 1024),
+);
 
 // Android arma su icono con dos capas. El primer plano va achicado: el sistema
 // recorta el borde con máscaras distintas según el fabricante, así que todo lo
@@ -165,11 +189,19 @@ writeFileSync(join(assets, 'adaptive-icon.png'), rend(svg('', dibujo(0.92)), 102
 // degradado que la emparenta con el icono de Pipí Cucú.
 writeFileSync(
   join(assets, 'adaptive-background.png'),
-  rend(svg(CIELO, '', DEGRADADO), 1024),
+  rend(svg(receta.fondo, '', receta.defs), 1024),
 );
 
-// El splash: la misma burbuja sobre el verde agua claro del arranque, que es
-// la primera parada del degradado. Así no hay salto de color al abrir.
-writeFileSync(join(assets, 'splash-icon.png'), rend(svg('', dibujo()), 1024));
+// El splash tiene dos versiones. Con una sola, la burbuja en tinta sobre el
+// fondo oscuro daba 1,41:1 de contraste: la pantalla de arranque en modo
+// oscuro era un rectángulo verde casi uniforme.
+writeFileSync(
+  join(assets, 'splash-icon.png'),
+  rend(svg('', burbuja(receta.splashClaro)), 1024),
+);
+writeFileSync(
+  join(assets, 'splash-icon-dark.png'),
+  rend(svg('', burbuja(receta.splashOscuro)), 1024),
+);
 
 console.log('assets escritos a partir de la variante', ELEGIDA);

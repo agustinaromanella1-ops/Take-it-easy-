@@ -61,14 +61,19 @@ async function migrate(db: SQLite.SQLiteDatabase): Promise<void> {
   );
   let version = row?.user_version ?? 0;
 
+  // La marca se guarda después de CADA migración, no al final. Las de la v3
+  // en adelante son ALTER TABLE, que no se pueden repetir: si el proceso se
+  // corta entre dos, al arrancar de nuevo el bucle reintentaría una columna
+  // que ya existe, fallaría con "duplicate column name", y como getDb()
+  // memoriza la promesa rechazada, toda la base quedaría inaccesible para
+  // siempre. Con la marca por paso, cada arranque retoma donde quedó.
   for (let i = version; i < MIGRATIONS.length; i += 1) {
     const sql = MIGRATIONS[i];
     if (!sql) continue;
     await db.execAsync(sql);
     version = i + 1;
+    await db.execAsync(`PRAGMA user_version = ${version}`);
   }
-
-  await db.execAsync(`PRAGMA user_version = ${version}`);
 }
 
 export function getDb(): Promise<SQLite.SQLiteDatabase> {

@@ -135,7 +135,11 @@ export async function reschedule(
     scheduledAt: wallToUtc(localAt, timezone).toISOString(),
     status: 'scheduled',
     firedAt: null,
-    ...(postergado ? { postponedAt: new Date().toISOString() } : {}),
+    // Se escribe siempre, no solo al posponer. Dejándolo intacto, la próxima
+    // repetición de un recurrente —o una fecha nueva elegida a mano— heredaba
+    // la marca y quedaba etiquetada "Postergado" para siempre, que es
+    // justamente la distinción que la etiqueta viene a hacer.
+    postponedAt: postergado ? new Date().toISOString() : null,
   });
 }
 

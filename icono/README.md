@@ -44,11 +44,13 @@ filo a cualquier tamaño.
 
 Hay dos variantes generadas:
 
-- **`a-tinta`** — la composición original con la tinta de la app. Es la que se publica.
+- **`a-tinta`** — la composición original con la tinta de la app.
 - **`b-atardecer`** — la versión de familia: el mismo cielo pastel del icono de Pipí Cucú,
-  con la burbuja en tinta y el minutero en coral.
+  con la burbuja en tinta y el minutero en coral. **Es la que se publica.**
 
-Para cambiar cuál se publica, la constante `ELEGIDA` en `generar.mjs`.
+Para cambiar cuál se publica, la constante `ELEGIDA` en `generar.mjs`. Los parámetros de
+cada variante están en `RECETAS` y los usan tanto las vistas previas como los archivos
+finales, así que cambiar la constante cambia de verdad lo que se exporta.
 
 ## Archivos que se generan
 
@@ -58,7 +60,8 @@ Para cambiar cuál se publica, la constante `ELEGIDA` en `generar.mjs`.
 |---|---|
 | `icon.png` | iOS y respaldo. Cuadrado lleno, sin transparencia ni esquinas redondeadas propias: la máscara la aplica el sistema. |
 | `adaptive-icon.png` | Primer plano de Android, achicado al 92 % para que el dibujo entre en el 66 % central que ninguna máscara recorta. El fondo lo pone `app.json`. |
-| `splash-icon.png` | Pantalla de arranque. Va invertido —burbuja en tinta— porque el fondo de arranque es el verde agua claro de la app. |
+| `splash-icon.png` | Pantalla de arranque en claro. Burbuja en tinta sobre el verde agua del fondo: 9,98:1. |
+| `splash-icon-dark.png` | La misma en modo oscuro, con la burbuja en crema. Con la de tinta daba 1,41:1 sobre el fondo oscuro, o sea un rectángulo casi uniforme. |
 
 El centro óptico no es el geométrico: la colita corre el dibujo hacia abajo y a la derecha,
 y sin corregirlo el icono se ve desplazado dentro de su cuadrado.

@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { Modal, Pressable, TextInput, View } from 'react-native';
+import { Modal, Pressable, TextInput } from 'react-native';
 import { BORDER_WIDTH, radius, spacing, usePalette } from '../theme';
 import { Button, Title, Txt } from './ui';
 

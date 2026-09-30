@@ -11,6 +11,7 @@ import {
   type ViewStyle,
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
+import type { Tono } from '../domain/estado';
 import {
   BORDER_WIDTH,
   SHADOW_OFFSET,
@@ -18,8 +19,30 @@ import {
   radius,
   spacing,
   usePalette,
+  type Palette,
   type ShadowSize,
 } from '../theme';
+
+/**
+ * El par de colores de cada tono, en un solo lugar.
+ *
+ * Estaba copiado en la tarjeta y en el resumen, que es justo lo que la
+ * indirección de `Tono` viene a evitar: con dos copias, restilar uno o
+ * agregar un tono nuevo deja los dos lados diciendo cosas distintas.
+ */
+export function coloresDeTono(
+  p: Palette,
+  tono: Tono,
+): { texto: string; fondo: string } {
+  switch (tono) {
+    case 'aviso':
+      return { texto: p.warning, fondo: p.warningSoft };
+    case 'listo':
+      return { texto: p.accentInk, fondo: p.accentSoft };
+    case 'neutro':
+      return { texto: p.textMuted, fondo: p.surfaceAlt };
+  }
+}
 
 /* ------------------------------------------------------------------ *
  * Texto

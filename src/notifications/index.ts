@@ -28,8 +28,16 @@ Notifications.setNotificationHandler({
   }),
 });
 
-export async function configure(sonido: Sonido = 'predeterminado'): Promise<void> {
+/**
+ * Devuelve true si el canal activo cambió respecto del que ya estaba, para
+ * que quien llame sepa que tiene que volver a agendar los avisos.
+ */
+export async function configure(
+  sonido: Sonido = 'predeterminado',
+): Promise<boolean> {
+  const anterior = sonidoActivo;
   sonidoActivo = sonido;
+  let canalCambio = anterior !== sonido;
 
   if (Platform.OS === 'android') {
     // Se crea solo el canal de la opción elegida. Crear los tres dejaría tres
@@ -54,14 +62,21 @@ export async function configure(sonido: Sonido = 'predeterminado'): Promise<void
         .filter(([clave]) => clave !== sonido)
         .map(([, id]) => id),
     ];
+    const existentes = await Notifications.getNotificationChannelsAsync();
     for (const id of sobrantes) {
+      if (!existentes.some((canal) => canal.id === id)) continue;
+      // Había un canal de otra opción todavía en uso: los avisos agendados
+      // apuntan ahí y hay que rehacerlos.
+      canalCambio = true;
       try {
         await Notifications.deleteNotificationChannelAsync(id);
       } catch {
-        // No existía: nada que borrar.
+        // Desapareció entre la consulta y el borrado: nada que hacer.
       }
     }
   }
+
+  return canalCambio;
 
   await Notifications.setNotificationCategoryAsync(CATEGORY_ID, [
     {
@@ -75,6 +90,8 @@ export async function configure(sonido: Sonido = 'predeterminado'): Promise<void
       options: { opensAppToForeground: false },
     },
   ]);
+
+  return canalCambio;
 }
 
 export type PermissionState = 'granted' | 'denied' | 'undetermined';

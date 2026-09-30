@@ -5,18 +5,21 @@ import { displayName } from '../domain/phone';
 import type { ScheduledMessage } from '../domain/types';
 import { estadoDe, ETIQUETAS, TONOS } from '../domain/estado';
 import { BORDER_WIDTH, SHADOW_OFFSET, radius, spacing, usePalette } from '../theme';
-import { HardShadow, Txt } from './ui';
+import { HardShadow, Txt, coloresDeTono } from './ui';
 
 export function MessageCard({
   message,
   onPress,
   overdue,
   trailing,
+  ahora,
 }: {
   message: ScheduledMessage;
   onPress: () => void;
   overdue?: boolean;
   trailing?: string;
+  /** La hora con la que se calcula el estado, una sola para toda la pantalla. */
+  ahora: Date;
 }): React.ReactElement {
   const p = usePalette();
   const [pressed, setPressed] = React.useState(false);
@@ -25,12 +28,11 @@ export function MessageCard({
   const time = message.localAt ? timeLabel(message.localAt) : trailing ?? '';
   const { x, y } = SHADOW_OFFSET.sm;
 
-  const estado = estadoDe(message);
-  const tono = estado ? TONOS[estado] : 'neutro';
-  const colorEstado =
-    tono === 'aviso' ? p.warning : tono === 'listo' ? p.accentInk : p.textMuted;
-  const fondoEstado =
-    tono === 'aviso' ? p.warningSoft : tono === 'listo' ? p.accentSoft : p.surfaceAlt;
+  const estado = estadoDe(message, ahora);
+  const { texto: colorEstado, fondo: fondoEstado } = coloresDeTono(
+    p,
+    estado ? TONOS[estado] : 'neutro',
+  );
 
   return (
     <HardShadow

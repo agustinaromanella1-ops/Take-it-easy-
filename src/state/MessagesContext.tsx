@@ -7,7 +7,7 @@ import React, {
   useRef,
   useState,
 } from 'react';
-import { AppState, Linking } from 'react-native';
+import { AppState } from 'react-native';
 import * as Notifications from 'expo-notifications';
 import * as FileSystem from 'expo-file-system';
 import * as Sharing from 'expo-sharing';
@@ -35,7 +35,6 @@ import {
 } from '../domain/actualizacion';
 import { buscarPublicacion, compiladaEn } from '../update/github';
 import type { Template } from '../domain/templates';
-import { whatsappSchemeUrl, whatsappWebUrl } from '../domain/whatsapp';
 import {
   abrirChat,
   compartirConWhatsApp,
@@ -257,11 +256,26 @@ export function MessagesProvider({
     }
   }, []);
 
+  /**
+   * Vuelve a agendar todos los avisos pendientes. Hace falta cada vez que
+   * cambia el canal de Android, porque el sonido vive en el canal y los
+   * avisos ya agendados apuntan al anterior.
+   */
+  const reagendarTodo = useCallback(async () => {
+    for (const m of await repo.listAll()) {
+      if (!awaitsNotification(m)) continue;
+      await notify.cancel(m.notificationId);
+      const notificationId = await notify.scheduleFor(m);
+      await repo.update(m.id, { notificationId });
+    }
+  }, []);
+
   useEffect(() => {
     let cancelled = false;
     (async () => {
       // El canal se crea con el sonido elegido antes de agendar nada.
-      await notify.configure(await settingsRepo.loadSonido());
+      const sonidoGuardado = await settingsRepo.loadSonido();
+      const canalCambio = await notify.configure(sonidoGuardado);
       const perm = await notify.getPermission();
       const [hours, samples, onboarded, tema, consejos, app, son] = await Promise.all([
         settingsRepo.loadQuietHours(),
@@ -276,6 +290,11 @@ export function MessagesProvider({
       // claro y salta a oscuro.
       setThemePreference(tema);
       await reconcile();
+      // Los avisos de una versión anterior apuntan a un canal que ya no
+      // existe. expo-notifications los manda a su canal de respaldo, con
+      // sonido por defecto: quien eligió "En silencio" igual escucharía el
+      // tono. reconcile no los toca porque ya tienen notificationId.
+      if (canalCambio) await reagendarTodo();
       if (cancelled) return;
       setPermission(perm);
       setQuietHours(hours);
@@ -290,7 +309,7 @@ export function MessagesProvider({
     return () => {
       cancelled = true;
     };
-  }, [reconcile, refresh]);
+  }, [reagendarTodo, reconcile, refresh]);
 
   const rescheduleMessage = useCallback(
     async (id: string, localAt: string, postergado = false) => {
@@ -462,6 +481,16 @@ export function MessagesProvider({
 
       openedId.current = id;
 
+      // El estado se escribe ANTES de abrir WhatsApp. La promesa del intent
+      // de Android recién se resuelve cuando la usuaria vuelve, y si el
+      // sistema recicla la app mientras tanto —cosa habitual— el estado no se
+      // guardaba nunca: el mensaje quedaba como atrasado para siempre y el
+      // cartel de "¿lo mandaste?" no aparecía.
+      if (message.status !== 'draft') {
+        await repo.setStatus(id, 'fired');
+      }
+      await refresh();
+
       if (message.recipientKind === 'grupo') {
         // No hay forma de abrir un grupo concreto: se le entrega el texto a
         // WhatsApp y la usuaria elige el chat de su propia lista.
@@ -469,14 +498,6 @@ export function MessagesProvider({
       } else {
         await abrirChat(message.phoneE164, message.body, app);
       }
-
-      // Un borrador no tiene fecha, y 'fired' sin fecha no cae en ninguna
-      // lista: el mensaje desaparecería de la pantalla. Abrir WhatsApp desde
-      // un borrador no cambia su estado.
-      if (message.status !== 'draft') {
-        await repo.setStatus(id, 'fired');
-      }
-      await refresh();
     },
     [appWhatsApp, refresh],
   );
@@ -589,13 +610,20 @@ export function MessagesProvider({
     setOnboardingCompleted(false);
   }, []);
 
+  // La escritura va afuera del updater: React puede llamarlo más de una vez
+  // por commit y descartar renders enteros, así que adentro se duplicaban
+  // escrituras y se podía guardar un valor de un render tirado a la basura.
+  const consejosRef = useRef<string[]>([]);
+  useEffect(() => {
+    consejosRef.current = consejosVistos;
+  }, [consejosVistos]);
+
   const descartarConsejo = useCallback(async (id: string) => {
-    setConsejosVistos((actuales) => {
-      if (actuales.includes(id)) return actuales;
-      const siguiente = [...actuales, id];
-      void settingsRepo.saveConsejosVistos(siguiente);
-      return siguiente;
-    });
+    if (consejosRef.current.includes(id)) return;
+    const siguiente = [...consejosRef.current, id];
+    consejosRef.current = siguiente;
+    setConsejosVistos(siguiente);
+    await settingsRepo.saveConsejosVistos(siguiente);
   }, []);
 
   const reiniciarConsejos = useCallback(async () => {
@@ -651,25 +679,30 @@ export function MessagesProvider({
   }, []);
 
   /**
-   * Cambiar el sonido no alcanza con guardar la preferencia: en Android el
-   * sonido vive en el canal, y los avisos ya agendados apuntan al canal
-   * viejo. Hay que volver a agendarlos todos para que suenen distinto.
+   * Cambiar el sonido no alcanza con guardar la preferencia: hay que volver a
+   * agendar todo en el canal nuevo.
+   *
+   * Se serializa con una bandera porque dos toques seguidos en los chips
+   * pisaban el notificationId de la otra corrida: una agendaba un aviso que
+   * quedaba registrado en el sistema y en ninguna fila, así que nada podía
+   * cancelarlo y llegaban dos avisos para el mismo mensaje.
    */
+  const cambiandoSonido = useRef(false);
   const updateSonido = useCallback(
     async (valor: Sonido) => {
-      setSonido(valor);
-      await settingsRepo.saveSonido(valor);
-      await notify.configure(valor);
-
-      for (const m of await repo.listAll()) {
-        if (!awaitsNotification(m)) continue;
-        await notify.cancel(m.notificationId);
-        const notificationId = await notify.scheduleFor(m);
-        await repo.update(m.id, { notificationId });
+      if (cambiandoSonido.current) return;
+      cambiandoSonido.current = true;
+      try {
+        setSonido(valor);
+        await settingsRepo.saveSonido(valor);
+        await notify.configure(valor);
+        await reagendarTodo();
+        await refresh();
+      } finally {
+        cambiandoSonido.current = false;
       }
-      await refresh();
     },
-    [refresh],
+    [reagendarTodo, refresh],
   );
 
   const updateAppWhatsApp = useCallback(
@@ -746,7 +779,7 @@ export function MessagesProvider({
       messages: backup.messages.length,
       templates: backup.templates.length,
     };
-  }, [reconcile, refresh]);
+  }, [reagendarTodo, reconcile, refresh]);
 
   /**
    * Al volver de WhatsApp preguntamos una sola vez si el mensaje salió.
