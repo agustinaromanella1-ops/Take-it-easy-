@@ -29,7 +29,13 @@
         "foregroundImage": "./assets/adaptive-icon.png",
         "backgroundImage": "./assets/adaptive-background.png",
         "backgroundColor": "#f1ecf9"
-      }
+      },
+      "blockedPermissions": [
+        "android.permission.SYSTEM_ALERT_WINDOW",
+        "android.permission.WRITE_CONTACTS",
+        "android.permission.READ_EXTERNAL_STORAGE",
+        "android.permission.WRITE_EXTERNAL_STORAGE"
+      ]
     },
     "plugins": [
       [
@@ -52,7 +58,8 @@
             "backgroundColor": "#0e2321"
           }
         }
-      ]
+      ],
+      "./plugins/withConsultasWhatsApp"
     ],
     "backgroundColor": "#f1ecf9",
     "androidStatusBar": {

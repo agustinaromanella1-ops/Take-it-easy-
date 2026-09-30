@@ -75,6 +75,24 @@ jobs:
         working-directory: android
         run: ./gradlew assembleRelease --no-daemon
 
+      # Los permisos del APK final, no los del manifiesto de origen. Los que
+      # van marcados con tools:node="remove" recién desaparecen acá, al
+      # fusionar los manifiestos, así que es el único lugar donde se puede
+      # comprobar qué se está publicando de verdad. Un permiso de más es una
+      # pregunta de Google Play en la revisión.
+      - name: Mostrar los permisos que quedaron en el APK
+        run: |
+          MERGED=$(find android/app/build/intermediates -name AndroidManifest.xml -path '*release*' | head -1)
+          echo "Manifiesto fusionado: $MERGED"
+          grep -oE 'android:name="android.permission[^"]*"' "$MERGED" | sort -u
+          for PROHIBIDO in SYSTEM_ALERT_WINDOW WRITE_CONTACTS WRITE_EXTERNAL_STORAGE QUERY_ALL_PACKAGES; do
+            if grep -q "android.permission.$PROHIBIDO" "$MERGED"; then
+              echo "::error::El APK quedó con android.permission.$PROHIBIDO, que esta app no usa"
+              exit 1
+            fi
+          done
+          echo "Sin permisos de más."
+
       - name: Ponerle un nombre reconocible
         run: cp android/app/build/outputs/apk/release/app-release.apk listo-para-enviar.apk
 
