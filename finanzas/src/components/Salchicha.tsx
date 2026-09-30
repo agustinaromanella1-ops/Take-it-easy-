@@ -1,57 +1,41 @@
 import type { TrucoId } from '../lib/huellitas/huellitas';
+import { sinMovimiento } from '../lib/movimiento';
 
 /**
- * El salchicha, dibujado por partes para poder animarlo.
+ * El perro. Es EL MISMO de Pipí Cucú, no uno parecido: los dos archivos de
+ * `public/` son copias byte por byte de los de la app hermana
+ * (`../public/pipi-cucu-dog-*`). La idea es que todas las apps tengan el
+ * mismo perrito, así que no se redibuja, no se recolorea y no se recorta. Si
+ * cambia allá, se vuelve a copiar acá.
  *
- * Es un personaje provisional inspirado en el perro de Pipí Cucú
- * (`public/pipi-cucu-dog-static.png` en la app hermana): naranja, panza
- * crema, orejas marrones, ojos cerrados sonrientes. Se reemplaza cambiando
- * este archivo; nada más en la app sabe cómo está dibujado.
+ * El GIF es el perro volando; el PNG, el mismo cuadro quieto, para quien pidió
+ * menos movimiento. Los trucos mueven la imagen entera (saltar, girar,
+ * inclinarse) sin tocar el dibujo.
  *
  * Nunca tiene hambre, ni se enferma, ni se pone triste: no hay un estado que
  * dependa de si la persona entró o no.
  */
+export const PERRO_VOLANDO = '/pipi-cucu-dog-flying.gif';
+export const PERRO_QUIETO = '/pipi-cucu-dog-static.png';
+const ANCHO = 483;
+const ALTO = 177;
+
 export function Salchicha({ truco, tam = 200, etiqueta = 'Salchi, el perro salchicha' }: { truco?: TrucoId | null; tam?: number; etiqueta?: string }) {
+  const quieto = sinMovimiento();
   return (
-    <svg
-      className="salchicha"
-      data-truco={truco ?? undefined}
-      width={tam}
-      height={tam / 2}
-      viewBox="0 0 240 120"
-      role="img"
-      aria-label={etiqueta}
-    >
-      <g className="perro">
-        <g className="cola">
-          <path d="M196 56 Q214 48 220 26" fill="none" stroke="var(--perro-trazo)" strokeWidth="9" strokeLinecap="round" />
-          <path d="M196 56 Q214 48 220 26" fill="none" stroke="var(--perro-cuerpo)" strokeWidth="4.5" strokeLinecap="round" />
-        </g>
-        <g className="patas-tras">
-          <rect x="166" y="66" width="13" height="32" rx="6.5" fill="var(--perro-cuerpo)" stroke="var(--perro-trazo)" strokeWidth="3" />
-          <rect x="182" y="66" width="13" height="32" rx="6.5" fill="var(--perro-oreja)" stroke="var(--perro-trazo)" strokeWidth="3" />
-        </g>
-        <g className="pata-del-2">
-          <rect x="88" y="66" width="13" height="32" rx="6.5" fill="var(--perro-oreja)" stroke="var(--perro-trazo)" strokeWidth="3" />
-        </g>
-        <rect x="58" y="38" width="146" height="44" rx="22" fill="var(--perro-cuerpo)" stroke="var(--perro-trazo)" strokeWidth="3" />
-        <path d="M78 70 Q130 84 190 70" fill="none" stroke="var(--perro-panza)" strokeWidth="9" strokeLinecap="round" />
-        <g className="pata-del-1">
-          <rect x="70" y="66" width="13" height="32" rx="6.5" fill="var(--perro-cuerpo)" stroke="var(--perro-trazo)" strokeWidth="3" />
-        </g>
-        <g className="cabeza">
-          <ellipse cx="50" cy="44" rx="25" ry="23" fill="var(--perro-cuerpo)" stroke="var(--perro-trazo)" strokeWidth="3" />
-          <ellipse cx="27" cy="55" rx="20" ry="12" fill="var(--perro-panza)" stroke="var(--perro-trazo)" strokeWidth="3" />
-          <circle cx="10" cy="51" r="5.5" fill="var(--perro-trazo)" />
-          <path d="M41 40 Q47 34 53 40" fill="none" stroke="var(--perro-trazo)" strokeWidth="3" strokeLinecap="round" />
-          <path d="M18 62 Q26 68 34 62" fill="none" stroke="var(--perro-trazo)" strokeWidth="2.5" strokeLinecap="round" />
-          <g className="oreja">
-            <path d="M58 26 Q86 30 78 62 Q70 70 62 60 Q56 44 58 26 Z" fill="var(--perro-oreja)" stroke="var(--perro-trazo)" strokeWidth="3" strokeLinejoin="round" />
-          </g>
-        </g>
-      </g>
-      <circle className="pelota" cx="232" cy="92" r="8" fill="var(--pelota)" stroke="var(--perro-trazo)" strokeWidth="2.5" />
-    </svg>
+    <span className="salchicha" data-truco={truco ?? undefined} style={{ width: tam }}>
+      <img
+        className="perro"
+        src={quieto ? PERRO_QUIETO : PERRO_VOLANDO}
+        width={tam}
+        height={Math.round((tam * ALTO) / ANCHO)}
+        alt={etiqueta}
+        {...(etiqueta === '' ? { 'aria-hidden': true } : {})}
+        decoding="async"
+        draggable={false}
+      />
+      {truco === 'pelota' && <span className="pelota" aria-hidden="true" />}
+    </span>
   );
 }
 

@@ -16,10 +16,16 @@ node e2e/etapa1.mjs          # punta a punta, con fecha fija y OCR real
 node e2e/etapa2.mjs          # préstamos, importar, capturas, resumen, atajos
 node e2e/etapa3.mjs          # plan, inversión, compartir (levanta sus servidores)
 node scripts/contraste.mjs   # si tocás un color
-node scripts/iconos.mjs      # si cambia el dibujo del perro
+node scripts/iconos.mjs      # si cambia el perro de Pipí Cucú
 ```
 
 ## Reglas que no se adivinan leyendo el código
+
+**El perro es el de Pipí Cucú, copiado, no redibujado.** `public/pipi-cucu-dog-flying.gif` y
+`public/pipi-cucu-dog-static.png` son copias byte por byte de `../public/`: todas las apps tienen el
+mismo perrito. No se dibuja uno "parecido", ni se recolorea, ni se recorta. Si cambia allá, se
+copia de nuevo (`cp ../public/pipi-cucu-dog-* public/`) y se regeneran los íconos. Los trucos
+mueven la imagen entera; `e2e/etapa1.mjs` verifica que los archivos sean idénticos.
 
 **La plata es un entero de centavos**, siempre. `parseMoney`/`formatMoney` son la única frontera
 con el texto. **Las fechas locales son `YYYY-MM-DD`**; nunca `new Date('2026-03-10')`.

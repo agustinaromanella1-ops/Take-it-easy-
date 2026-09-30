@@ -19,16 +19,21 @@ import type { AccionHuellita, DateISO, Huellitas, Instante } from '../../types';
 export const ALMOHADILLAS = 5;
 export const COMPLETAS_POR_DIA = 2;
 
-/** Los trucos, en el orden en que se aprenden. El primero es la celebración inicial. */
+/**
+ * Los trucos, en el orden en que se aprenden. El primero es la celebración
+ * inicial. Los ids no cambian nunca: están guardados en los datos de cada
+ * persona. Los nombres dicen lo que se ve, porque el perro es una imagen
+ * entera (el de Pipí Cucú) y no se le puede levantar una pata sola.
+ */
 export const TRUCOS = [
-  { id: 'patita', nombre: 'Dar la patita y girar' },
-  { id: 'saltito', nombre: 'Saltito y mover la cola' },
+  { id: 'patita', nombre: 'Llegar volando y dar una vuelta' },
+  { id: 'saltito', nombre: 'Saltitos de alegría' },
   { id: 'reverencia', nombre: 'Hacer una reverencia' },
   { id: 'giro', nombre: 'Girar sobre sí mismo' },
   { id: 'panza', nombre: 'Rodar panza arriba' },
-  { id: 'pelota', nombre: 'Traer la pelota' },
+  { id: 'pelota', nombre: 'Ir a buscar la pelota' },
   { id: 'estirarse', nombre: 'Estirarse bien largo' },
-  { id: 'orejas', nombre: 'Sacudir las orejas' },
+  { id: 'orejas', nombre: 'Sacudirse' },
 ] as const;
 
 export type TrucoId = (typeof TRUCOS)[number]['id'];

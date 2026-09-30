@@ -92,7 +92,7 @@ export default defineConfig({
         ],
       },
       workbox: {
-        globPatterns: ['**/*.{js,css,html,woff2,woff,png,svg}'],
+        globPatterns: ['**/*.{js,css,html,woff2,woff,png,svg,gif}'],
         // El lector de texto pesa unos 6 MB y no todo el mundo lo va a usar:
         // no se baja de entrada. Se guarda la primera vez que se lee un
         // comprobante y desde ahí funciona sin conexión.

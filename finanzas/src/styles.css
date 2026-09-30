@@ -28,11 +28,8 @@
   --foco: #1f6fd1;
   --sombra: 0 1px 2px rgb(29 42 38 / 6%), 0 4px 14px rgb(29 42 38 / 6%);
 
-  --perro-cuerpo: #e38a4f;
-  --perro-panza: #f8dcba;
-  --perro-oreja: #8b4a2b;
-  --perro-trazo: #2b2340;
   --pelota: #f2c14e;
+  --pelota-borde: #2b2340;
   --hormiga: #5b3a29;
   --almohadilla: #e8e1d7;
   --almohadilla-llena: #c46a2e;
@@ -67,10 +64,6 @@
   --foco: #8ab8f5;
   --sombra: 0 1px 2px rgb(0 0 0 / 30%);
 
-  --perro-cuerpo: #e38a4f;
-  --perro-panza: #f8dcba;
-  --perro-oreja: #8b4a2b;
-  --perro-trazo: #120e1f;
   --hormiga: #d9b39a;
   --almohadilla: #33443e;
   --almohadilla-llena: #f0a066;
@@ -1165,6 +1158,199 @@ input[type='file'] {
   list-style: none;
   padding: 0;
   margin: 0 0 8px;
+}
+
+.lista-trucos li {
+  padding: 4px 0;
+}
+
+.celebracion {
+  position: fixed;
+  left: 0;
+  right: 0;
+  /* Por encima de la barra de deshacer, que aparece a la vez. */
+  bottom: calc(var(--nav-alto) + 150px + env(safe-area-inset-bottom));
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  /* No recibe toques: no puede tapar un botón ni robar el foco. */
+  pointer-events: none;
+  z-index: 30;
+}
+
+.escena {
+  display: flex;
+  align-items: flex-end;
+  gap: 0;
+  animation: escena-entra 0.6s ease-out both;
+}
+
+.celebracion-texto {
+  background: var(--tinta);
+  color: var(--fondo);
+  border-radius: 999px;
+  padding: 8px 16px;
+  margin: 4px 16px 0;
+  font-weight: 700;
+  text-align: center;
+  box-shadow: 0 4px 14px rgb(0 0 0 / 20%);
+}
+
+.huellita-completa {
+  animation: huella-llena 0.5s 0.6s ease-out both;
+}
+
+@keyframes escena-entra {
+  from {
+    transform: translateX(60vw);
+  }
+  to {
+    transform: translateX(0);
+  }
+}
+
+@keyframes huella-llena {
+  50% {
+    transform: scale(1.25);
+  }
+}
+
+/*
+ * El perro es la imagen de Pipí Cucú, entera: los trucos la mueven completa
+ * (saltar, girar, inclinarse), sin tocar el dibujo. Duran menos de 2,5 s.
+ * Mira a la izquierda, así que "adelante" es hacia la izquierda.
+ */
+.salchicha {
+  position: relative;
+  display: inline-block;
+  line-height: 0;
+}
+
+.salchicha .perro {
+  display: block;
+  max-width: 100%;
+  height: auto;
+  user-select: none;
+}
+
+.salchicha .pelota {
+  position: absolute;
+  left: -6%;
+  bottom: 8%;
+  width: 11%;
+  aspect-ratio: 1;
+  border-radius: 50%;
+  background: var(--pelota);
+  border: 2px solid var(--pelota-borde);
+  animation: pelota 1.4s 0.5s ease-out both;
+}
+
+.salchicha[data-truco='patita'] .perro {
+  transform-origin: 50% 100%;
+  animation: aterrizar 0.6s 0.6s ease-out both, giro 0.8s 1.3s ease-in-out both;
+}
+
+@keyframes aterrizar {
+  40% {
+    transform: translateY(8%) scaleY(0.94);
+  }
+}
+
+@keyframes giro {
+  0% {
+    transform: scaleX(1);
+  }
+  25% {
+    transform: scaleX(0);
+  }
+  50% {
+    transform: scaleX(-1);
+  }
+  75% {
+    transform: scaleX(0);
+  }
+  100% {
+    transform: scaleX(1);
+  }
+}
+
+.salchicha[data-truco='giro'] .perro {
+  animation: giro 0.9s 0.6s ease-in-out 2 both;
+}
+
+.salchicha[data-truco='saltito'] .perro {
+  animation: saltito 0.6s 0.6s ease-out 3 both;
+}
+
+@keyframes saltito {
+  40% {
+    transform: translateY(-16%);
+  }
+}
+
+.salchicha[data-truco='reverencia'] .perro {
+  transform-origin: 85% 100%;
+  animation: reverencia 1.6s 0.6s ease-in-out both;
+}
+
+@keyframes reverencia {
+  30%,
+  70% {
+    transform: rotate(-12deg);
+  }
+}
+
+.salchicha[data-truco='panza'] .perro {
+  animation: panza 1.8s 0.6s ease-in-out both;
+}
+
+@keyframes panza {
+  30%,
+  70% {
+    transform: scaleY(-1);
+  }
+}
+
+.salchicha[data-truco='pelota'] .perro {
+  animation: saltito 0.5s 1.6s ease-out 2 both;
+}
+
+@keyframes pelota {
+  0% {
+    transform: translateX(-160%);
+  }
+  70% {
+    transform: translateX(10%);
+  }
+  100% {
+    transform: translateX(0);
+  }
+}
+
+.salchicha[data-truco='estirarse'] .perro {
+  transform-origin: 90% 80%;
+  animation: estirarse 1.8s 0.6s ease-in-out both;
+}
+
+@keyframes estirarse {
+  35%,
+  65% {
+    transform: scaleX(1.12);
+  }
+}
+
+.salchicha[data-truco='orejas'] .perro {
+  transform-origin: 50% 60%;
+  animation: sacudirse 0.3s 0.6s ease-in-out 5 both;
+}
+
+@keyframes sacudirse {
+  25% {
+    transform: rotate(-4deg);
+  }
+  75% {
+    transform: rotate(4deg);
+  }
 }
 
 .lista-trucos li {

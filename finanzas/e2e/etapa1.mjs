@@ -518,9 +518,20 @@ await verificar('movimiento reducido: el perro queda quieto', async () => {
   const p4 = await c4.newPage();
   await p4.goto(URL);
   await p4.getByRole('button', { name: 'Mirar primero con datos de ejemplo' }).click();
-  const anim = await p4.locator('.salchicha .cola').first().evaluate((e) => getComputedStyle(e).animationName);
-  igual(anim, 'none');
+  // Quieto = el PNG, no el GIF volando.
+  const src = await p4.locator('.salchicha img').first().getAttribute('src');
+  igual(src, '/pipi-cucu-dog-static.png');
   await c4.close();
+});
+
+await verificar('el perro es el mismo archivo que el de Pipí Cucú, byte por byte', async () => {
+  const src = await p.locator('.salchicha img').first().getAttribute('src');
+  igual(src, '/pipi-cucu-dog-flying.gif');
+  for (const archivo of ['pipi-cucu-dog-flying.gif', 'pipi-cucu-dog-static.png']) {
+    const servido = Buffer.from(await (await fetch(new globalThis.URL(archivo, URL))).arrayBuffer());
+    const original = readFileSync(join(dirname(fileURLToPath(import.meta.url)), '..', '..', 'public', archivo));
+    cierto(servido.equals(original), `${archivo} no es igual al de Pipí Cucú`);
+  }
 });
 
 await verificar('modo oscuro sin letra clara sobre fondo claro', async () => {

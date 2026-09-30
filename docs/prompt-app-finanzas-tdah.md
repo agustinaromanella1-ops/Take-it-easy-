@@ -266,11 +266,9 @@ Distinciones que las reglas tienen que respetar (cada una con prueba):
 
 ## 8. El salchicha
 
-- Referencia visual: el perro de Pipí Cucú (`public/pipi-cucu-dog-flying.gif`,
-  `pipi-cucu-dog-static.png`): salchicha naranja con panza crema, orejas marrones, trazo oscuro,
-  ojos cerrados sonrientes. Para animarlo hace falta dibujarlo en **SVG por partes** (cuerpo,
-  cabeza, orejas, patas, cola) inspirado en ese, como personaje provisional y reemplazable. Si
-  hay un diseño original más completo, se usa ese.
+- **Es el perro de Pipí Cucú, copiado tal cual**: `public/pipi-cucu-dog-flying.gif` (volando) y
+  `public/pipi-cucu-dog-static.png` (quieto, para movimiento reducido). Todas las apps tienen el
+  mismo perrito: no se dibuja uno nuevo ni uno "inspirado en". Los trucos mueven la imagen entera.
 - Tres modos: **visible**, **de vez en cuando**, **sin personaje**. Apagarlo no quita nada.
 - **Nunca** tiene hambre, se enferma, se pone triste, se aburre ni pierde cosas porque la persona
   no entró. No es una mascota a cuidar.
