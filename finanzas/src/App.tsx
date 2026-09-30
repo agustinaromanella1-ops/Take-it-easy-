@@ -14,6 +14,9 @@ import { CobrarForm, CompromisoForm, IngresoForm, PagarForm } from './components
 import { AporteForm, MetaForm } from './components/formularios/Metas';
 import { Comprobante } from './components/Comprobante';
 import { Explicacion } from './components/Explicacion';
+import { Escenarios } from './components/Escenarios';
+import { Importar } from './components/Importar';
+import { LeerResumen } from './components/LeerResumen';
 import { Celebracion } from './components/Companero';
 import { Hormiga } from './components/Hormiga';
 import { BarraActualizar, Deshacer, NoSeGuarda } from './components/Barras';
@@ -57,6 +60,25 @@ function Cascara({ ejemplo, onEjemplo }: { ejemplo: boolean; onEjemplo: (v: bool
   }, [ejemplo]);
 
   const cerrar = useCallback(() => setVentana(null), []);
+
+  /**
+   * Atajos del ícono y "compartir" hacia la app: llegan como parámetros en la
+   * dirección. Se atienden una vez y se limpian, para que recargar no vuelva a
+   * abrir el cuadro.
+   */
+  const listo = data.preferencias.onboardingHecho;
+  useEffect(() => {
+    if (!listo || ejemplo) return;
+    const q = new URLSearchParams(window.location.search);
+    const accion = q.get('accion');
+    const texto = [q.get('titulo'), q.get('texto')].filter(Boolean).join(' ').trim();
+    if (!accion && !texto) return;
+    window.history.replaceState(null, '', '/');
+    if (texto) setVentana({ tipo: 'anotar', modo: 'frase', frase: texto.slice(0, 300) });
+    else if (accion === 'anotar') setVentana({ tipo: 'anotar' });
+    else if (accion === 'foto') setVentana({ tipo: 'comprobante' });
+    else if (accion === 'vence') setPestana('plata');
+  }, [listo, ejemplo]);
   const irA = useCallback((p: Pestana) => {
     setVentana(null);
     setPestana(p);
@@ -148,11 +170,18 @@ function Cascara({ ejemplo, onEjemplo }: { ejemplo: boolean; onEjemplo: (v: bool
 function VentanaAbierta({ v }: { v: Ventana }) {
   switch (v.tipo) {
     case 'anotar':
-      return <Anotar {...(v.mov ? { mov: v.mov } : {})} {...(v.modo ? { modo: v.modo } : {})} {...(v.fecha ? { fechaInicial: v.fecha } : {})} />;
+      return (
+        <Anotar
+          {...(v.mov ? { mov: v.mov } : {})}
+          {...(v.modo ? { modo: v.modo } : {})}
+          {...(v.fecha ? { fechaInicial: v.fecha } : {})}
+          {...(v.frase ? { fraseInicial: v.frase } : {})}
+        />
+      );
     case 'comprobante':
       return <Comprobante />;
     case 'cuenta':
-      return <CuentaForm {...(v.cuenta ? { cuenta: v.cuenta } : {})} />;
+      return <CuentaForm {...(v.cuenta ? { cuenta: v.cuenta } : {})} {...(v.tipoCuenta ? { tipoInicial: v.tipoCuenta } : {})} />;
     case 'saldo':
       return <SaldoForm cuentaId={v.cuentaId} />;
     case 'asignar':
@@ -171,5 +200,11 @@ function VentanaAbierta({ v }: { v: Ventana }) {
       return <AporteForm metaId={v.metaId} usar={v.usar ?? false} />;
     case 'explicacion':
       return <Explicacion moneda={v.moneda} />;
+    case 'escenarios':
+      return <Escenarios cuentaId={v.cuentaId} />;
+    case 'importar':
+      return <Importar />;
+    case 'resumen':
+      return <LeerResumen tarjetaId={v.tarjetaId} />;
   }
 }

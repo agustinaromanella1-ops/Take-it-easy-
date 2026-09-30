@@ -6,13 +6,15 @@ import { Aviso, Field, Llave, Modal, Opciones } from '../ui';
 import { centsToInput, formatMoney, parseMoney } from '../../lib/money';
 import { formatDateMedium, today } from '../../lib/dates';
 import { newId } from '../../lib/id';
-import { esTarjeta, saldo } from '../../lib/finanzas/saldos';
+import { esDeuda, saldo } from '../../lib/finanzas/saldos';
+import { parseTasa } from '../../lib/finanzas/escenarios';
 
 const TIPOS: { valor: TipoCuenta; texto: string }[] = [
   { valor: 'banco', texto: 'Banco' },
   { valor: 'billetera', texto: 'Billetera virtual' },
   { valor: 'efectivo', texto: 'Efectivo' },
   { valor: 'tarjeta-credito', texto: 'Tarjeta de crédito' },
+  { valor: 'prestamo', texto: 'Préstamo' },
 ];
 
 const NOMBRES: Record<TipoCuenta, string> = {
@@ -20,6 +22,7 @@ const NOMBRES: Record<TipoCuenta, string> = {
   billetera: 'Mercado Pago',
   efectivo: 'Efectivo',
   'tarjeta-credito': 'Visa',
+  prestamo: 'Préstamo',
 };
 
 /** Alias que se agregan solos, para que "con débito" o "mp" se entiendan al escribir. */
@@ -28,14 +31,15 @@ function aliasPorDefecto(tipo: TipoCuenta, nombre: string): string[] {
   if (tipo === 'banco') return ['débito'];
   if (tipo === 'billetera' && n.includes('mercado')) return ['mp'];
   if (tipo === 'tarjeta-credito') return ['crédito'];
+  if (tipo === 'prestamo') return ['préstamo'];
   return [];
 }
 
-export function CuentaForm({ cuenta, alGuardar }: { cuenta?: Cuenta; alGuardar?: () => void }) {
+export function CuentaForm({ cuenta, alGuardar, tipoInicial }: { cuenta?: Cuenta; alGuardar?: () => void; tipoInicial?: TipoCuenta }) {
   const { data, dispatch, huellita } = useStore();
   const { cerrar } = useVentanas();
   const editando = cuenta !== undefined;
-  const [tipo, setTipo] = useState<TipoCuenta>(cuenta?.tipo ?? 'banco');
+  const [tipo, setTipo] = useState<TipoCuenta>(cuenta?.tipo ?? tipoInicial ?? 'banco');
   const [nombre, setNombre] = useState(cuenta?.nombre ?? '');
   const [moneda, setMoneda] = useState<Moneda>(cuenta?.moneda ?? 'ARS');
   const [importe, setImporte] = useState(cuenta ? centsToInput(cuenta.saldoInicial) : '');
@@ -44,8 +48,13 @@ export function CuentaForm({ cuenta, alGuardar }: { cuenta?: Cuenta; alGuardar?:
   const [cierre, setCierre] = useState(String(cuenta?.diaCierre ?? 25));
   const [venc, setVenc] = useState(String(cuenta?.diaVencimiento ?? 5));
   const [alias, setAlias] = useState((cuenta?.alias ?? []).join(', '));
+  const [cuota, setCuota] = useState(centsToInput(cuenta?.cuotaMensual ?? null));
+  const [restantes, setRestantes] = useState(cuenta?.cuotasRestantes != null ? String(cuenta.cuotasRestantes) : '');
+  const [tasa, setTasa] = useState(cuenta?.tasaAnual != null ? String(cuenta.tasaAnual / 100).replace('.', ',') : '');
   const [error, setError] = useState('');
   const tarjeta = tipo === 'tarjeta-credito';
+  const prestamo = tipo === 'prestamo';
+  const deuda = tarjeta || prestamo;
 
   function guardar() {
     const saldoInicial = importe.trim() === '' ? 0 : parseMoney(importe);
@@ -59,6 +68,21 @@ export function CuentaForm({ cuenta, alGuardar }: { cuenta?: Cuenta; alGuardar?:
       setError('Los días de cierre y vencimiento van del 1 al 31.');
       return;
     }
+    const cuotaMensual = cuota.trim() === '' ? null : parseMoney(cuota);
+    if (prestamo && (cuotaMensual === null || cuotaMensual <= 0)) {
+      setError('Escribí cuánto es la cuota de cada mes.');
+      return;
+    }
+    if (prestamo && !(dVenc >= 1 && dVenc <= 31)) {
+      setError('El día de vencimiento va del 1 al 31.');
+      return;
+    }
+    const tasaAnual = tasa.trim() === '' ? null : parseTasa(tasa);
+    if (tasa.trim() !== '' && tasaAnual === null) {
+      setError('La tasa no se entiende. Escribila como número, por ejemplo 85,5.');
+      return;
+    }
+    const cuotasRestantes = restantes.trim() === '' ? null : Number(restantes);
     const nombreFinal = nombre.trim() || NOMBRES[tipo];
     const hoy = today();
     const c: Omit<Cuenta, 'updatedAt'> = {
@@ -69,13 +93,16 @@ export function CuentaForm({ cuenta, alGuardar }: { cuenta?: Cuenta; alGuardar?:
       saldoInicial,
       fechaSaldo: cuenta?.fechaSaldo ?? hoy,
       aproximado,
-      cuentaParaDisponible: tarjeta ? false : cuenta2,
+      cuentaParaDisponible: deuda ? false : cuenta2,
       confirmadoEn: cuenta?.confirmadoEn ?? hoy,
       alias: editando
         ? alias.split(',').map((a) => a.trim()).filter(Boolean)
         : aliasPorDefecto(tipo, nombreFinal),
       diaCierre: tarjeta ? dCierre : null,
-      diaVencimiento: tarjeta ? dVenc : null,
+      diaVencimiento: deuda ? dVenc : null,
+      cuotaMensual: prestamo ? cuotaMensual : null,
+      cuotasRestantes: prestamo && cuotasRestantes !== null && Number.isFinite(cuotasRestantes) ? cuotasRestantes : null,
+      tasaAnual: deuda ? tasaAnual : null,
       archivada: cuenta?.archivada ?? false,
     };
     dispatch({ type: editando ? 'cuenta/editar' : 'cuenta/agregar', cuenta: c });
@@ -108,11 +135,13 @@ export function CuentaForm({ cuenta, alGuardar }: { cuenta?: Cuenta; alGuardar?:
           onChange={setMoneda}
         />
         <Field
-          label={tarjeta ? '¿Cuánto debés hoy en esta tarjeta?' : editando ? 'Saldo cuando la cargaste' : '¿Cuánto hay hoy?'}
+          label={tarjeta ? '¿Cuánto debés hoy en esta tarjeta?' : prestamo ? '¿Cuánto debés hoy en total?' : editando ? 'Saldo cuando la cargaste' : '¿Cuánto hay hoy?'}
           ayuda={
             tarjeta
               ? 'Lo tomamos como parte del próximo resumen. Las compras nuevas se van sumando solas.'
-              : editando
+              : prestamo
+                ? 'Lo que figura como saldo en el banco. Si no lo sabés, estimalo y corregilo después con "Actualizar saldo".'
+                : editando
                 ? 'Para decir cuánto hay ahora, usá "Actualizar saldo": así queda registrada la diferencia.'
                 : 'Si no sabés exacto, poné un número aproximado y marcalo abajo.'
           }
@@ -121,6 +150,26 @@ export function CuentaForm({ cuenta, alGuardar }: { cuenta?: Cuenta; alGuardar?:
           <input className="input-importe" inputMode="decimal" value={importe} onChange={(e) => setImporte(e.target.value)} placeholder="0" />
         </Field>
         {!tarjeta && <Llave label="Es aproximado" checked={aproximado} onChange={setAproximado} />}
+        {prestamo && (
+          <>
+            <div className="fila">
+              <Field label="Cuota de cada mes">
+                <input className="input-importe" inputMode="decimal" value={cuota} onChange={(e) => setCuota(e.target.value)} placeholder="0" />
+              </Field>
+              <Field label="Vence el día">
+                <input inputMode="numeric" value={venc} onChange={(e) => setVenc(e.target.value.replace(/\D/g, ''))} />
+              </Field>
+            </div>
+            <Field label="Cuotas que quedan (opcional)">
+              <input inputMode="numeric" value={restantes} onChange={(e) => setRestantes(e.target.value.replace(/\D/g, ''))} />
+            </Field>
+          </>
+        )}
+        {deuda && (
+          <Field label="Tasa nominal anual, % (opcional)" ayuda="Solo se usa para simular escenarios. Está en el contrato o en el resumen como TNA.">
+            <input inputMode="decimal" value={tasa} onChange={(e) => setTasa(e.target.value)} placeholder="Por ejemplo 85,5" />
+          </Field>
+        )}
         {tarjeta && (
           <div className="fila">
             <Field label="Día de cierre">
@@ -133,7 +182,7 @@ export function CuentaForm({ cuenta, alGuardar }: { cuenta?: Cuenta; alGuardar?:
         )}
         <details className="plegable" open={editando && (!cuenta2 || alias !== '')}>
           <summary>Más opciones</summary>
-          {!tarjeta && (
+          {!deuda && (
             <Llave
               label="Cuenta para lo que puedo usar"
               ayuda="Apagalo en una cuenta de ahorro que no querés tocar: su plata no se suma al disponible."
@@ -194,7 +243,7 @@ export function SaldoForm({ cuentaId, alGuardar }: { cuentaId: string; alGuardar
   const [error, setError] = useState('');
   if (!c) return null;
   const calculado = saldo(c, data.movimientos);
-  const tarjeta = esTarjeta(c);
+  const tarjeta = esDeuda(c);
 
   function guardar(igual: boolean) {
     if (!c) return;

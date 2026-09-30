@@ -27,6 +27,8 @@ export const TRUCOS = [
   { id: 'giro', nombre: 'Girar sobre sí mismo' },
   { id: 'panza', nombre: 'Rodar panza arriba' },
   { id: 'pelota', nombre: 'Traer la pelota' },
+  { id: 'estirarse', nombre: 'Estirarse bien largo' },
+  { id: 'orejas', nombre: 'Sacudir las orejas' },
 ] as const;
 
 export type TrucoId = (typeof TRUCOS)[number]['id'];

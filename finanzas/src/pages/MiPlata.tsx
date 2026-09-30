@@ -4,8 +4,9 @@ import { useStore } from '../store/StoreContext';
 import { useVentanas } from '../components/Ventanas';
 import { Card } from '../components/ui';
 import { saldosPorCuenta, vencimientos } from '../lib/finanzas/pendientes';
-import { esTarjeta } from '../lib/finanzas/saldos';
-import { proximoResumen, resumenes } from '../lib/finanzas/tarjeta';
+import { esDeuda, esPrestamo, esTarjeta } from '../lib/finanzas/saldos';
+import { comprasEnCuotas, proximoResumen, resumenes } from '../lib/finanzas/tarjeta';
+import { proximaCuota } from '../lib/finanzas/prestamo';
 import { formatMoney } from '../lib/money';
 import { capitalizar, daysBetween, distancia, formatDateMedium, today } from '../lib/dates';
 
@@ -14,7 +15,7 @@ const TIPO_TEXTO: Record<Movimiento['tipo'], string> = {
   ingreso: 'Ingreso',
   transferencia: 'Entre mis cuentas',
   devolucion: 'Devolución',
-  'pago-tarjeta': 'Pago de tarjeta',
+  'pago-tarjeta': 'Pago de tarjeta o préstamo',
   ajuste: 'Diferencia sin conciliar',
 };
 
@@ -27,7 +28,8 @@ export function MiPlata() {
   const saldos = saldosPorCuenta(data);
   const activas = data.cuentas.filter((c) => !c.archivada);
   const archivadas = data.cuentas.filter((c) => c.archivada);
-  const liquidas = activas.filter((c) => !esTarjeta(c));
+  const liquidas = activas.filter((c) => !esDeuda(c));
+  const prestamos = activas.filter(esPrestamo);
   const tarjetas = activas.filter(esTarjeta);
   const venc = vencimientos(data);
   const ingresos = data.ingresos.filter((i) => !i.cobrado).sort((a, b) => (a.fecha < b.fecha ? -1 : 1));
@@ -96,6 +98,10 @@ export function MiPlata() {
                     {futuras.length > 1 && <span className="susurro">Cuotas en {futuras.length} resúmenes.</span>}
                   </button>
                   <span className="lista-importe">Debés {formatMoney(futuras.reduce((s, r) => s + r.pendiente, 0), t.moneda)}</span>
+                  <CuotasDeTarjeta tarjetaId={t.id} />
+                  <button className="btn chico" onClick={() => abrir({ tipo: 'resumen', tarjetaId: t.id })}>
+                    Revisar con el resumen
+                  </button>
                   {prox && (
                     <button
                       className="btn chico"
@@ -113,6 +119,32 @@ export function MiPlata() {
               );
             })}
           </ul>
+        </Card>
+      )}
+
+      {prestamos.length > 0 && (
+        <Card titulo="Préstamos">
+          <ul className="lista">
+            {prestamos.map((pr) => {
+              const cuota = proximaCuota(pr, data.movimientos, hoy);
+              return (
+                <li key={pr.id} className="lista-item">
+                  <button className="lista-principal" onClick={() => abrir({ tipo: 'cuenta', cuenta: pr })}>
+                    <span className="lista-nombre">{pr.nombre}</span>
+                    <span className="susurro">
+                      {cuota ? `Próxima cuota: ${formatMoney(cuota.pendiente, pr.moneda)}, vence ${distancia(hoy, cuota.vencimiento)}` : 'Sin cuotas pendientes'}
+                      {pr.cuotasRestantes !== null ? ` · quedaban ${pr.cuotasRestantes} al cargarlo` : ''}
+                    </span>
+                  </button>
+                  <span className="lista-importe">Debés {formatMoney(saldos.get(pr.id) ?? 0, pr.moneda)}</span>
+                  <button className="btn chico" onClick={() => abrir({ tipo: 'saldo', cuentaId: pr.id })}>
+                    Actualizar saldo
+                  </button>
+                </li>
+              );
+            })}
+          </ul>
+          <p className="susurro">Los intereses no se calculan solos: el saldo real lo dice el banco. Los escenarios están en Mis planes.</p>
         </Card>
       )}
 
@@ -198,6 +230,11 @@ export function MiPlata() {
             </button>
           ))}
         </div>
+        <div className="acciones">
+          <button className="btn chico" onClick={() => abrir({ tipo: 'importar' })}>
+            Importar un archivo del banco
+          </button>
+        </div>
         {data.movimientos.length > 0 && (
           <button
             className="btn chico"
@@ -264,5 +301,35 @@ export function MiPlata() {
         </details>
       )}
     </div>
+  );
+}
+
+/** Las compras en cuotas de una tarjeta, plegadas: de dónde sale cada resumen. */
+function CuotasDeTarjeta({ tarjetaId }: { tarjetaId: string }) {
+  const { data } = useStore();
+  const { abrir } = useVentanas();
+  const t = data.cuentas.find((c) => c.id === tarjetaId);
+  if (!t) return null;
+  const compras = comprasEnCuotas(t, data.movimientos, today());
+  if (compras.length === 0) return null;
+  return (
+    <details className="plegable lista-detalle">
+      <summary>Compras en cuotas ({compras.length})</summary>
+      <ul className="lista">
+        {compras.map(({ movimiento: m, proxima, faltaVencer }) => (
+          <li key={m.id}>
+            <button className="mov" onClick={() => abrir({ tipo: 'anotar', mov: m })}>
+              <span className="mov-texto">
+                <span className="lista-nombre">{m.comercio || m.categoria || 'Compra'}</span>
+                <span className="susurro">
+                  Cuota {proxima} de {m.cuotas} en el próximo resumen · falta que venzan {formatMoney(faltaVencer, m.moneda)}
+                </span>
+              </span>
+              <span className="mov-importe">{formatMoney(m.importe, m.moneda)}</span>
+            </button>
+          </li>
+        ))}
+      </ul>
+    </details>
   );
 }

@@ -4,7 +4,7 @@ import { useStore } from '../store/StoreContext';
 import { useVentanas } from '../components/Ventanas';
 import { Aviso, Field } from '../components/ui';
 import { Salchicha } from '../components/Salchicha';
-import { saldo, esTarjeta } from '../lib/finanzas/saldos';
+import { saldo, esDeuda } from '../lib/finanzas/saldos';
 import { formatMoney, parseMoney } from '../lib/money';
 import { addDays, daysBetween, formatDateMedium, today } from '../lib/dates';
 import { newId } from '../lib/id';
@@ -40,7 +40,7 @@ export function Regreso({ desde, onSalir }: { desde: DateISO; onSalir: () => voi
 
   const vencidos = data.compromisos.filter((k) => !k.pagado && k.vencimiento < hoy);
   const sinCuenta = data.movimientos.filter((m) => m.tipo === 'gasto' && m.cuentaId === null);
-  const cuentas = data.cuentas.filter((c) => !c.archivada && !esTarjeta(c));
+  const cuentas = data.cuentas.filter((c) => !c.archivada && !esDeuda(c));
 
   const siguiente = (desdePaso: Paso) => {
     setIndice(0);

@@ -83,7 +83,7 @@ export function Celebracion() {
 }
 
 export function ListaTrucos() {
-  const { data } = useStore();
+  const { data, repetirTruco } = useStore();
   return (
     <ul className="lista-trucos">
       {TRUCOS.map((t) => {
@@ -91,6 +91,11 @@ export function ListaTrucos() {
         return (
           <li key={t.id}>
             <span aria-hidden="true">{sabe ? '🐾' : '·'}</span> {t.nombre} <span className="susurro">{sabe ? 'aprendido' : 'todavía no'}</span>
+            {sabe && (
+              <button type="button" className="btn chico" onClick={() => repetirTruco(t.id)}>
+                Verlo
+              </button>
+            )}
           </li>
         );
       })}

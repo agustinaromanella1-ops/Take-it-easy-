@@ -1,23 +1,32 @@
 import { useRef, useState } from 'react';
 import type { Companero, Periodo, Preferencias, Trato } from '../types';
 import { useStore } from '../store/StoreContext';
+import { useVentanas } from '../components/Ventanas';
 import { Aviso, Card, Field, Llave, Opciones } from '../components/ui';
 import { ListaTrucos } from '../components/Companero';
+import { TRUCOS } from '../lib/huellitas/huellitas';
 import { borrarTodo, parseData } from '../lib/storage';
-import { descargar, exportarCSV, exportarJSON } from '../lib/exportar';
+import { descargar, exportarCSV, exportarJSON, recordatorioICS, vencimientosICS } from '../lib/exportar';
+import { vencimientos } from '../lib/finanzas/pendientes';
 import { guardarAnimaciones, leerAnimaciones, type Animaciones } from '../lib/movimiento';
 import { guardarTema, leerTema, type Tema } from '../lib/tema';
 import { buscarVersionNueva } from '../pwa';
+import { hayVoz } from '../lib/voz';
 import { today } from '../lib/dates';
 import { limpiarTodosLosBorradores } from '../lib/borrador';
 
+const DIAS = ['Domingo', 'Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado'];
+
 export function Ajustes({ onVerEjemplo }: { onVerEjemplo: () => void }) {
   const { data, dispatch, esEjemplo } = useStore();
+  const { abrir } = useVentanas();
   const p = data.preferencias;
   const cambiar = (cambios: Partial<Omit<Preferencias, 'updatedAt'>>) => dispatch({ type: 'prefs/cambiar', cambios });
   const [tema, setTema] = useState<Tema>(leerTema);
   const [anim, setAnim] = useState<Animaciones>(leerAnimaciones);
   const [aviso, setAviso] = useState('');
+  const [diaRevision, setDiaRevision] = useState(0);
+  const [horaRevision, setHoraRevision] = useState('19:00');
   const [version, setVersion] = useState('');
   const [confirmarBorrado, setConfirmarBorrado] = useState('');
   const archivo = useRef<HTMLInputElement>(null);
@@ -41,7 +50,7 @@ export function Ajustes({ onVerEjemplo }: { onVerEjemplo: () => void }) {
         <Llave label="Celebraciones" ayuda="La huellita y los trucos. Apagadas, no se ve ninguna animación." checked={p.celebraciones} onChange={(v) => cambiar({ celebraciones: v })} />
         <Llave label="Hormiguita" ayuda="Aparece de vez en cuando a preguntar por gastos chiquitos. Nunca más de una vez cada 3 días." checked={p.hormiga} onChange={(v) => cambiar({ hormiga: v })} />
         <details className="plegable">
-          <summary>Trucos aprendidos ({data.huellitas.trucos.length} de 6)</summary>
+          <summary>Trucos aprendidos ({data.huellitas.trucos.length} de {TRUCOS.length})</summary>
           <ListaTrucos />
           <p className="susurro">Los trucos no se pierden nunca, aunque pasen meses sin abrir la app.</p>
         </details>
@@ -86,6 +95,18 @@ export function Ajustes({ onVerEjemplo }: { onVerEjemplo: () => void }) {
         />
       </Card>
 
+      <Card titulo="Dictar por voz">
+        <p>
+          Sirve para anotar hablando: "gasté ocho mil en la verdulería". El que pasa la voz a texto es el navegador, y en Chrome eso manda el audio
+          a los servidores de Google. Es lo único de la app que sale del teléfono, por eso viene apagado.
+        </p>
+        {hayVoz() ? (
+          <Llave label="Dictar por voz" ayuda="Aparece un botón “Dictar” al anotar con una frase." checked={p.voz} onChange={(v) => cambiar({ voz: v })} />
+        ) : (
+          <p className="susurro">Este navegador no permite dictar. Se puede escribir la frase igual.</p>
+        )}
+      </Card>
+
       <Card titulo="Cálculos">
         <Opciones<Periodo>
           legend="Lo que podés usar, hasta cuándo"
@@ -102,7 +123,7 @@ export function Ajustes({ onVerEjemplo }: { onVerEjemplo: () => void }) {
       <Card titulo="Recordatorios">
         <p>
           La app no manda notificaciones: no hay un servidor que las mande y un navegador cerrado no avisa. Lo que sí funciona con todo cerrado es
-          agregar un vencimiento al calendario del teléfono, desde el compromiso ("Al calendario").
+          agregar los vencimientos al calendario del teléfono: de a uno desde cada compromiso, o todos juntos acá.
         </p>
         <Llave
           label="Mostrar qué y cuánto en el calendario"
@@ -118,10 +139,72 @@ export function Ajustes({ onVerEjemplo }: { onVerEjemplo: () => void }) {
             <option value={3 * 24 * 60}>Tres días antes</option>
           </select>
         </Field>
+        <button
+          className="btn"
+          disabled={vencimientos(data).length === 0}
+          onClick={() =>
+            descargar(
+              `salchi-vencimientos-${today()}.ics`,
+              vencimientosICS(
+                vencimientos(data).map((v) => ({
+                  clave: v.clave,
+                  nombre: v.nombre,
+                  importe: v.importe,
+                  moneda: v.moneda,
+                  fecha: v.fecha,
+                  recurrente: v.tipo === 'compromiso' && data.compromisos.find((k) => k.id === v.id)?.recurrencia === 'mensual',
+                })),
+                p,
+              ),
+              'text/calendar',
+            )
+          }
+        >
+          Todos los vencimientos al calendario
+        </button>
+
+        <h3>Un rato para mirar la plata</h3>
+        <p className="susurro">
+          Un recordatorio que se repite, el día y la hora que elijas. No dice nada de plata, solo "Mirar Salchi". Si lo ignorás, no insiste más.
+        </p>
+        <div className="fila">
+          <Field label="Día">
+            <select value={diaRevision} onChange={(e) => setDiaRevision(Number(e.target.value))}>
+              <option value={-1}>Todos los días</option>
+              {DIAS.map((d, i) => (
+                <option key={d} value={i}>
+                  {d}
+                </option>
+              ))}
+            </select>
+          </Field>
+          <Field label="Hora">
+            <input type="time" value={horaRevision} onChange={(e) => setHoraRevision(e.target.value || '19:00')} />
+          </Field>
+        </div>
+        <button
+          className="btn"
+          onClick={() =>
+            descargar(
+              'salchi-recordatorio.ics',
+              recordatorioICS({
+                titulo: 'Mirar Salchi',
+                frecuencia: diaRevision === -1 ? 'DAILY' : 'WEEKLY',
+                dia: Math.max(0, diaRevision),
+                hora: horaRevision,
+                desde: today(),
+                uid: `revision-${diaRevision}-${horaRevision.replace(':', '')}`,
+              }),
+              'text/calendar',
+            )
+          }
+        >
+          Agregar al calendario
+        </button>
       </Card>
 
       <Card titulo="Tus datos">
-        <p>Todo queda en este teléfono: no hay cuentas de usuario, ni servidor, ni analítica. Si se borran los datos del navegador o se pierde el teléfono, se pierden. Por eso conviene bajar una copia cada tanto.</p>
+        <p>Todo queda en este teléfono: no hay cuentas de usuario, ni servidor, ni analítica{p.voz ? ' (salvo el audio del dictado, si lo prendiste)' : ''}. Si se borran los datos del navegador o se pierde el teléfono, se pierden. Por eso conviene bajar una copia cada tanto.</p>
         <div className="acciones">
           <button className="btn principal" onClick={() => descargar(`salchi-copia-${today()}.json`, exportarJSON(data), 'application/json')}>
             Bajar una copia
@@ -134,6 +217,9 @@ export function Ajustes({ onVerEjemplo }: { onVerEjemplo: () => void }) {
               Traer una copia
             </button>
           )}
+          <button className="btn" onClick={() => abrir({ tipo: 'importar' })}>
+            Importar movimientos del banco (CSV)
+          </button>
         </div>
         <input
           ref={archivo}
@@ -209,10 +295,9 @@ export function Ajustes({ onVerEjemplo }: { onVerEjemplo: () => void }) {
         <details className="plegable">
           <summary>Qué viene después</summary>
           <ul>
-            <li>Más trucos y leer capturas con varios movimientos.</li>
-            <li>Resúmenes de tarjeta completos e importar archivos del banco.</li>
-            <li>Anotar por voz (opcional: el dictado del navegador manda el audio afuera, y se va a avisar antes).</li>
-            <li>Deudas con escenarios, y más adelante inversión educativa.</li>
+            <li>Compartir con una persona que elijas, con permisos que se pueden sacar.</li>
+            <li>Planificación y un espacio educativo sobre inversión, con simulaciones que muestran también pérdidas.</li>
+            <li>Conectar bancos, solo si se puede verificar que es seguro.</li>
           </ul>
           <p className="susurro">Nada de esto está disponible todavía.</p>
         </details>

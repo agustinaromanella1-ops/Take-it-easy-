@@ -27,6 +27,9 @@ export function datosDeEjemplo(): AppData {
     alias: tipo === 'banco' ? ['débito'] : tipo === 'billetera' ? ['mp'] : tipo === 'tarjeta-credito' ? ['crédito'] : [],
     diaCierre: tipo === 'tarjeta-credito' ? 25 : null,
     diaVencimiento: tipo === 'tarjeta-credito' ? 5 : null,
+    cuotaMensual: null as number | null,
+    cuotasRestantes: null as number | null,
+    tasaAnual: null as number | null,
     archivada: false,
     ...extra,
   });
@@ -56,6 +59,14 @@ export function datosDeEjemplo(): AppData {
       cuenta('ej-efectivo', 'Efectivo', 'efectivo', 12_000_00, { aproximado: true }),
       cuenta('ej-visa', 'Visa', 'tarjeta-credito', 0),
       cuenta('ej-usd', 'Dólares', 'efectivo', 300_00, { moneda: 'USD', alias: ['dolares'] }),
+      cuenta('ej-prestamo', 'Préstamo personal', 'prestamo', 600_000_00, {
+        cuentaParaDisponible: false,
+        alias: ['prestamo'],
+        diaVencimiento: 12,
+        cuotaMensual: 55_000_00,
+        cuotasRestantes: 14,
+        tasaAnual: 6900,
+      }),
     ],
     movimientos: [
       mov('ej-m1', { importe: 8_500_00, fecha: hace(1), cuentaId: 'ej-banco', comercio: 'Supermercado', categoria: 'Comida' }),

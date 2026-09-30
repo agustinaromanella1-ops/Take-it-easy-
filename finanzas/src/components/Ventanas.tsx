@@ -7,9 +7,9 @@ import type { Vencimiento } from '../lib/finanzas/pendientes';
  * decisiones a la vez.
  */
 export type Ventana =
-  | { tipo: 'anotar'; mov?: Movimiento; modo?: 'numero' | 'frase'; fecha?: string }
+  | { tipo: 'anotar'; mov?: Movimiento; modo?: 'numero' | 'frase'; fecha?: string; frase?: string }
   | { tipo: 'comprobante' }
-  | { tipo: 'cuenta'; cuenta?: Cuenta }
+  | { tipo: 'cuenta'; cuenta?: Cuenta; tipoCuenta?: Cuenta['tipo'] }
   | { tipo: 'saldo'; cuentaId: string }
   | { tipo: 'compromiso'; compromiso?: Compromiso }
   | { tipo: 'pagar'; vencimiento: Vencimiento }
@@ -18,7 +18,10 @@ export type Ventana =
   | { tipo: 'meta'; meta?: Meta; esReserva?: boolean }
   | { tipo: 'aporte'; metaId: string; usar?: boolean }
   | { tipo: 'explicacion'; moneda: Moneda }
-  | { tipo: 'asignar'; movimientoId: string };
+  | { tipo: 'asignar'; movimientoId: string }
+  | { tipo: 'resumen'; tarjetaId: string }
+  | { tipo: 'importar' }
+  | { tipo: 'escenarios'; cuentaId: string };
 
 export type Pestana = 'hoy' | 'plata' | 'planes' | 'ajustes';
 

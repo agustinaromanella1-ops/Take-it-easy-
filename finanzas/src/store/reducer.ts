@@ -34,6 +34,7 @@ export type Action =
   | { type: 'cuenta/borrar'; id: string }
   | { type: 'cuenta/confirmarSaldo'; cuentaId: string; saldoReal: Cents; fecha: DateISO; ajusteId: string }
   | { type: 'mov/agregar'; mov: SinSello<Movimiento> }
+  | { type: 'mov/agregarVarios'; movs: SinSello<Movimiento>[]; origen: 'importar' | 'captura' | 'resumen' }
   | { type: 'mov/editar'; mov: SinSello<Movimiento> }
   | { type: 'mov/borrar'; id: string }
   | { type: 'mov/revisado'; ids: string[] }
@@ -127,6 +128,9 @@ export function reducer(data: AppData, action: Action): AppData {
 
     case 'mov/agregar':
       return agregar(data, 'movimientos', action.mov);
+    case 'mov/agregarVarios':
+      // Una sola acción para que deshacer se lleve la importación entera.
+      return action.movs.reduce((d, m) => agregar(d, 'movimientos', m), data);
     case 'mov/editar':
       return editar(data, 'movimientos', action.mov);
     case 'mov/borrar': {
@@ -242,6 +246,11 @@ export function etiquetaDe(action: Action): string | null {
       return 'Actualizaste un saldo';
     case 'mov/agregar':
       return action.mov.tipo === 'ingreso' ? 'Anotaste un ingreso' : action.mov.tipo === 'gasto' ? 'Anotaste un gasto' : 'Anotaste un movimiento';
+    case 'mov/agregarVarios': {
+      const n = action.movs.length;
+      const que = n === 1 ? '1 movimiento' : `${n} movimientos`;
+      return action.origen === 'importar' ? `Importaste ${que}` : `Agregaste ${que}`;
+    }
     case 'mov/editar':
       return 'Editaste un movimiento';
     case 'mov/borrar':

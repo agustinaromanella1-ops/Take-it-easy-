@@ -5,6 +5,8 @@ import { Card, Progreso } from '../components/ui';
 import { mesesCubiertos, proximoHito, reservado } from '../lib/finanzas/metas';
 import { formatMoney } from '../lib/money';
 import { formatDateMedium } from '../lib/dates';
+import { esDeuda, esPrestamo, saldo } from '../lib/finanzas/saldos';
+import { formatTasa } from '../lib/finanzas/escenarios';
 
 /**
  * Metas y reserva. Una meta destacada; las otras plegadas, para que no sean
@@ -59,7 +61,55 @@ export function MisPlanes() {
           Otra meta
         </button>
       )}
+
+      <Deudas />
     </div>
+  );
+}
+
+/**
+ * Deudas: tarjetas con saldo y préstamos. Se ven juntas para poder
+ * compararlas, sin rojo y sin juicio: una deuda es un dato, no una falta.
+ */
+function Deudas() {
+  const { data } = useStore();
+  const { abrir } = useVentanas();
+  const deudas = data.cuentas
+    .filter((c) => !c.archivada && esDeuda(c))
+    .map((c) => ({ c, debe: saldo(c, data.movimientos) }))
+    .filter(({ c, debe }) => debe > 0 || esPrestamo(c));
+
+  return (
+    <Card
+      titulo="Deudas"
+      accion={
+        <button className="btn chico" onClick={() => abrir({ tipo: 'cuenta', tipoCuenta: 'prestamo' })}>
+          Agregar un préstamo
+        </button>
+      }
+    >
+      {deudas.length === 0 ? (
+        <p className="susurro">No hay deudas cargadas. Si tenés un préstamo, cargarlo hace que su cuota aparezca en lo que vence.</p>
+      ) : (
+        <ul className="lista">
+          {deudas.map(({ c, debe }) => (
+            <li key={c.id} className="lista-item">
+              <button className="lista-principal" onClick={() => abrir({ tipo: 'cuenta', cuenta: c })}>
+                <span className="lista-nombre">{c.nombre}</span>
+                <span className="susurro">
+                  {esPrestamo(c) ? 'Préstamo' : 'Tarjeta'}
+                  {c.tasaAnual != null ? ` · TNA ${formatTasa(c.tasaAnual)}` : ' · sin tasa cargada'}
+                </span>
+              </button>
+              <span className="lista-importe">{formatMoney(debe, c.moneda)}</span>
+              <button className="btn chico" onClick={() => abrir({ tipo: 'escenarios', cuentaId: c.id })}>
+                Ver escenarios
+              </button>
+            </li>
+          ))}
+        </ul>
+      )}
+    </Card>
   );
 }
 

@@ -31,7 +31,7 @@ const TIPOS: Record<string, string> = {
   ingreso: 'Ingreso',
   transferencia: 'Entre mis cuentas',
   devolucion: 'Devolución',
-  'pago-tarjeta': 'Pago de tarjeta',
+  'pago-tarjeta': 'Pago de tarjeta o préstamo',
   ajuste: 'Diferencia sin conciliar',
 };
 
@@ -99,4 +99,74 @@ export function compromisoICS(k: Compromiso, prefs: Pick<Preferencias, 'calendar
     'END:VCALENDAR',
   ].filter((l) => l !== '');
   return lineas.join('\r\n');
+}
+
+function envolver(eventos: string[]): string {
+  return ['BEGIN:VCALENDAR', 'VERSION:2.0', 'PRODID:-//Salchi//ES', ...eventos, 'END:VCALENDAR'].join('\r\n');
+}
+
+function sello(): string {
+  return new Date().toISOString().replace(/[-:]/g, '').replace(/\.\d{3}/, '');
+}
+
+/** Solo el VEVENT de un compromiso (sin el calendario que lo envuelve). */
+function eventoDe(ics: string): string {
+  const lineas = ics.split('\r\n');
+  return lineas.slice(lineas.indexOf('BEGIN:VEVENT'), lineas.indexOf('END:VEVENT') + 1).join('\r\n');
+}
+
+/**
+ * Todos los vencimientos en un solo archivo: se importan de una vez al
+ * calendario del teléfono. Los de tarjetas y préstamos van como evento suelto
+ * del próximo vencimiento, porque su importe cambia cada mes.
+ */
+export function vencimientosICS(
+  vencs: readonly { clave: string; nombre: string; importe: number | null; moneda: Compromiso['moneda']; fecha: string; recurrente: boolean }[],
+  prefs: Pick<Preferencias, 'calendarioConDetalle' | 'recordatorioMin'>,
+): string {
+  const eventos = vencs.map((v) =>
+    eventoDe(
+      compromisoICS(
+        { id: v.clave, updatedAt: '', nombre: v.nombre, importe: v.importe, moneda: v.moneda, vencimiento: v.fecha, recurrencia: v.recurrente ? 'mensual' : 'ninguna', pagado: false, pagoId: null },
+        prefs,
+        v.clave.replace(/[^a-zA-Z0-9-]/g, ''),
+      ),
+    ),
+  );
+  return envolver(eventos);
+}
+
+const DIAS_ICS = ['SU', 'MO', 'TU', 'WE', 'TH', 'FR', 'SA'];
+
+/**
+ * Un recordatorio que se repite: la revisión semanal que elige la persona, o
+ * un aviso diario para anotar. Va a la hora local del teléfono (sin zona
+ * horaria: el calendario lo pone a esa hora donde esté). El texto no dice
+ * nada de plata.
+ */
+export function recordatorioICS(opciones: { titulo: string; frecuencia: 'WEEKLY' | 'DAILY'; dia: number; hora: string; desde: string; uid: string }): string {
+  const [hh, mm] = opciones.hora.split(':');
+  const inicio = new Date(Number(opciones.desde.slice(0, 4)), Number(opciones.desde.slice(5, 7)) - 1, Number(opciones.desde.slice(8, 10)));
+  if (opciones.frecuencia === 'WEEKLY') {
+    while (inicio.getDay() !== opciones.dia) inicio.setDate(inicio.getDate() + 1);
+  }
+  const fecha = `${inicio.getFullYear()}${String(inicio.getMonth() + 1).padStart(2, '0')}${String(inicio.getDate()).padStart(2, '0')}`;
+  const regla = opciones.frecuencia === 'WEEKLY' ? `RRULE:FREQ=WEEKLY;BYDAY=${DIAS_ICS[opciones.dia]}` : 'RRULE:FREQ=DAILY';
+  return envolver([
+    [
+      'BEGIN:VEVENT',
+      `UID:${opciones.uid}@salchi`,
+      `DTSTAMP:${sello()}`,
+      `DTSTART:${fecha}T${hh}${mm}00`,
+      'DURATION:PT15M',
+      `SUMMARY:${textoICS(opciones.titulo)}`,
+      regla,
+      'BEGIN:VALARM',
+      'ACTION:DISPLAY',
+      `DESCRIPTION:${textoICS(opciones.titulo)}`,
+      'TRIGGER:PT0M',
+      'END:VALARM',
+      'END:VEVENT',
+    ].join('\r\n'),
+  ]);
 }

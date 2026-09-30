@@ -76,6 +76,15 @@ export default defineConfig({
         background_color: '#FBF8F4',
         theme_color: '#FBF8F4',
         categories: ['finance', 'productivity'],
+        // Mantener apretado el ícono muestra estos atajos: anotar sin pasar por Hoy.
+        shortcuts: [
+          { name: 'Anotar un gasto', short_name: 'Anotar', url: '/?accion=anotar', icons: [{ src: '/icon-192.png', sizes: '192x192' }] },
+          { name: 'Leer un comprobante', short_name: 'Comprobante', url: '/?accion=foto', icons: [{ src: '/icon-192.png', sizes: '192x192' }] },
+          { name: 'Lo que vence', short_name: 'Vence', url: '/?accion=vence', icons: [{ src: '/icon-192.png', sizes: '192x192' }] },
+        ],
+        // "Compartir" un texto hacia Salchi (el aviso del banco, un mensaje)
+        // abre Anotar con esa frase. Por GET: no hace falta servidor.
+        share_target: { action: '/', method: 'GET', params: { title: 'titulo', text: 'texto' } },
         icons: [
           { src: '/icon-192.png', sizes: '192x192', type: 'image/png' },
           { src: '/icon-512.png', sizes: '512x512', type: 'image/png' },

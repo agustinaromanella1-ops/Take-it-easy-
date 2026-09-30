@@ -7,13 +7,25 @@ import type { Cents, Cuenta, Movimiento } from '../../types';
  * con fecha igual o posterior a la de ese saldo. Lo anterior se da por
  * incluido en el número que la persona escribió.
  *
- * En una tarjeta de crédito el "saldo" es lo que se debe. Por eso el efecto de
+ * En una tarjeta de crédito o un préstamo el "saldo" es lo que se debe. Por eso el efecto de
  * un movimiento depende de qué clase de cuenta toca: una compra baja la plata
  * de una cuenta de débito y sube la deuda de una tarjeta.
  */
 
 export function esTarjeta(c: Pick<Cuenta, 'tipo'>): boolean {
   return c.tipo === 'tarjeta-credito';
+}
+
+export function esPrestamo(c: Pick<Cuenta, 'tipo'>): boolean {
+  return c.tipo === 'prestamo';
+}
+
+/**
+ * Una cuenta cuyo saldo es lo que se debe: tarjeta de crédito o préstamo.
+ * Nunca es plata disponible, y pagarla no es un gasto.
+ */
+export function esDeuda(c: Pick<Cuenta, 'tipo'>): boolean {
+  return esTarjeta(c) || esPrestamo(c);
 }
 
 /**
@@ -29,7 +41,7 @@ export function efecto(m: Movimiento, cuenta: Cuenta): Cents {
   const origen = m.cuentaId === cuenta.id;
   const destino = m.cuentaDestinoId === cuenta.id;
   if (!origen && !destino) return 0;
-  const tarjeta = esTarjeta(cuenta);
+  const tarjeta = esDeuda(cuenta);
 
   switch (m.tipo) {
     case 'gasto':

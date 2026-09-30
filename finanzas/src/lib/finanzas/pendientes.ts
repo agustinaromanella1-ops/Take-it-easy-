@@ -1,7 +1,8 @@
 import type { AppData, Cents, DateISO, Moneda } from '../../types';
-import { daysBetween } from '../dates';
+import { daysBetween, today } from '../dates';
 import { DIAS_SALDO_VIEJO } from './disponible';
-import { esTarjeta, saldo } from './saldos';
+import { esDeuda, esPrestamo, esTarjeta, saldo } from './saldos';
+import { proximaCuota } from './prestamo';
 import { proximoResumen } from './tarjeta';
 
 /**
@@ -11,7 +12,7 @@ import { proximoResumen } from './tarjeta';
  */
 export interface Vencimiento {
   clave: string;
-  tipo: 'compromiso' | 'tarjeta';
+  tipo: 'compromiso' | 'tarjeta' | 'prestamo';
   /** Id del compromiso o de la tarjeta. */
   id: string;
   nombre: string;
@@ -20,7 +21,7 @@ export interface Vencimiento {
   fecha: DateISO;
 }
 
-export function vencimientos(data: AppData): Vencimiento[] {
+export function vencimientos(data: AppData, hoy: DateISO = today()): Vencimiento[] {
   const lista: Vencimiento[] = [];
   for (const k of data.compromisos) {
     if (k.pagado) continue;
@@ -32,12 +33,18 @@ export function vencimientos(data: AppData): Vencimiento[] {
     if (!r) continue;
     lista.push({ clave: `t:${t.id}:${r.vencimiento}`, tipo: 'tarjeta', id: t.id, nombre: `Resumen de ${t.nombre}`, importe: r.pendiente, moneda: t.moneda, fecha: r.vencimiento });
   }
+  for (const p of data.cuentas) {
+    if (p.archivada || !esPrestamo(p)) continue;
+    const c = proximaCuota(p, data.movimientos, hoy);
+    if (!c) continue;
+    lista.push({ clave: `p:${p.id}:${c.vencimiento}`, tipo: 'prestamo', id: p.id, nombre: `Cuota de ${p.nombre}`, importe: c.pendiente, moneda: p.moneda, fecha: c.vencimiento });
+  }
   return lista.sort((a, b) => (a.fecha < b.fecha ? -1 : a.fecha > b.fecha ? 1 : 0));
 }
 
 /** El próximo compromiso: el más cercano, incluidos los que ya vencieron. */
-export function proximoVencimiento(data: AppData): Vencimiento | null {
-  return vencimientos(data)[0] ?? null;
+export function proximoVencimiento(data: AppData, hoy: DateISO = today()): Vencimiento | null {
+  return vencimientos(data, hoy)[0] ?? null;
 }
 
 /**
@@ -73,7 +80,7 @@ export function pasoSugerido(data: AppData, hoy: DateISO): Paso | null {
   }
 
   const vieja = activas
-    .filter((c) => !esTarjeta(c) && c.cuentaParaDisponible && daysBetween(c.confirmadoEn, hoy) >= DIAS_SALDO_VIEJO)
+    .filter((c) => !esDeuda(c) && c.cuentaParaDisponible && daysBetween(c.confirmadoEn, hoy) >= DIAS_SALDO_VIEJO)
     .sort((a, b) => (a.confirmadoEn < b.confirmadoEn ? -1 : 1))[0];
   if (vieja) {
     return { tipo: 'confirmar-saldo', cuentaId: vieja.id, texto: `¿Cuánto hay hoy en ${vieja.nombre}? Con mirar el número alcanza.` };

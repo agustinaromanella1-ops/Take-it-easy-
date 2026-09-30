@@ -6,7 +6,7 @@ import { Aviso, Field, Modal, Opciones } from '../ui';
 import { centsToInput, formatMoney, parseMoney } from '../../lib/money';
 import { today } from '../../lib/dates';
 import { newId } from '../../lib/id';
-import { esTarjeta, saldo } from '../../lib/finanzas/saldos';
+import { esDeuda, saldo } from '../../lib/finanzas/saldos';
 import { miniatura } from '../../lib/imagen';
 import { mensaje } from '../../lib/companero';
 import { reservado } from '../../lib/finanzas/metas';
@@ -158,7 +158,7 @@ export function AporteForm({ metaId, usar = false }: { metaId: string; usar?: bo
   const { data, dispatch } = useStore();
   const { cerrar } = useVentanas();
   const meta = data.metas.find((m) => m.id === metaId);
-  const cuentas = data.cuentas.filter((c) => !c.archivada && !esTarjeta(c) && c.moneda === meta?.moneda);
+  const cuentas = data.cuentas.filter((c) => !c.archivada && !esDeuda(c) && c.moneda === meta?.moneda);
   const [importe, setImporte] = useState('');
   const [forma, setForma] = useState<'virtual' | 'real'>('virtual');
   const [cuentaId, setCuentaId] = useState(cuentas[0]?.id ?? '');

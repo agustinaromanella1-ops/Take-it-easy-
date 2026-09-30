@@ -73,13 +73,13 @@ describe('reducer', () => {
 
   it('toda acción que toca datos tiene etiqueta para deshacer', () => {
     const acciones: Action['type'][] = [
-      'cuenta/agregar', 'cuenta/editar', 'cuenta/borrar', 'cuenta/confirmarSaldo', 'mov/agregar', 'mov/editar', 'mov/borrar',
+      'cuenta/agregar', 'cuenta/editar', 'cuenta/borrar', 'cuenta/confirmarSaldo', 'mov/agregar', 'mov/agregarVarios', 'mov/editar', 'mov/borrar',
       'mov/revisado', 'compromiso/agregar', 'compromiso/editar', 'compromiso/borrar', 'compromiso/pagar', 'ingreso/agregar',
       'ingreso/editar', 'ingreso/borrar', 'ingreso/cobrar', 'meta/agregar', 'meta/editar', 'meta/borrar', 'meta/destacar',
       'aporte/agregar', 'aporte/borrar', 'data/replace',
     ];
     for (const type of acciones) {
-      const a = { type, mov: movimiento(), aporte: { importe: 1 } } as unknown as Action;
+      const a = { type, mov: movimiento(), movs: [movimiento()], origen: 'importar', aporte: { importe: 1 } } as unknown as Action;
       expect(etiquetaDe(a), type).toBeTruthy();
     }
   });

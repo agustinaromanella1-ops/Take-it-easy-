@@ -72,6 +72,9 @@ export function Bienvenida({ onVerEjemplo }: { onVerEjemplo: () => void }) {
                 alias: tipo === 'banco' ? ['débito'] : tipo === 'billetera' ? ['mp'] : [],
                 diaCierre: null,
                 diaVencimiento: null,
+                cuotaMensual: null,
+                cuotasRestantes: null,
+                tasaAnual: null,
                 archivada: false,
               },
             });

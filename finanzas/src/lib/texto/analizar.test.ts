@@ -7,7 +7,8 @@ const efectivo = cuenta({ nombre: 'Efectivo', tipo: 'efectivo' });
 const mp = cuenta({ nombre: 'Mercado Pago', tipo: 'billetera', alias: ['mp'] });
 const visa = cuenta({ nombre: 'Visa', tipo: 'tarjeta-credito' });
 const dolares = cuenta({ nombre: 'Caja en dólares', tipo: 'banco', moneda: 'USD' });
-const CUENTAS = [banco, efectivo, mp, visa, dolares];
+const prestamo = cuenta({ nombre: 'Préstamo personal', tipo: 'prestamo', alias: ['préstamo'] });
+const CUENTAS = [banco, efectivo, mp, visa, dolares, prestamo];
 
 const a = (frase: string) => analizar(frase, CUENTAS, HOY);
 
@@ -55,6 +56,10 @@ describe('analizar frases', () => {
     expect(a('pagué la visa 80.000')).toMatchObject({ tipo: 'pago-tarjeta', cuentaDestinoId: visa.id, importe: 80_000_00 });
     // Con "con", la tarjeta es el medio de pago: es una compra.
     expect(a('pagué 5000 con la visa')).toMatchObject({ tipo: 'gasto', cuentaId: visa.id });
+  });
+
+  it('pagar la cuota del préstamo baja la deuda: no es gasto', () => {
+    expect(a('pagué la cuota del préstamo 55000 con galicia')).toMatchObject({ tipo: 'pago-tarjeta', importe: 55_000_00, cuentaId: banco.id, cuentaDestinoId: prestamo.id });
   });
 
   it('transferencia entre cuentas propias', () => {

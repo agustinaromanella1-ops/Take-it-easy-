@@ -3,6 +3,7 @@ import { addDays, isValidISODate } from '../dates';
 import { parseMoney } from '../money';
 import { normalizar } from '../finanzas/duplicados';
 import { categoriaPara } from './categorias';
+import { esDeuda } from '../finanzas/saldos';
 
 /**
  * Entender una frase como "gasté 8.500 en súper con débito".
@@ -35,7 +36,7 @@ const RELLENO = new Set([
   'las', 'lo', 'por', 'un', 'una', 'y', 'a', 'al', 'para', 'que', 'hoy', 'ayer', 'anteayer', 'pase', 'transferi', 'movi',
   'pesos', 'peso', 'mango', 'mangos', 'dolares', 'dolar', 'usd', 'verdes', 'plata', 'devolvieron', 'depositaron',
   'pagaron', 'entro', 'entraron', 'ingreso', 'devolucion', 'reintegro', 'reembolso', 'tarjeta', 'resumen',
-  'efectivo', 'cash', 'debito', 'credito', 'cuotas', 'cuota', 'sin', 'interes', 'mil', 'lucas', 'luca', 'k', 'palo', 'palos', 'millon', 'millones',
+  'efectivo', 'cash', 'debito', 'credito', 'cuotas', 'cuota', 'prestamo', 'sin', 'interes', 'mil', 'lucas', 'luca', 'k', 'palo', 'palos', 'millon', 'millones',
 ]);
 
 interface Trozo {
@@ -128,6 +129,7 @@ function buscarCuentas(t: string, cuentas: readonly Cuenta[]): Mencion[] {
     [/\b(efectivo|cash|billete)\b/, 'efectivo'],
     [/\b(debito)\b/, 'banco'],
     [/\b(credito|tarjeta)\b/, 'tarjeta-credito'],
+    [/\b(prestamo)\b/, 'prestamo'],
     [/\b(mp|mercadopago|mercado pago|billetera)\b/, 'billetera'],
   ];
   for (const [re, tipo] of medios) {
@@ -143,9 +145,11 @@ function detectarTipo(t: string, menciones: Mencion[]): TipoMovimiento | null {
   if (/\b(me devolvieron|devolucion|reintegro|reembolso|me reintegraron)\b/.test(t)) return 'devolucion';
   if (/\b(cobre|cobro|me pagaron|me depositaron|entro|entraron|ingreso|sueldo|aguinaldo|honorarios)\b/.test(t)) return 'ingreso';
   if (/\b(pague|pago)\s+(el\s+)?resumen\b|\bpago\s+de\s+(la\s+)?tarjeta\b|\bpague\s+la\s+tarjeta\b/.test(t)) return 'pago-tarjeta';
+  // La cuota del préstamo se paga como la tarjeta: baja la deuda, no es un gasto.
+  if (/\b(pague|pago)\s+(la\s+)?cuota\s+del\s+prestamo\b|\bpague\s+el\s+prestamo\b/.test(t)) return 'pago-tarjeta';
   // "pagué la visa" (sin "con"): si lo que sigue a pagar es una tarjeta, es su pago.
   const pagoA = /\bpague\s+(?:la|el)\s+(\S+(?:\s\S+)?)/.exec(t);
-  if (pagoA && menciones.some((m) => m.cuenta.tipo === 'tarjeta-credito' && m.trozo.inicio >= pagoA.index && m.trozo.inicio <= pagoA.index + pagoA[0].length)) {
+  if (pagoA && menciones.some((m) => esDeuda(m.cuenta) && m.trozo.inicio >= pagoA.index && m.trozo.inicio <= pagoA.index + pagoA[0].length)) {
     return 'pago-tarjeta';
   }
   if (/\b(pase|transferi|movi)\b/.test(t) && menciones.length >= 2) return 'transferencia';
@@ -208,9 +212,11 @@ export function analizar(frase: string, cuentas: readonly Cuenta[], hoy: DateISO
     res.cuentaId = a?.cuenta.id ?? null;
     res.cuentaDestinoId = b?.cuenta.id ?? null;
   } else if (res.tipo === 'pago-tarjeta') {
-    const tarjeta = menciones.find((m) => m.cuenta.tipo === 'tarjeta-credito');
-    const origen = menciones.find((m) => m.cuenta.tipo !== 'tarjeta-credito');
-    res.cuentaDestinoId = tarjeta?.cuenta.id ?? cuentas.find((x) => x.tipo === 'tarjeta-credito' && !x.archivada)?.id ?? null;
+    const deuda = menciones.find((m) => esDeuda(m.cuenta));
+    const origen = menciones.find((m) => !esDeuda(m.cuenta));
+    const esPrestamo = /prestamo/.test(t);
+    res.cuentaDestinoId =
+      deuda?.cuenta.id ?? cuentas.find((x) => !x.archivada && (esPrestamo ? x.tipo === 'prestamo' : x.tipo === 'tarjeta-credito'))?.id ?? null;
     res.cuentaId = origen?.cuenta.id ?? null;
   } else {
     res.cuentaId = menciones[0]?.cuenta.id ?? null;

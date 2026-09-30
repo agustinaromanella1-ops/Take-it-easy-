@@ -1,4 +1,4 @@
-import { compromisoICS, exportarCSV } from './exportar';
+import { compromisoICS, exportarCSV, recordatorioICS, vencimientosICS } from './exportar';
 import { compromiso, cuenta, datos, movimiento } from './fabrica';
 
 describe('calendario', () => {
@@ -25,5 +25,29 @@ describe('planilla', () => {
     const csv = exportarCSV(datos({ cuentas: [c], movimientos: [movimiento({ cuentaId: c.id, importe: 8_500_50, comercio: '=HYPERLINK("x")' })] }));
     expect(csv).toContain('-8500,50');
     expect(csv).toContain(`"'=HYPERLINK(""x"")"`);
+  });
+});
+
+describe('recordatorios', () => {
+  it('todos los vencimientos en un solo archivo, sin importes por defecto', () => {
+    const ics = vencimientosICS(
+      [
+        { clave: 'c:1', nombre: 'Luz', importe: 25_000_00, moneda: 'ARS', fecha: '2026-09-20', recurrente: true },
+        { clave: 't:2:2026-10-05', nombre: 'Resumen de Visa', importe: 10_000_00, moneda: 'ARS', fecha: '2026-10-05', recurrente: false },
+      ],
+      { calendarioConDetalle: false, recordatorioMin: 1440 },
+    );
+    expect(ics.match(/BEGIN:VEVENT/g)).toHaveLength(2);
+    expect(ics.match(/BEGIN:VCALENDAR/g)).toHaveLength(1);
+    expect(ics).not.toContain('25.000');
+    expect(ics.match(/RRULE/g)).toHaveLength(1);
+  });
+
+  it('la revisión semanal empieza el próximo día elegido, a la hora local', () => {
+    // 15/9/2026 es martes; el próximo domingo es el 20.
+    const ics = recordatorioICS({ titulo: 'Mirar Salchi', frecuencia: 'WEEKLY', dia: 0, hora: '19:30', desde: '2026-09-15', uid: 'r' });
+    expect(ics).toContain('DTSTART:20260920T193000');
+    expect(ics).toContain('RRULE:FREQ=WEEKLY;BYDAY=SU');
+    expect(ics).not.toMatch(/DTSTART:.*Z/);
   });
 });

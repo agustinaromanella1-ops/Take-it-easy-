@@ -40,6 +40,7 @@ export function preferenciasPorDefecto(): Preferencias {
     periodo: 'proximo-ingreso',
     calendarioConDetalle: false,
     recordatorioMin: 24 * 60,
+    voz: false,
     updatedAt: EPOCA,
   };
 }
@@ -93,9 +94,9 @@ const dia = (x: unknown): number | null => {
   return n !== null && n >= 1 && n <= 31 ? n : null;
 };
 
-const TIPOS_CUENTA: readonly TipoCuenta[] = ['efectivo', 'banco', 'billetera', 'tarjeta-credito'];
+const TIPOS_CUENTA: readonly TipoCuenta[] = ['efectivo', 'banco', 'billetera', 'tarjeta-credito', 'prestamo'];
 const TIPOS_MOV: readonly TipoMovimiento[] = ['gasto', 'ingreso', 'transferencia', 'devolucion', 'pago-tarjeta', 'ajuste'];
-const ORIGENES: readonly OrigenMovimiento[] = ['manual', 'texto', 'comprobante', 'ajuste'];
+const ORIGENES: readonly OrigenMovimiento[] = ['manual', 'texto', 'comprobante', 'ajuste', 'importado', 'resumen'];
 const RECURRENCIAS: readonly Recurrencia[] = ['ninguna', 'mensual'];
 const ACCIONES: readonly AccionHuellita[] = [
   'revisar-movimientos', 'confirmar-compromiso', 'actualizar-saldo', 'anotar', 'retomar', 'comprobante',
@@ -118,11 +119,20 @@ function parseCuenta(r: unknown): Cuenta | null {
     saldoInicial,
     fechaSaldo,
     aproximado: bool(r.aproximado, false),
-    cuentaParaDisponible: bool(r.cuentaParaDisponible, tipo !== 'tarjeta-credito'),
+    cuentaParaDisponible: tipo === 'tarjeta-credito' || tipo === 'prestamo' ? false : bool(r.cuentaParaDisponible, true),
     confirmadoEn: fecha(r.confirmadoEn) ?? fechaSaldo,
     alias: Array.isArray(r.alias) ? r.alias.filter((a): a is string => typeof a === 'string') : [],
     diaCierre: dia(r.diaCierre),
     diaVencimiento: dia(r.diaVencimiento),
+    cuotaMensual: importeNulo(r.cuotaMensual),
+    cuotasRestantes: (() => {
+      const n = entero(r.cuotasRestantes);
+      return n !== null && n >= 0 && n <= 600 ? n : null;
+    })(),
+    tasaAnual: (() => {
+      const n = entero(r.tasaAnual);
+      return n !== null && n >= 0 && n <= 100_000 ? n : null;
+    })(),
     archivada: bool(r.archivada, false),
   };
 }
@@ -266,6 +276,7 @@ function parsePreferencias(x: unknown): Preferencias {
     periodo: unoDe<Periodo>(x.periodo, ['proximo-ingreso', 'fin-de-mes'], d.periodo),
     calendarioConDetalle: bool(x.calendarioConDetalle, d.calendarioConDetalle),
     recordatorioMin: min !== null && min >= 0 && min <= 7 * 24 * 60 ? min : d.recordatorioMin,
+    voz: bool(x.voz, d.voz),
     updatedAt: sello(x.updatedAt),
   };
 }

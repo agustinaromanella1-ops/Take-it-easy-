@@ -5,13 +5,14 @@ import { useVentanas } from './Ventanas';
 import { Aviso, Field, Modal, Opciones, Progreso } from './ui';
 import { extraer, type Campo, type Destino, type MedioPago, type Propuesta } from '../lib/comprobantes/extraer';
 import { leerTexto, LecturaCancelada, type Etapa } from '../lib/comprobantes/ocr';
+import { extraerVarios, type ItemCaptura } from '../lib/comprobantes/varios';
 import { prepararParaLeer, SIN_RECORTE, type Recorte } from '../lib/imagen';
 import { centsToInput, formatMoney, parseMoney } from '../lib/money';
 import { formatDateMedium, today } from '../lib/dates';
 import { newId } from '../lib/id';
 import { CATEGORIAS } from '../lib/texto/categorias';
 import { posiblesDuplicados } from '../lib/finanzas/duplicados';
-import { esTarjeta } from '../lib/finanzas/saldos';
+import { esDeuda } from '../lib/finanzas/saldos';
 
 /**
  * Leer un comprobante: elegir la imagen, leerla, revisar y guardar.
@@ -28,7 +29,8 @@ type Paso =
   | { tipo: 'elegir' }
   | { tipo: 'preparar' }
   | { tipo: 'leyendo'; etapa: Etapa; avance: number }
-  | { tipo: 'revisar'; propuesta: Propuesta | null }
+  | { tipo: 'revisar'; propuesta: Propuesta | null; varios?: ItemCaptura[] }
+  | { tipo: 'varios'; items: ItemCaptura[]; propuesta: Propuesta }
   | { tipo: 'ilegible' }
   | { tipo: 'error'; mensaje: string };
 
@@ -36,7 +38,7 @@ const DESTINOS: { valor: Destino; texto: string }[] = [
   { valor: 'gasto', texto: 'Un gasto hecho' },
   { valor: 'compromiso', texto: 'Algo a pagar' },
   { valor: 'transferencia', texto: 'Entre mis cuentas' },
-  { valor: 'pago-tarjeta', texto: 'Pago de tarjeta' },
+  { valor: 'pago-tarjeta', texto: 'Pago de tarjeta o préstamo' },
 ];
 
 function cuentaPara(medio: MedioPago | null, cuentas: Cuenta[], moneda: Moneda): string {
@@ -68,7 +70,11 @@ export function Comprobante() {
       const imagen = await prepararParaLeer(archivo, recorte);
       const texto = await leerTexto(imagen, (etapa, avance) => setPaso({ tipo: 'leyendo', etapa, avance }), control.signal);
       const propuesta = extraer(texto, today());
-      setPaso(propuesta.legible ? { tipo: 'revisar', propuesta } : { tipo: 'ilegible' });
+      // Una captura con varios movimientos (la actividad de una billetera) se
+      // revisa como lista; si no, como un solo comprobante.
+      const varios = extraerVarios(texto, today());
+      if (varios.length >= 2) setPaso({ tipo: 'varios', items: varios, propuesta });
+      else setPaso(propuesta.legible ? { tipo: 'revisar', propuesta } : { tipo: 'ilegible' });
     } catch (e) {
       if (e instanceof LecturaCancelada) {
         setPaso({ tipo: 'preparar' });
@@ -213,6 +219,9 @@ export function Comprobante() {
       )}
 
       {paso.tipo === 'revisar' && <Revisar propuesta={paso.propuesta} vista={vista} />}
+      {paso.tipo === 'varios' && (
+        <RevisarVarios items={paso.items} vista={vista} onUnoSolo={() => setPaso({ tipo: 'revisar', propuesta: paso.propuesta })} />
+      )}
     </Modal>
   );
 }
@@ -235,8 +244,8 @@ function Revisar({ propuesta, vista }: { propuesta: Propuesta | null; vista: Rea
   const dudoso = (c: Campo) => propuesta !== null && propuesta.dudosos.includes(c);
 
   const cuentas = data.cuentas.filter((c) => !c.archivada && c.moneda === moneda);
-  const tarjetas = cuentas.filter(esTarjeta);
-  const noTarjetas = cuentas.filter((c) => !esTarjeta(c));
+  const tarjetas = cuentas.filter(esDeuda);
+  const noTarjetas = cuentas.filter((c) => !esDeuda(c));
 
   function guardar(aunqueParezcaRepetido = false) {
     const monto = parseMoney(importe);
@@ -351,7 +360,7 @@ function Revisar({ propuesta, vista }: { propuesta: Propuesta | null; vista: Rea
           </div>
         )}
         {destino === 'pago-tarjeta' && (
-          <Field label="Qué tarjeta">
+          <Field label="Qué tarjeta o préstamo">
             <select value={destinoId} onChange={(e) => setDestinoId(e.target.value)}>
               <option value="">Elegí una</option>
               {tarjetas.map((c) => (
@@ -429,6 +438,115 @@ function Revisar({ propuesta, vista }: { propuesta: Propuesta | null; vista: Rea
           </button>
         </div>
       </form>
+    </div>
+  );
+}
+
+/**
+ * Varios movimientos de una sola captura. Todos van a la misma cuenta (la
+ * captura es de una billetera o un banco). Lo repetido viene destildado; lo
+ * que vino sin signo se pregunta.
+ */
+function RevisarVarios({ items, vista, onUnoSolo }: { items: ItemCaptura[]; vista: React.ReactNode; onUnoSolo: () => void }) {
+  const { data, dispatch, huellita } = useStore();
+  const { cerrar } = useVentanas();
+  const hoy = today();
+  const [filas, setFilas] = useState(() =>
+    items.map((it) => ({
+      ...it,
+      fecha: it.fecha ?? hoy,
+      elegido: posiblesDuplicados({ tipo: it.tipo, importe: it.importe, moneda: it.moneda, fecha: it.fecha ?? hoy, comercio: it.descripcion }, data.movimientos).length === 0,
+      repetido: posiblesDuplicados({ tipo: it.tipo, importe: it.importe, moneda: it.moneda, fecha: it.fecha ?? hoy, comercio: it.descripcion }, data.movimientos).length > 0,
+      sinFecha: it.fecha === null,
+    })),
+  );
+  const moneda = items[0]?.moneda ?? 'ARS';
+  const cuentas = data.cuentas.filter((c) => !c.archivada && !esDeuda(c) && c.moneda === moneda);
+  const [cuentaId, setCuentaId] = useState(cuentas.find((c) => c.tipo === 'billetera')?.id ?? cuentas[0]?.id ?? '');
+  const cambiar = (i: number, cambios: Partial<(typeof filas)[number]>) => setFilas((f) => f.map((x, j) => (j === i ? { ...x, ...cambios } : x)));
+  const elegidos = filas.filter((f) => f.elegido);
+
+  function guardar() {
+    const movs: Omit<Movimiento, 'updatedAt'>[] = elegidos.map((f) => ({
+      id: newId(),
+      tipo: f.tipo,
+      importe: f.importe,
+      moneda: f.moneda,
+      fecha: f.fecha,
+      cuentaId: cuentaId || null,
+      cuentaDestinoId: null,
+      categoria: f.categoria,
+      comercio: f.descripcion,
+      nota: 'De una captura',
+      cuotas: 1,
+      devolucionDe: null,
+      origen: 'comprobante',
+      aRevisar: false,
+    }));
+    if (movs.length) dispatch({ type: 'mov/agregarVarios', movs, origen: 'captura' });
+    huellita('comprobante');
+    cerrar();
+  }
+
+  return (
+    <div className="revisar">
+      {vista}
+      <p>
+        Encontré <strong>{items.length} movimientos</strong>. Elegí cuáles guardar. Los saldos y totales de la captura no se toman.
+      </p>
+      <Field label="De qué cuenta es la captura">
+        <select value={cuentaId} onChange={(e) => setCuentaId(e.target.value)}>
+          <option value="">Sin cuenta por ahora</option>
+          {cuentas.map((c) => (
+            <option key={c.id} value={c.id}>
+              {c.nombre}
+            </option>
+          ))}
+        </select>
+      </Field>
+      <ul className="lista importar-lista">
+        {filas.map((f, i) => (
+          <li key={i}>
+            <label className="importar-fila">
+              <input type="checkbox" checked={f.elegido} onChange={(e) => cambiar(i, { elegido: e.target.checked })} />
+              <span className="mov-texto">
+                <span className="lista-nombre">{f.descripcion || 'Sin descripción'}</span>
+                <span className="susurro">
+                  {formatDateMedium(f.fecha)}
+                  {f.sinFecha ? ' (no se veía la fecha: puse hoy)' : ''}
+                  {f.repetido ? ' · parece repetido' : ''}
+                </span>
+              </span>
+              <span className={`mov-importe${f.tipo !== 'gasto' ? ' entra' : ''}`}>
+                {f.tipo === 'gasto' ? '−' : '+'}
+                {formatMoney(f.importe, f.moneda)}
+              </span>
+            </label>
+            {f.signoDudoso && (
+              <div className="dudoso">
+                <span className="dudoso-marca">Revisá esto</span>
+                <Opciones
+                  legend={`¿${f.descripcion || 'Este'} fue un gasto o un ingreso?`}
+                  valor={f.tipo === 'gasto' ? 'gasto' : 'ingreso'}
+                  opciones={[
+                    { valor: 'gasto', texto: 'Gasto' },
+                    { valor: 'ingreso', texto: 'Ingreso' },
+                  ]}
+                  onChange={(v) => cambiar(i, { tipo: v, categoria: v === 'gasto' ? f.categoria : '' })}
+                />
+              </div>
+            )}
+          </li>
+        ))}
+      </ul>
+      <div className="acciones acciones-final">
+        <button type="button" className="btn" onClick={onUnoSolo}>
+          Es un solo comprobante
+        </button>
+        <button type="button" className="btn principal grande" onClick={guardar} disabled={elegidos.length === 0}>
+          Guardar {elegidos.length}
+        </button>
+      </div>
     </div>
   );
 }

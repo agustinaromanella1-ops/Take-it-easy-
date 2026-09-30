@@ -395,7 +395,7 @@ await verificar('sin personaje: se va el perro, quedan todas las funciones', asy
 await verificar('los trucos se conservan después de desactivar y de recargar', async () => {
   await p.reload();
   await p.getByRole('banner').getByRole('button', { name: 'Ajustes' }).click();
-  await p.getByText(/Trucos aprendidos \(1 de 6\)/).click();
+  await p.getByText(/Trucos aprendidos \(1 de 8\)/).click();
   await p.getByText('aprendido', { exact: true }).waitFor();
   await p.getByRole('button', { name: 'Visible en Hoy' }).click();
 });

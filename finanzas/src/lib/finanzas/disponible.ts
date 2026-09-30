@@ -1,6 +1,7 @@
 import type { AppData, Cents, Cuenta, DateISO, IngresoEsperado, Moneda } from '../../types';
 import { daysBetween, finDeMes } from '../dates';
-import { esTarjeta, saldo } from './saldos';
+import { esDeuda, esPrestamo, esTarjeta, saldo } from './saldos';
+import { cuotasAPagarHasta } from './prestamo';
 import { aPagarHasta } from './tarjeta';
 
 /**
@@ -72,7 +73,7 @@ export function finDelPeriodo(data: AppData, hoy: DateISO): { hasta: DateISO; mo
 }
 
 function cuentaLiquida(c: Cuenta): boolean {
-  return !c.archivada && !esTarjeta(c) && c.cuentaParaDisponible;
+  return !c.archivada && !esDeuda(c) && c.cuentaParaDisponible;
 }
 
 export function calcularDisponible(data: AppData, moneda: Moneda, hoy: DateISO): Disponible {
@@ -109,6 +110,14 @@ export function calcularDisponible(data: AppData, moneda: Moneda, hoy: DateISO):
     if (debe <= 0) continue;
     total -= debe;
     renglones.push({ texto: `Resumen de ${t.nombre}`, importe: debe, signo: '−' });
+  }
+
+  for (const p of data.cuentas) {
+    if (p.archivada || !esPrestamo(p) || p.moneda !== moneda) continue;
+    const debe = cuotasAPagarHasta(p, data.movimientos, hasta);
+    if (debe <= 0) continue;
+    total -= debe;
+    renglones.push({ texto: `Cuota de ${p.nombre}`, importe: debe, signo: '−' });
   }
 
   const sinCuenta = data.movimientos.filter((m) => m.tipo === 'gasto' && m.cuentaId === null && m.moneda === moneda);

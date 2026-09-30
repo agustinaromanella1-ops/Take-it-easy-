@@ -28,7 +28,7 @@ export interface Lapida {
   deletedAt: Instante;
 }
 
-export type TipoCuenta = 'efectivo' | 'banco' | 'billetera' | 'tarjeta-credito';
+export type TipoCuenta = 'efectivo' | 'banco' | 'billetera' | 'tarjeta-credito' | 'prestamo';
 
 export interface Cuenta extends Sellado {
   nombre: string;
@@ -54,8 +54,17 @@ export interface Cuenta extends Sellado {
   alias: string[];
   /** Solo tarjetas: día del mes en que cierra el resumen. */
   diaCierre: number | null;
-  /** Solo tarjetas: día del mes en que vence el resumen. */
+  /** Tarjetas: día en que vence el resumen. Préstamos: día en que vence la cuota. */
   diaVencimiento: number | null;
+  /** Solo préstamos: la cuota de cada mes. */
+  cuotaMensual: Cents | null;
+  /** Solo préstamos: cuántas cuotas quedan, si se sabe. */
+  cuotasRestantes: number | null;
+  /**
+   * Tasa nominal anual en centésimos de punto (8550 = 85,50 %), si se sabe.
+   * Solo sirve para simular escenarios; nunca cambia un saldo.
+   */
+  tasaAnual: number | null;
   archivada: boolean;
 }
 
@@ -67,7 +76,7 @@ export type TipoMovimiento =
   | 'pago-tarjeta'
   | 'ajuste';
 
-export type OrigenMovimiento = 'manual' | 'texto' | 'comprobante' | 'ajuste';
+export type OrigenMovimiento = 'manual' | 'texto' | 'comprobante' | 'ajuste' | 'importado' | 'resumen';
 
 export interface Movimiento extends Sellado {
   tipo: TipoMovimiento;
@@ -167,6 +176,8 @@ export interface Preferencias {
   calendarioConDetalle: boolean;
   /** Minutos antes del vencimiento (a las 9) en que suena el recordatorio del calendario. */
   recordatorioMin: number;
+  /** Dictado por voz: apagado por defecto porque el navegador puede mandar el audio afuera. */
+  voz: boolean;
   /** Se toca de a uno y casi nunca: gana quien guarda. */
   updatedAt: Instante;
 }

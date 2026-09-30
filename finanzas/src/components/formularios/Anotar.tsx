@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import type { Cuenta, Moneda, Movimiento, TipoMovimiento } from '../../types';
 import { useStore } from '../../store/StoreContext';
 import { useVentanas } from '../Ventanas';
@@ -10,9 +10,10 @@ import { newId } from '../../lib/id';
 import { analizar } from '../../lib/texto/analizar';
 import { CATEGORIAS } from '../../lib/texto/categorias';
 import { posiblesDuplicados } from '../../lib/finanzas/duplicados';
-import { esTarjeta } from '../../lib/finanzas/saldos';
+import { esDeuda, esTarjeta } from '../../lib/finanzas/saldos';
 import { useBorrador } from '../../lib/useBorrador';
 import { mensaje } from '../../lib/companero';
+import { dictar, hayVoz } from '../../lib/voz';
 
 /**
  * Anotar un movimiento: la acción principal de la app.
@@ -47,7 +48,7 @@ const TIPOS: { valor: TipoMovimiento; texto: string }[] = [
   { valor: 'gasto', texto: 'Gasto' },
   { valor: 'ingreso', texto: 'Ingreso' },
   { valor: 'transferencia', texto: 'Entre mis cuentas' },
-  { valor: 'pago-tarjeta', texto: 'Pago de tarjeta' },
+  { valor: 'pago-tarjeta', texto: 'Pago de tarjeta o préstamo' },
   { valor: 'devolucion', texto: 'Devolución' },
 ];
 
@@ -81,7 +82,17 @@ function formDe(m: Movimiento): Form {
   };
 }
 
-export function Anotar({ mov, modo: modoInicial = 'numero', fechaInicial }: { mov?: Movimiento; modo?: 'numero' | 'frase'; fechaInicial?: string }) {
+export function Anotar({
+  mov,
+  modo: modoInicial = 'numero',
+  fechaInicial,
+  fraseInicial,
+}: {
+  mov?: Movimiento;
+  modo?: 'numero' | 'frase';
+  fechaInicial?: string;
+  fraseInicial?: string;
+}) {
   const { data, dispatch, huellita } = useStore();
   const { cerrar, abrir } = useVentanas();
   const cuentas = data.cuentas.filter((c) => !c.archivada || c.id === mov?.cuentaId);
@@ -107,15 +118,21 @@ export function Anotar({ mov, modo: modoInicial = 'numero', fechaInicial }: { mo
   );
   const [form, setForm] = useState<Form>(() => (mov ? formDe(mov) : vacio));
   const [modo, setModo] = useState(modoInicial);
-  const [frase, setFrase] = useState('');
+  const [frase, setFrase] = useState(fraseInicial ?? '');
   const [entendido, setEntendido] = useState<string[] | null>(null);
+  const [escuchando, setEscuchando] = useState(false);
+  const [errorVoz, setErrorVoz] = useState('');
+  const cortarVoz = useRef<(() => void) | null>(null);
+  useEffect(() => () => cortarVoz.current?.(), []);
   const [error, setError] = useState<string | null>(null);
   const [duplicados, setDuplicados] = useState<Movimiento[]>([]);
   const [detalles, setDetalles] = useState(editando && Boolean(mov.comercio || mov.categoria || mov.nota || mov.fecha !== today()));
 
   const borrador = useBorrador('anotar', vacio, form, !editando);
   useEffect(() => {
-    if (!editando) borrador.ofrecerSiHay();
+    // Lo compartido desde otra app se entiende enseguida; igual se muestra antes de guardar.
+    if (fraseInicial) entender(fraseInicial);
+    else if (!editando) borrador.ofrecerSiHay();
     // Solo al abrir.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
@@ -128,16 +145,16 @@ export function Anotar({ mov, modo: modoInicial = 'numero', fechaInicial }: { mo
 
   const cuenta = cuentas.find((c) => c.id === form.cuentaId);
   const moneda: Moneda = cuenta?.moneda ?? form.moneda;
-  const tarjetas = cuentas.filter(esTarjeta);
-  const noTarjetas = cuentas.filter((c) => !esTarjeta(c));
+  const tarjetas = cuentas.filter(esDeuda);
+  const noTarjetas = cuentas.filter((c) => !esDeuda(c));
   const origenes = form.tipo === 'pago-tarjeta' || form.tipo === 'transferencia' ? noTarjetas : cuentas;
   const gastosRecientes = data.movimientos
     .filter((m) => m.tipo === 'gasto')
     .sort((a, b) => (a.fecha > b.fecha ? -1 : 1))
     .slice(0, 30);
 
-  function entender() {
-    const a = analizar(frase, data.cuentas, today());
+  function entender(texto: string = frase) {
+    const a = analizar(texto, data.cuentas, today());
     const partes: string[] = [];
     const cambios: Partial<Form> = {};
     if (a.tipo) {
@@ -314,9 +331,34 @@ export function Anotar({ mov, modo: modoInicial = 'numero', fechaInicial }: { mo
               autoComplete="off"
             />
           </Field>
-          <button type="button" className="btn" onClick={entender} disabled={!frase.trim()}>
-            Entender
-          </button>
+          <div className="acciones">
+            <button type="button" className="btn" onClick={() => entender()} disabled={!frase.trim()}>
+              Entender
+            </button>
+            {data.preferencias.voz && hayVoz() && (
+              <button
+                type="button"
+                className="btn"
+                aria-pressed={escuchando}
+                onClick={() => {
+                  if (escuchando) return cortarVoz.current?.();
+                  setErrorVoz('');
+                  setEscuchando(true);
+                  cortarVoz.current = dictar(
+                    (t) => {
+                      setFrase(t);
+                      entender(t);
+                    },
+                    setErrorVoz,
+                    () => setEscuchando(false),
+                  );
+                }}
+              >
+                {escuchando ? 'Escuchando… (tocá para cortar)' : 'Dictar'}
+              </button>
+            )}
+          </div>
+          {errorVoz && <p className="error-text">{errorVoz}</p>}
           {entendido && (
             <p className="entendido" aria-live="polite">
               {entendido.length ? (
@@ -364,9 +406,9 @@ export function Anotar({ mov, modo: modoInicial = 'numero', fechaInicial }: { mo
         )}
 
         {form.tipo === 'pago-tarjeta' && (
-          <Field label="Qué tarjeta pagaste">
+          <Field label="Qué pagaste">
             <select value={form.cuentaDestinoId} onChange={(e) => set('cuentaDestinoId', e.target.value)}>
-              <option value="">Elegí una tarjeta</option>
+              <option value="">Elegí una tarjeta o préstamo</option>
               {tarjetas.map((c) => (
                 <option key={c.id} value={c.id}>
                   {c.nombre}

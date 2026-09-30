@@ -17,16 +17,17 @@ código en tiempo de ejecución: lo que se reutilizó se copió y adaptó.
 cd finanzas
 npm install
 npm run dev          # http://localhost:5173
-npm test             # 89 pruebas unitarias
+npm test             # 113 pruebas unitarias
 npm run typecheck
 npm run build        # compila en dist/ (HTML estático, sin servidor)
 ```
 
-De punta a punta (35 verificaciones, con el lector de texto de verdad):
+De punta a punta (35 + 19 verificaciones, con el lector de texto de verdad):
 
 ```bash
 npm run build && npx vite preview --port 4174 &
 node e2e/etapa1.mjs          # deja capturas en e2e/capturas/
+node e2e/etapa2.mjs
 node scripts/contraste.mjs   # contraste de todos los pares de colores
 ```
 
@@ -74,9 +75,36 @@ Todo esto está implementado y probado; no hay botones que no hagan nada.
 - **Datos de ejemplo** separados: no se guardan ni se mezclan con los tuyos.
 - **PWA instalable**, funciona sin conexión, con barra de "hay una versión nueva".
 
+## Qué suma la etapa 2
+
+- **Préstamos**: se cargan como deuda (como la tarjeta), con cuota, día de vencimiento, cuotas que
+  quedan y tasa opcional. Las cuotas se derivan, no se guardan como compromisos, así que entran una
+  sola vez en "cuánto puedo usar" y en lo que vence. Pagar la cuota baja la deuda y no es gasto.
+- **Escenarios de deuda** (Mis planes → Deudas): "si pago tanto por mes, termino en N meses y pago
+  tanto de intereses", con los supuestos escritos. Si el pago no cubre los intereses, lo dice. No
+  recomienda nada.
+- **Importar un CSV** del banco o la billetera: detecta separador, codificación (UTF-8 o latin1),
+  columnas (importe con signo, o débito y crédito) y fechas. Nunca usa la columna de saldo. Lo
+  repetido viene destildado, todo entra "para revisar", y deshacer se lleva la importación entera.
+- **Capturas con varios movimientos** (la actividad de una billetera): cada uno con su fecha y
+  signo; los saldos se ignoran; lo que vino sin signo se pregunta.
+- **Resumen de tarjeta**: pegando el texto del PDF o con una foto. Compara el saldo del resumen con
+  lo anotado al cierre y muestra de dónde sale la diferencia: consumos que faltan (una cuota 2 de 6
+  se agrega como las 5 que quedan), intereses e impuestos, y lo que sobre como diferencia sin
+  conciliar. Nada se agrega sin elegirlo.
+- **Compras en cuotas** por tarjeta: qué cuota viene y cuánto falta que venza.
+- **Recordatorios**: todos los vencimientos al calendario en un solo archivo, y un recordatorio que
+  se repite ("Mirar Salchi") el día y la hora que elijas. Sin importes en el texto.
+- **Accesos rápidos**: mantener apretado el ícono ofrece Anotar, Leer un comprobante y Lo que
+  vence. "Compartir" un texto hacia Salchi (el aviso del banco) abre Anotar con esa frase entendida.
+- **Dictado por voz**, apagado por defecto: el navegador puede mandar el audio afuera y Ajustes lo
+  dice antes de prenderlo.
+- **Ocho trucos**, y los aprendidos se pueden volver a ver desde Ajustes.
+
 ## Privacidad
 
-Nada sale del dispositivo: sin servidor, sin cuentas, sin analítica. La compilación agrega una
+Nada sale del dispositivo: sin servidor, sin cuentas, sin analítica. La única excepción es el
+dictado por voz, que viene apagado y avisa antes de prenderse. La compilación agrega una
 política de contenido con `connect-src 'self'`, así que el navegador bloquea cualquier pedido a
 otro origen aunque una dependencia lo intente. La prueba de punta a punta verifica que no haya
 ninguno. El lector de texto y la tipografía se sirven desde la app.
@@ -86,13 +114,14 @@ teléfono, se pierden. Por eso la copia está a un toque en Ajustes.
 
 ## Qué NO está (y no aparenta estar)
 
-- Notificaciones del sistema: sin servidor no hay forma confiable. El `.ics` es lo que avisa con la
-  app cerrada, y Ajustes lo dice.
-- Voz: el dictado del navegador manda el audio a un tercero. Etapa 2, opcional y avisado.
-- Capturas con varios movimientos, resúmenes de tarjeta enteros, importar archivos del banco.
-- Lectura de comprobantes con IA (mejor en fotos difíciles): necesita un backend propio. No hay.
-- Deudas con escenarios e inversión educativa.
-- Compartir con otra persona, integraciones bancarias.
+- Notificaciones del sistema: sin servidor no hay forma confiable. El calendario es lo que avisa
+  con la app cerrada, y Ajustes lo dice.
+- Compartir una imagen hacia la app: necesita que el service worker reciba archivos; por ahora se
+  comparte texto.
+- Resúmenes en PDF leídos directo: se copia el texto del PDF y se pega.
+- Lectura de comprobantes con IA: necesita un backend propio. No hay.
+- Intereses calculados solos en préstamos y tarjetas: el saldo real lo da el banco.
+- Etapa 3: compartir con otra persona, integraciones bancarias, inversión educativa.
 
 ## Contraste
 
@@ -108,7 +137,8 @@ Medido con `node scripts/contraste.mjs` sobre los tokens de `src/styles.css`. Al
 
 ## Estructura
 
-- `src/lib/finanzas/`: el motor (saldos, tarjeta, disponible, duplicados, pendientes, metas).
+- `src/lib/finanzas/`: el motor (saldos, tarjeta, préstamo, disponible, duplicados, pendientes, metas, escenarios).
+- `src/lib/importar/`: el importador de CSV.
 - `src/lib/texto/`: el analizador de frases y las categorías.
 - `src/lib/comprobantes/`: extracción de campos (pura, probada) y el lector de texto.
 - `src/lib/huellitas/`, `src/lib/hormiga.ts`, `src/lib/pausa.ts`: las reglas del juego y del regreso.

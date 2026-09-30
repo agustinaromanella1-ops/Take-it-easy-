@@ -6,7 +6,7 @@ import { Aviso, Field, Llave, Modal, Opciones } from '../ui';
 import { centsToInput, parseMoney } from '../../lib/money';
 import { addDays, distancia, formatDateMedium, today } from '../../lib/dates';
 import { newId } from '../../lib/id';
-import { esTarjeta } from '../../lib/finanzas/saldos';
+import { esDeuda } from '../../lib/finanzas/saldos';
 import type { Vencimiento } from '../../lib/finanzas/pendientes';
 import { compromisoICS, descargar } from '../../lib/exportar';
 
@@ -126,8 +126,9 @@ export function CompromisoForm({ compromiso }: { compromiso?: Compromiso }) {
 export function PagarForm({ vencimiento, alPagar }: { vencimiento: Vencimiento; alPagar?: () => void }) {
   const { data, dispatch, huellita } = useStore();
   const { cerrar } = useVentanas();
-  const cuentas = data.cuentas.filter((c) => !c.archivada && !esTarjeta(c) && c.moneda === vencimiento.moneda);
-  const tarjeta = vencimiento.tipo === 'tarjeta';
+  const cuentas = data.cuentas.filter((c) => !c.archivada && !esDeuda(c) && c.moneda === vencimiento.moneda);
+  // Tarjeta o préstamo: se paga la deuda, no es un gasto nuevo.
+  const tarjeta = vencimiento.tipo === 'tarjeta' || vencimiento.tipo === 'prestamo';
   const puedeConTarjeta = !tarjeta;
   const opciones = puedeConTarjeta ? data.cuentas.filter((c) => !c.archivada && c.moneda === vencimiento.moneda) : cuentas;
   const [cuentaId, setCuentaId] = useState(opciones[0]?.id ?? '');
@@ -219,7 +220,13 @@ export function PagarForm({ vencimiento, alPagar }: { vencimiento: Vencimiento; 
             ))}
           </select>
         </Field>
-        {tarjeta && <Aviso>Pagar la tarjeta no es un gasto nuevo: las compras ya se contaron cuando las anotaste.</Aviso>}
+        {tarjeta && (
+          <Aviso>
+            {vencimiento.tipo === 'prestamo'
+              ? 'Pagar la cuota baja lo que debés; no se cuenta como gasto nuevo.'
+              : 'Pagar la tarjeta no es un gasto nuevo: las compras ya se contaron cuando las anotaste.'}
+          </Aviso>
+        )}
         <div className="acciones acciones-final">
           {!tarjeta && (
             <button type="button" className="btn" onClick={() => pagar(true)}>
@@ -320,7 +327,7 @@ export function CobrarForm({ ingresoId }: { ingresoId: string }) {
   const { data, dispatch } = useStore();
   const { cerrar } = useVentanas();
   const i = data.ingresos.find((x) => x.id === ingresoId);
-  const cuentas = data.cuentas.filter((c) => !c.archivada && !esTarjeta(c) && c.moneda === i?.moneda);
+  const cuentas = data.cuentas.filter((c) => !c.archivada && !esDeuda(c) && c.moneda === i?.moneda);
   const [cuentaId, setCuentaId] = useState(cuentas[0]?.id ?? '');
   const [importe, setImporte] = useState(centsToInput(i?.importe ?? null));
   const [error, setError] = useState('');

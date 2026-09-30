@@ -19,6 +19,7 @@ export const CATEGORIAS = [
   'Educación',
   'Mascotas',
   'Regalos',
+  'Intereses y cargos',
   'Otros',
 ] as const;
 
