@@ -11,6 +11,7 @@ import {
   sessionsInRange,
   upcomingSessions,
   patientAttendance,
+  fueReagendada,
 } from './selectors';
 
 function patient(id: string, over: Partial<Patient> = {}): Patient {
@@ -315,5 +316,32 @@ describe('patientAttendance', () => {
   it('sin sesiones cerradas no inventa un porcentaje', () => {
     const data = build({ patients: [patient('p1')] });
     expect(patientAttendance(data).get('p1')!.rate).toBeNull();
+  });
+});
+
+describe('fueReagendada', () => {
+  const base = {
+    id: 's1',
+    updatedAt: '2026-10-26T09:00:00.000Z',
+    patientId: 'p1',
+    date: '2026-10-26',
+    time: '10:00',
+    durationMin: 50,
+    fee: 500000,
+    chargeable: true,
+    notes: '',
+  };
+
+  it('una cancelada común no es una mudanza', () => {
+    expect(fueReagendada({ ...base, status: 'cancelada' })).toBe(false);
+  });
+
+  it('una cancelada que apunta a otra sesión, sí', () => {
+    expect(fueReagendada({ ...base, status: 'cancelada', rescheduledTo: 's2' })).toBe(true);
+  });
+
+  it('ni una ausencia ni una realizada lo son', () => {
+    expect(fueReagendada({ ...base, status: 'ausente' })).toBe(false);
+    expect(fueReagendada({ ...base, status: 'realizada', rescheduledTo: 's2' })).toBe(false);
   });
 });

@@ -176,6 +176,7 @@ function parseSession(raw: unknown, patientIds: Set<string>): Session | null {
     status,
     fee: Math.max(0, int(raw.fee, 0)),
     chargeable: bool(raw.chargeable, true),
+    ...(str(raw.rescheduledTo) ? { rescheduledTo: str(raw.rescheduledTo) } : {}),
     notes: str(raw.notes),
   };
 }

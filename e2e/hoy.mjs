@@ -117,6 +117,38 @@ check('y deshacerlo saca el cobro',
   !(await disco()).payments.some((g) => g.sessionId === 's1'),
   `quedaron ${(await disco()).payments.length} cobros`);
 
+titulo('6. Reagendar');
+// Mover un turno no es perderlo: deja la original cancelada, crea otra, y las
+// dos quedan atadas para que el "% se cae" del paciente no cuente la mudanza.
+const antesDeMover = (await disco()).sessions.length;
+await fila(1).getByRole('button', { name: 'Reagendó' }).click();
+await p.waitForTimeout(500);
+check('abre el cuadro para elegir cuándo', (await p.locator('.modal input[type=date]').count()) === 1);
+const propuesta = await p.locator('.modal input[type=date]').inputValue();
+const enUnaSemana = new Date(Date.now() + 7 * 86400000).toISOString().slice(0, 10);
+check('propone la misma hora de la semana que viene', propuesta === enUnaSemana, propuesta);
+check('y propone la misma hora', (await p.locator('.modal input[type=time]').inputValue()) === '11:00');
+
+await p.locator('.modal input[type=date]').fill('2026-12-15');
+await p.locator('.modal input[type=time]').fill('16:45');
+await p.getByRole('button', { name: 'Mover el turno' }).click();
+await p.waitForTimeout(800);
+
+const tras = await disco();
+check('crea una sesión más', tras.sessions.length === antesDeMover + 1);
+const vieja = tras.sessions.find((s) => s.id === 's2');
+const nueva = tras.sessions.find((s) => s.date === '2026-12-15');
+check('la de hoy queda cancelada', vieja?.status === 'cancelada');
+check('y apunta a la nueva, que es lo que la distingue de una caída',
+  vieja?.rescheduledTo === nueva?.id);
+check('la nueva queda programada en la fecha elegida', nueva?.status === 'programada' && nueva?.time === '16:45');
+check('con el mismo honorario', nueva?.fee === 3500000);
+check('la fila deja de ofrecer botones y dice adónde fue',
+  (await p.locator('.hoy-fila.is-movida button').count()) === 0 &&
+    (await p.locator('.hoy-movida').innerText()).includes('diciembre'),
+  await p.locator('.hoy-movida').innerText());
+check('se puede deshacer', (await p.locator('.deshacer').count()) === 1);
+
 console.log(`\n═══ ${ok} verificaciones pasaron, ${fail} fallaron ═══`);
 console.log('Errores de JavaScript:', errores.length ? errores.join(' | ') : 'ninguno');
 await browser.close();

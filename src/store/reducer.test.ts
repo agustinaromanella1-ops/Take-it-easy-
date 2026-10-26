@@ -182,3 +182,105 @@ describe('cierre del día', () => {
     expect(next.sessions.find((s) => s.id === otra.id)).toEqual(otra);
   });
 });
+
+describe('mover un turno de día', () => {
+  /** Un estado con una sesión programada para hoy, que es la que se mueve. */
+  function conTurno(): { state: AppData; sesion: string } {
+    let state = reducer(emptyData(), {
+      type: 'patient/add',
+      payload: { name: 'Ana', email: '', phone: '', defaultFee: 500000, status: 'activo', colorIndex: 0, frequency: 'semanal', kind: 'particular', legalName: '', document: '', taxId: '', taxCondition: 'consumidor_final', memberNumber: '', insurer: '', lastRaise: null, notes: '' },
+    });
+    const pac = state.patients[0]!.id;
+    state = reducer(state, {
+      type: 'session/add',
+      payload: {
+        patientId: pac,
+        date: '2026-10-26',
+        time: '10:00',
+        durationMin: 50,
+        status: 'programada',
+        fee: 500000,
+        chargeable: true,
+        notes: 'Traer los estudios',
+      },
+    });
+    return { state, sesion: state.sessions[0]!.id };
+  }
+
+  it('deja la original cancelada y crea una nueva', () => {
+    const { state, sesion } = conTurno();
+    const r = reducer(state, {
+      type: 'session/reschedule',
+      payload: { id: sesion, date: '2026-11-02', time: '15:30' },
+    });
+    expect(r.sessions).toHaveLength(2);
+    const vieja = r.sessions.find((s) => s.id === sesion)!;
+    const nueva = r.sessions.find((s) => s.id !== sesion)!;
+    expect(vieja.status).toBe('cancelada');
+    expect(nueva.status).toBe('programada');
+    expect(nueva.date).toBe('2026-11-02');
+    expect(nueva.time).toBe('15:30');
+  });
+
+  it('la vieja apunta a la nueva, que es lo que la distingue de una caída', () => {
+    const { state, sesion } = conTurno();
+    const r = reducer(state, {
+      type: 'session/reschedule',
+      payload: { id: sesion, date: '2026-11-02', time: '10:00' },
+    });
+    const vieja = r.sessions.find((s) => s.id === sesion)!;
+    const nueva = r.sessions.find((s) => s.id !== sesion)!;
+    expect(vieja.rescheduledTo).toBe(nueva.id);
+    // Y la nueva no hereda la marca: todavía no se movió a ningún lado.
+    expect(nueva.rescheduledTo).toBeUndefined();
+  });
+
+  it('la nueva se lleva paciente, honorario, duración y las notas', () => {
+    const { state, sesion } = conTurno();
+    const r = reducer(state, {
+      type: 'session/reschedule',
+      payload: { id: sesion, date: '2026-11-02', time: '10:00' },
+    });
+    const nueva = r.sessions.find((s) => s.id !== sesion)!;
+    expect(nueva.patientId).toBe(state.patients[0]!.id);
+    expect(nueva.fee).toBe(500000);
+    expect(nueva.durationMin).toBe(50);
+    // Lo anotado para esa sesión sigue valiendo el día que se dé.
+    expect(nueva.notes).toBe('Traer los estudios');
+  });
+
+  it('las dos quedan selladas', () => {
+    const { state, sesion } = conTurno();
+    const antes = state.sessions[0]!.updatedAt;
+    const r = reducer(state, {
+      type: 'session/reschedule',
+      payload: { id: sesion, date: '2026-11-02', time: '10:00' },
+    });
+    for (const s of r.sessions) expect(s.updatedAt >= antes).toBe(true);
+  });
+
+  it('mover una sesión que no existe no rompe ni inventa nada', () => {
+    const { state } = conTurno();
+    const r = reducer(state, {
+      type: 'session/reschedule',
+      payload: { id: 'no-existe', date: '2026-11-02', time: '10:00' },
+    });
+    expect(r).toBe(state);
+  });
+
+  it('se puede volver a mover, y la cadena queda encadenada', () => {
+    const { state, sesion } = conTurno();
+    const r1 = reducer(state, {
+      type: 'session/reschedule',
+      payload: { id: sesion, date: '2026-11-02', time: '10:00' },
+    });
+    const segunda = r1.sessions.find((s) => s.id !== sesion)!;
+    const r2 = reducer(r1, {
+      type: 'session/reschedule',
+      payload: { id: segunda.id, date: '2026-11-09', time: '10:00' },
+    });
+    expect(r2.sessions).toHaveLength(3);
+    expect(r2.sessions.find((s) => s.id === segunda.id)!.rescheduledTo).toBeTruthy();
+    expect(r2.sessions.filter((s) => s.status === 'programada')).toHaveLength(1);
+  });
+});

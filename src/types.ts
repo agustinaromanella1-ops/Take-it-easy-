@@ -109,6 +109,15 @@ export interface Session {
   /** Solo aplica a `ausente`: si esa ausencia se cobra o no. */
   chargeable: boolean;
   notes: string;
+  /**
+   * Si se movió de día: el id de la sesión que la reemplaza.
+   *
+   * Reagendar deja la original como `cancelada` —no se dio, no se factura— y
+   * crea otra. Pero mover un turno no es lo mismo que perderlo: sin esta
+   * marca, el "% se cae" de la ficha del paciente contaría las mudanzas como
+   * caídas y el número empezaría a mentir sobre esa persona.
+   */
+  rescheduledTo?: string;
 }
 
 export type PaymentMethod = 'efectivo' | 'transferencia' | 'tarjeta' | 'otro';

@@ -1780,6 +1780,16 @@ a.btn {
 .hoy-cobro:hover { color: var(--text); }
 .hoy-cobro.is-on { background: var(--menta); color: var(--sobre-claro); }
 
+/* El turno que se movió: queda a la vista, apagado y diciendo adónde fue. */
+.hoy-fila.is-movida .hoy-nombre { color: var(--muted); font-weight: 600; }
+.hoy-movida {
+  grid-column: 3 / -1;
+  justify-self: end;
+  text-align: right;
+  color: var(--muted);
+  font-size: 0.86rem;
+}
+
 /* En celular las cuatro columnas no entran: el nombre pasa a ocupar su propia
    línea y las respuestas quedan abajo, alineadas a la derecha. */
 @media (max-width: 560px) {
@@ -1789,6 +1799,7 @@ a.btn {
   }
   .hoy-estado { grid-column: 1 / 2; }
   .hoy-cobro { grid-column: 2 / 3; justify-self: end; }
+  .hoy-movida { grid-column: 1 / -1; justify-self: start; text-align: left; }
 }
 
 /* ---------- Lo que quedó abierto ---------- */

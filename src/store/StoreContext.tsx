@@ -74,6 +74,8 @@ function etiquetaDe(action: Action): string | null {
       return 'Borraste una sesión';
     case 'session/setStatus':
       return 'Marcaste una sesión';
+    case 'session/reschedule':
+      return 'Moviste un turno de día';
     case 'payment/add':
       return 'Registraste un cobro';
     case 'payment/remove':

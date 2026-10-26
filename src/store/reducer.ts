@@ -38,6 +38,7 @@ export type Action =
   | { type: 'session/update'; payload: Session }
   | { type: 'session/remove'; payload: { id: string } }
   | { type: 'session/setStatus'; payload: { id: string; status: Session['status'] } }
+  | { type: 'session/reschedule'; payload: { id: string; date: string; time: string } }
   | { type: 'payment/add'; payload: Omit<Payment, 'id' | 'updatedAt'> }
   | {
       type: 'day/close';
@@ -124,6 +125,46 @@ export function reducer(state: AppData, action: Action): AppData {
           s.id === action.payload.id ? sellar({ ...s, status: action.payload.status }) : s,
         ),
       };
+
+    /**
+     * Mover un turno de día: la original queda cancelada y nace otra.
+     *
+     * Va como UNA acción y no como dos despachos seguidos por dos motivos. El
+     * primero es el deshacer: dos despachos dejarían dos entradas, y deshacer
+     * una sola partiría el movimiento al medio —el turno viejo cancelado y el
+     * nuevo sin crear, o al revés—. El segundo es que entre un despacho y el
+     * otro habría un instante en que la sesión no está en ningún lado.
+     *
+     * La nueva se lleva lo práctico —paciente, duración, honorario— y también
+     * las notas: lo que estaba anotado para esa sesión sigue valiendo el día
+     * que se dé. La original conserva las suyas y queda marcada con
+     * `rescheduledTo`, que es lo que distingue una mudanza de una caída.
+     */
+    case 'session/reschedule': {
+      const original = state.sessions.find((s) => s.id === action.payload.id);
+      if (!original) return state;
+
+      const nueva = sellar({
+        ...original,
+        id: newId(),
+        date: action.payload.date,
+        time: action.payload.time,
+        status: 'programada' as const,
+        rescheduledTo: undefined,
+      });
+
+      return {
+        ...state,
+        sessions: [
+          ...state.sessions.map((s) =>
+            s.id === original.id
+              ? sellar({ ...s, status: 'cancelada' as const, rescheduledTo: nueva.id })
+              : s,
+          ),
+          nueva,
+        ],
+      };
+    }
 
     case 'payment/add':
       return { ...state, payments: [...state.payments, sellar({ ...action.payload, id: newId() })] };

@@ -7,6 +7,17 @@ import { addDays, daysBetween, monthKey, overlaps, timeToMinutes, today } from '
  * `map` (lo que daría O(n·m) y se nota con pocos cientos de sesiones).
  */
 
+/**
+ * Si el turno se movió de día en vez de perderse.
+ *
+ * Queda como `cancelada` porque no se dio y no se factura, pero contarla como
+ * una caída sería injusto con el paciente: el "% se cae" de su ficha y el
+ * gráfico de asistencia hablarían de alguien que en realidad avisó y volvió.
+ */
+export function fueReagendada(s: Session): boolean {
+  return s.status === 'cancelada' && s.rescheduledTo !== undefined;
+}
+
 /** Una sesión genera deuda si se realizó, o si fue ausencia cobrable. */
 export function isBillable(s: Session): boolean {
   return s.status === 'realizada' || (s.status === 'ausente' && s.chargeable);
@@ -236,6 +247,9 @@ export function patientAttendance(data: AppData): Map<string, Attendance> {
   for (const s of data.sessions) {
     const entry = result.get(s.patientId);
     if (!entry || s.status === 'programada') continue;
+    // Una sesión movida de día no entra en la cuenta: no se dio, pero tampoco
+    // se cayó. La que cuenta es la nueva, cuando se resuelva.
+    if (fueReagendada(s)) continue;
     entry.closed += 1;
     if (s.status === 'realizada') entry.held += 1;
     if (s.status === 'ausente') entry.absent += 1;

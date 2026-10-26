@@ -1,7 +1,7 @@
 import { useMemo, useState } from 'react';
 import type { Frequency, Patient, PatientKind, TaxCondition } from '../types';
 import { useStore } from '../store/StoreContext';
-import { patientBalances } from '../store/selectors';
+import { fueReagendada, patientBalances } from '../store/selectors';
 import { centsToInput, formatMoney, parseMoney } from '../lib/money';
 import { formatDateShort, today } from '../lib/dates';
 import { ConfirmButton, Empty, Field, Modal } from '../components/ui';
@@ -114,6 +114,8 @@ export function PatientsPage({ onOpenPatient }: { onOpenPatient: (id: string) =>
     const counts = new Map<string, { total: number; caidas: number }>();
     for (const s of data.sessions) {
       if (s.status === 'programada') continue;
+      // Mover un turno no es perderlo. Ver `fueReagendada`.
+      if (fueReagendada(s)) continue;
       const c = counts.get(s.patientId) ?? { total: 0, caidas: 0 };
       c.total += 1;
       if (s.status === 'cancelada' || s.status === 'ausente') c.caidas += 1;
