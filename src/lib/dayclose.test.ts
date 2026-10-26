@@ -68,7 +68,15 @@ describe('buildDayClose', () => {
       'transferencia',
     );
     expect(r.payments).toEqual([
-      { patientId: 'pac-a', date: FECHA, amount: 4200000, method: 'transferencia', notes: 'Cobrado en el cierre del día' },
+      {
+        patientId: 'pac-a',
+        date: FECHA,
+        amount: 4200000,
+        method: 'transferencia',
+        notes: 'Cobrado en el cierre del día',
+        // Atado a su sesión, para poder decir después si esa sesión está paga.
+        sessionId: 'a',
+      },
     ]);
   });
 

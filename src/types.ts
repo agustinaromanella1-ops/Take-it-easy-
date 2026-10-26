@@ -122,6 +122,16 @@ export interface Payment {
   amount: Cents;
   method: PaymentMethod;
   notes: string;
+  /**
+   * La sesión que este cobro salda, si salda una.
+   *
+   * Opcional porque un cobro puede no corresponder a una sesión puntual —se
+   * paga el mes entero, o una seña—, y porque los cobros cargados antes de
+   * que esto existiera no lo tienen. Sirve para poder decir, mirando una
+   * sesión, si ya está paga, y para poder desmarcarla sacando ese mismo cobro
+   * y no otro.
+   */
+  sessionId?: string;
 }
 
 /**

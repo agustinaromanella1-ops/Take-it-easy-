@@ -197,6 +197,7 @@ function parsePayment(raw: unknown, patientIds: Set<string>): Payment | null {
     date,
     amount,
     method: PAYMENT_METHODS.has(str(raw.method)) ? (raw.method as Payment['method']) : 'efectivo',
+    ...(str(raw.sessionId) ? { sessionId: str(raw.sessionId) } : {}),
     notes: str(raw.notes),
   };
 }

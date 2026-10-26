@@ -7,6 +7,7 @@ import { Card, Empty, Stat } from '../components/ui';
 import { DayClose } from '../components/DayClose';
 import { Ahora } from '../components/Ahora';
 import { Pendientes } from '../components/Pendientes';
+import { SesionesDeHoy } from '../components/SesionesDeHoy';
 import { goalProgress } from '../lib/pricing';
 import { patientColor } from '../lib/palette';
 import { guardarEnfoque, leerEnfoque } from '../lib/enfoque';
@@ -94,6 +95,12 @@ export function DashboardPage({
 
       {/* Antes que cualquier número: qué está pasando y cuánto falta. */}
       <Ahora sessions={data.sessions} patientsById={patientsById} onVerAgenda={() => onGo('agenda')} />
+
+      {/* El día de hoy, con sus dos preguntas al lado. Va antes que lo demás
+          porque es el trabajo de hoy; lo que quedó abierto de otros días viene
+          después. Se queda también en modo enfoque: es para hacer, no para
+          mirar. */}
+      <SesionesDeHoy sesiones={sesionesHoy} patientsById={patientsById} />
 
       {/* De todo lo que quedó abierto, una cosa. Reemplaza a la vieja tarjeta
           de "sesiones sin cerrar": eso ahora es uno de los casos de la lista. */}

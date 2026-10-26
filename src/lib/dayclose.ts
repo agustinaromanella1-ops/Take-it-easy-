@@ -73,6 +73,9 @@ export function buildDayClose(
         amount: closed.fee,
         method,
         notes: 'Cobrado en el cierre del día',
+        // Atado a su sesión: así el inicio puede mostrar esa sesión como
+        // cobrada, y desmarcarla saca este cobro y no otro del mismo día.
+        sessionId: session.id,
       });
     }
   }

@@ -1081,7 +1081,15 @@ a.btn {
   cursor: pointer;
 }
 .seg button:hover { color: var(--text); }
-.seg button.is-on { background: var(--accent); color: #fff; }
+/* Tinta oscura y no blanco: blanco sobre el lila da 2,41:1 y no pasa WCAG AA.
+   Es el mismo caso del botón principal, que por eso lleva `--sobre-claro`.
+   `aria-pressed` además de `.is-on` porque los botones nuevos usan el atributo,
+   que es lo que lee un lector de pantalla. */
+.seg button.is-on,
+.seg button[aria-pressed='true'] {
+  background: var(--accent);
+  color: var(--sobre-claro);
+}
 
 .close-summary {
   display: flex;
@@ -1706,6 +1714,81 @@ a.btn {
   font-size: 0.92rem;
   font-weight: 600;
   color: var(--text);
+}
+
+/* ---------- Las sesiones de hoy ---------- */
+/* Una fila por sesión, con sus dos preguntas al lado. Ver SesionesDeHoy.tsx. */
+.hoy {
+  background: var(--surface);
+  border: var(--borde) solid var(--border);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  padding: 16px 18px;
+  margin-bottom: 18px;
+}
+.hoy-rotulo {
+  font-size: 0.74rem;
+  font-weight: 800;
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+  color: var(--accent-ink);
+  margin-bottom: 10px;
+}
+.hoy-lista { list-style: none; margin: 0; padding: 0; }
+.hoy-fila {
+  display: grid;
+  /* Hora y nombre a la izquierda; las dos respuestas, a la derecha y siempre
+     en la misma columna, para que la vista baje en línea recta. */
+  grid-template-columns: auto 1fr auto auto;
+  align-items: center;
+  gap: 10px;
+  padding: 9px 0;
+}
+.hoy-fila + .hoy-fila { border-top: 1px solid var(--border); }
+.hoy-hora {
+  font-variant-numeric: tabular-nums;
+  font-size: 0.86rem;
+  color: var(--muted);
+  font-weight: 700;
+}
+.hoy-nombre {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  font-weight: 700;
+  color: var(--text);
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.hoy-estado { flex-shrink: 0; }
+.hoy-estado button { min-height: 44px; padding: 8px 11px; }
+.hoy-cobro {
+  border: var(--borde) solid var(--border);
+  background: var(--surface);
+  color: var(--muted);
+  font: inherit;
+  font-weight: 700;
+  font-size: 0.86rem;
+  border-radius: 999px;
+  padding: 8px 13px;
+  min-height: 44px;
+  cursor: pointer;
+  white-space: nowrap;
+}
+.hoy-cobro:hover { color: var(--text); }
+.hoy-cobro.is-on { background: var(--menta); color: var(--sobre-claro); }
+
+/* En celular las cuatro columnas no entran: el nombre pasa a ocupar su propia
+   línea y las respuestas quedan abajo, alineadas a la derecha. */
+@media (max-width: 560px) {
+  .hoy-fila {
+    grid-template-columns: auto 1fr;
+    row-gap: 8px;
+  }
+  .hoy-estado { grid-column: 1 / 2; }
+  .hoy-cobro { grid-column: 2 / 3; justify-self: end; }
 }
 
 /* ---------- Lo que quedó abierto ---------- */
