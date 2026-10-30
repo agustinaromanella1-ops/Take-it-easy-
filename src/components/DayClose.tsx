@@ -9,7 +9,7 @@ import {
   type DayCloseResult,
 } from '../lib/dayclose';
 import { formatMoney } from '../lib/money';
-import { formatDateLong } from '../lib/dates';
+import { addDays, formatDateLong, isValidISODate, isValidTime } from '../lib/dates';
 import { patientColor } from '../lib/palette';
 import { Modal } from './ui';
 import { plural } from '../lib/plural';
@@ -149,6 +149,14 @@ export function DayClose({
   const [method, setMethod] = useState<PaymentMethod>('efectivo');
   /** Lo que se muestra una vez guardado: el resumen de la jornada. */
   const [despedida, setDespedida] = useState<Despedida | null>(null);
+  /**
+   * La sesión que se está moviendo de día, con la fecha y hora propuestas.
+   *
+   * Se resuelve en la fila y no en otro cuadro: el cierre del día YA es un
+   * cuadro, y uno encima de otro deja dos trampas de foco peleándose y un
+   * Escape que cierra las dos cosas.
+   */
+  const [moviendo, setMoviendo] = useState<{ id: string; date: string; time: string } | null>(null);
 
   /*
    * El cierre del día guarda borrador como cualquier formulario largo, y por
@@ -191,6 +199,24 @@ export function DayClose({
   const pending = useMemo(() => sessions.filter((s) => s.status === 'programada'), [sessions]);
   const alreadyClosed = useMemo(() => sessions.filter((s) => s.status !== 'programada'), [sessions]);
   const summary = useMemo(() => summarizeDayClose(sessions, decisions), [sessions, decisions]);
+
+  /**
+   * Mover un turno se aplica en el acto, no al guardar el cierre.
+   *
+   * El resto de las respuestas se juntan y se guardan todas juntas porque son
+   * del mismo acto —repasar el día—. Mover un turno no: crea una sesión en
+   * otra fecha, que es una decisión por sí sola y se puede deshacer sola. Al
+   * aplicarse, la fila sale de las pendientes y pasa a las ya resueltas.
+   */
+  function confirmarMudanza() {
+    if (!moviendo) return;
+    if (!isValidISODate(moviendo.date) || !isValidTime(moviendo.time)) return;
+    dispatch({
+      type: 'session/reschedule',
+      payload: { id: moviendo.id, date: moviendo.date, time: moviendo.time },
+    });
+    setMoviendo(null);
+  }
 
   function update(id: string, patch: Partial<DayCloseDecision>) {
     setDecisions((prev) => {
@@ -349,7 +375,46 @@ export function DayClose({
                         {a.label}
                       </button>
                     ))}
+                    {/* No es un estado más: abre los campos de abajo. Un turno
+                        movido sin fecha nueva es un turno perdido. */}
+                    <button
+                      className={moviendo?.id === s.id ? 'is-on' : ''}
+                      aria-pressed={moviendo?.id === s.id}
+                      onClick={() =>
+                        setMoviendo(
+                          moviendo?.id === s.id
+                            ? null
+                            : { id: s.id, date: addDays(s.date, 7), time: s.time },
+                        )
+                      }
+                    >
+                      Reagendó
+                    </button>
                   </div>
+
+                  {moviendo?.id === s.id && (
+                    <div className="close-mudanza">
+                      <label>
+                        <span className="field-label">Nueva fecha</span>
+                        <input
+                          type="date"
+                          value={moviendo.date}
+                          onChange={(e) => setMoviendo({ ...moviendo, date: e.target.value })}
+                        />
+                      </label>
+                      <label>
+                        <span className="field-label">Hora</span>
+                        <input
+                          type="time"
+                          value={moviendo.time}
+                          onChange={(e) => setMoviendo({ ...moviendo, time: e.target.value })}
+                        />
+                      </label>
+                      <button className="btn small primary" onClick={confirmarMudanza}>
+                        Mover
+                      </button>
+                    </div>
+                  )}
 
                   {status === 'ausente' && (
                     <label className="check-inline small">

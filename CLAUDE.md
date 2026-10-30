@@ -22,9 +22,9 @@ npx vite build && npx vite preview --port 4173 &
 node e2e/aceptacion.mjs     # 118 verificaciones sobre la app entera
 node e2e/bienvenida.mjs     # 43: la portada contra el diseño aprobado
 node e2e/actualizacion.mjs  # 17: la barra de "hay una versión nueva"
-node e2e/borradores.mjs     # 26: que lo escrito no se pierda al cerrar una pantalla
+node e2e/borradores.mjs     # 28: que lo escrito no se pierda al cerrar una pantalla
 node e2e/dos-pestanas.mjs   # 8: dos pestañas a la vez, que no se pisen
-node e2e/hoy.mjs            # 26: las sesiones de hoy en el inicio, vino, pagó y reagendó
+node e2e/hoy.mjs            # 30: marcar lo que pasó, desde el inicio y desde el cierre
 ```
 
 `e2e/actualizacion.mjs` tarda unos minutos porque vuelve a compilar dos veces con la app
@@ -68,6 +68,14 @@ registro por registro —gana el sello más nuevo, y una lápida más nueva que 
 y `StoreContext` además escucha el evento `storage` para enterarse de lo que guardó la otra.
 La regla es la que define `SINCRONIZACION.md`: es la misma pregunta que la sincronización entre
 dispositivos, resuelta primero para el caso chico.
+
+**Un borrador se juzga al guardarlo, no al ofrecerlo.** `ofrecerSiHay()` solo mira si existe:
+lo que decide si vale la pena guardarlo es `hayAlgo`, en el momento de escribir. Volver a
+preguntarlo al abrir comparaba contra el formulario en blanco de AHORA, que es otro —un turno
+nuevo nace con la fecha del día que se esté mirando y el honorario del paciente que toque—, así
+que un borrador de ayer siempre parecía tener algo y la app ofrecía retomar en cada turno nuevo.
+Y lo que `hayAlgo` mide tiene que ser lo que duele perder: en el turno son las notas y la serie
+de repeticiones, no haber elegido el paciente, que son dos toques.
 
 **Reagendar no es cancelar.** `session/reschedule` deja la original `cancelada` y crea otra, y
 las ata con `Session.rescheduledTo`. Va como UNA acción del reducer: dos despachos seguidos

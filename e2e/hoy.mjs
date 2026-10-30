@@ -1,5 +1,6 @@
 /**
- * Las sesiones de hoy en el inicio, con sus dos preguntas.
+ * Marcar lo que pasó con las sesiones de hoy, desde los dos lugares que lo
+ * ofrecen: la tarjeta del inicio y el cierre del día.
  *
  * "¿Vino?" y "¿Pagó?" se contestaban entrando al día en la Agenda o abriendo
  * el cierre del día. Esto las pone en la pantalla que se abre sin pensar.
@@ -148,6 +149,33 @@ check('la fila deja de ofrecer botones y dice adónde fue',
     (await p.locator('.hoy-movida').innerText()).includes('diciembre'),
   await p.locator('.hoy-movida').innerText());
 check('se puede deshacer', (await p.locator('.deshacer').count()) === 1);
+
+titulo('7. Reagendar desde el cierre del día');
+// La misma pregunta que en la tarjeta del inicio, en el otro lugar donde se
+// contesta. Acá los campos van en la fila y no en otro cuadro: el cierre YA es
+// un cuadro, y uno encima de otro deja dos trampas de foco peleándose.
+await p.locator('.tabbar button', { hasText: 'Inicio' }).click();
+await p.waitForTimeout(500);
+await p.locator('.close-day-btn').click();
+await p.waitForTimeout(700);
+const antesDelCierre = (await disco()).sessions.length;
+const primeraFila = p.locator('.close-row').first();
+check('la fila ofrece "Reagendó" junto a las otras tres',
+  (await primeraFila.locator('.seg button').allInnerTexts()).includes('Reagendó'));
+await primeraFila.locator('.seg button', { hasText: 'Reagendó' }).click();
+await p.waitForTimeout(500);
+const campos = p.locator('.close-mudanza');
+check('abre los campos en la misma fila, sin otro cuadro encima',
+  (await campos.count()) === 1 && (await p.locator('.modal-backdrop').count()) === 1);
+await campos.locator('input[type=date]').fill('2026-12-22');
+await campos.locator('input[type=time]').fill('08:15');
+await campos.getByRole('button', { name: 'Mover' }).click();
+await p.waitForTimeout(800);
+const trasCierre = await disco();
+check('crea la sesión nueva', trasCierre.sessions.length === antesDelCierre + 1);
+check('y la movida sale de las pendientes del cierre',
+  (await p.locator('.close-row').count()) < 2,
+  `quedan ${await p.locator('.close-row').count()}`);
 
 console.log(`\n═══ ${ok} verificaciones pasaron, ${fail} fallaron ═══`);
 console.log('Errores de JavaScript:', errores.length ? errores.join(' | ') : 'ninguno');

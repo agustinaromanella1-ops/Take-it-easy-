@@ -56,8 +56,17 @@ export function useBorrador<T extends object>(
      * nadie lo pidiera—, solo pregunta.
      */
     ofrecerSiHay() {
-      const guardado = leerBorrador<T>(clave);
-      setEstado(guardado && hayAlgo({ ...vacio, ...guardado }, vacio) ? 'ofrecido' : 'no');
+      /*
+       * Alcanza con que exista: solo se guarda lo que ya pasó por `hayAlgo`.
+       *
+       * Antes se volvía a preguntar acá, y esa pregunta estaba mal planteada:
+       * se comparaba contra el formulario en blanco de AHORA, que es otro. Un
+       * turno nuevo nace con la fecha del día que se esté mirando y el
+       * honorario del paciente que toque; un borrador de ayer difiere de ese
+       * blanco en campos que nadie escribió, así que siempre parecía tener
+       * algo. La pregunta correcta se contesta al guardar, no al abrir.
+       */
+      setEstado(leerBorrador<T>(clave) ? 'ofrecido' : 'no');
     },
 
     /** Marca que no hay nada que ofrecer, sin tocar lo guardado. */

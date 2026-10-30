@@ -53,6 +53,17 @@ interface FormState {
 /** Clave del borrador del turno. Ver `src/lib/borrador.ts`. */
 const BORRADOR_SESION = 'sesion';
 
+/**
+ * Qué cuenta como "quedó algo a medio cargar" en un turno.
+ *
+ * NO alcanza con haber elegido el paciente y la hora: eso es lo que se hace
+ * siempre, cuesta dos toques rehacerlo, y tratarlo como borrador hacía que la
+ * app ofreciera retomar algo en cada turno nuevo. Cuenta lo que duele perder:
+ * una nota escrita, o una serie de repeticiones ya armada.
+ */
+const hayAlgoEnElTurno = (f: FormState, reciénAbierto: FormState): boolean =>
+  f.notes.trim() !== '' || f.repeat !== reciénAbierto.repeat;
+
 /** Solo como respaldo: la referencia de verdad es el formulario recién abierto. */
 const VACIO_SESION: FormState = {
   patientId: '',
@@ -154,6 +165,7 @@ export function AgendaPage({
     reciénAbierto.current,
     form ?? reciénAbierto.current,
     editing === 'new',
+    hayAlgoEnElTurno,
   );
 
   /** Al retomar, lo guardado reemplaza lo que haya en pantalla. */
@@ -274,6 +286,9 @@ export function AgendaPage({
     } else if (editing) {
       dispatch({ type: 'session/update', payload: { ...editing, ...fields } });
     }
+    // Faltaba: sin esto el borrador sobrevivía al guardado y la app ofrecía
+    // "retomar" un turno que ya estaba agendado, para siempre.
+    borrador.listo();
     setEditing(null);
     setForm(null);
   }

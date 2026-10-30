@@ -111,7 +111,29 @@ await recorrido(
   async () => p.locator('.modal .field').last().locator('input').inputValue(),
 );
 
-titulo('4. Cierre del día');
+titulo('4. Cargar algo normal NO deja borrador');
+// El bug: elegir el paciente y la hora alcanzaba para que quedara un borrador,
+// y guardar no lo borraba. Resultado: cada turno nuevo ofrecía "retomar" algo
+// que ya estaba agendado.
+await irA('Agenda');
+await p.locator('.fab').click();
+await p.waitForTimeout(500);
+await p.locator('.modal input[type=time]').first().fill('15:00');
+await p.waitForTimeout(400);
+await p.getByRole('button', { name: 'Guardar' }).click();
+await p.waitForTimeout(800);
+const quedaron = await p.evaluate(() =>
+  Object.keys(localStorage).filter((k) => k.includes('borrador')),
+);
+check('guardar un turno no deja borrador detrás', quedaron.length === 0, quedaron.join(', '));
+await p.locator('.fab').click();
+await p.waitForTimeout(600);
+check('y el turno siguiente no ofrece retomar nada',
+  (await p.locator('.borrador-aviso').count()) === 0);
+await p.locator('.modal-close').click();
+await p.waitForTimeout(400);
+
+titulo('5. Cierre del día');
 // Es la pantalla que más trabajo acumula: marcar sesión por sesión. Sus
 // decisiones viven en memoria hasta que se guarda, así que sin borrador un
 // roce fuera del cuadro se llevaba la jornada entera.
@@ -154,7 +176,7 @@ check('guardar de verdad borra el borrador del cierre',
 await p.locator('.modal-foot .btn.primary').click().catch(() => {});
 await p.waitForTimeout(400);
 
-titulo('5. Guardar de verdad borra el borrador');
+titulo('6. Guardar de verdad borra el borrador');
 await irA('Pacientes');
 await p.locator('.fab').click();
 await p.waitForTimeout(400);

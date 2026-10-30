@@ -43,7 +43,7 @@ const SECCIONES: { titulo: string; puntos: string[] }[] = [
       'El calendario muestra el mes. Tocá un día para ver o agregar sesiones.',
       'Al agendar podés elegir que se repita: se crean todas las sesiones de una vez, sin cargarlas una por una.',
       'Cada sesión puede quedar como realizada, cancelada o ausente. Eso es lo que después se factura.',
-      'Si un paciente mueve el turno, usá "Reagendó" desde el inicio: cancela el de hoy, te pide la fecha nueva y agenda el otro de una. No cuenta como sesión caída, así que el porcentaje de la ficha sigue diciendo la verdad.',
+      'Si un paciente mueve el turno, usá "Reagendó" —está en el inicio y también en el cierre del día—: cancela el de hoy, te pide la fecha nueva y agenda el otro de una. No cuenta como sesión caída, así que el porcentaje de la ficha sigue diciendo la verdad.',
       'El cierre del día 🌙 repasa las sesiones de la jornada y te deja marcarlas todas juntas, con sus cobros. Es el atajo de fin de día, y termina con el resumen de lo que hiciste.',
       'Si al cerrar el día te olvidás de alguien o te equivocás, se arregla después: la sesión se edita desde la Agenda y el cobro se borra desde Finanzas. Nada queda cerrado con llave.',
       'Si cargaste el teléfono del paciente, cada turno agendado tiene un botón para escribirle por WhatsApp con el mensaje ya armado: recordarle el turno, pedirle que confirme o reprogramar. Se abre WhatsApp con el texto escrito; mandarlo lo hacés vos.',

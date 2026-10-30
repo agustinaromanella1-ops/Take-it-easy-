@@ -1091,6 +1091,20 @@ a.btn {
   color: var(--sobre-claro);
 }
 
+.close-mudanza {
+  grid-column: 1 / -1;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: 10px;
+  margin-top: 10px;
+  padding-top: 10px;
+  border-top: 1px solid var(--border);
+}
+.close-mudanza label { display: flex; flex-direction: column; gap: 5px; }
+.close-mudanza input { padding: 9px 11px; }
+.close-mudanza .btn { min-height: 44px; }
+
 .close-summary {
   display: flex;
   justify-content: space-between;
