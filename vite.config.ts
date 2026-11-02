@@ -74,6 +74,19 @@ export default defineConfig({
         maximumFileSizeToCacheInBytes: 4 * 1024 * 1024,
         cleanupOutdatedCaches: true,
         navigateFallback: '/index.html',
+        /*
+         * Lo que pasa al tocar una notificación.
+         *
+         * Va como script aparte y no dentro de este archivo: el service worker
+         * lo genera Workbox entero en cada compilación, y la estrategia
+         * `injectManifest` —la otra forma de meterle código propio— obliga a
+         * escribir a mano el precacheo y la activación, que son justo las
+         * piezas de las que depende la barra de "hay una versión nueva". Esa
+         * barra ya se rompió dos veces; un `importScripts` no la toca.
+         */
+        importScripts: ['/sw-acciones.js'],
+        // Ya se importa arriba; precachearlo además lo guardaría dos veces.
+        globIgnores: ['**/sw-acciones.js'],
       },
       devOptions: { enabled: false },
     }),

@@ -10,7 +10,7 @@ Seguí en ese idioma.
 ```bash
 npm run dev                          # desarrollo
 npm run build                        # tsc --noEmit && vite build
-npm test                             # toda la batería unitaria (315 al escribir esto)
+npm test                             # toda la batería unitaria (378 al escribir esto)
 npx vitest run src/lib/money.test.ts # una sola
 npm run typecheck
 ```
@@ -19,12 +19,13 @@ Las pruebas de punta a punta necesitan la app compilada y servida:
 
 ```bash
 npx vite build && npx vite preview --port 4173 &
-node e2e/aceptacion.mjs     # 118 verificaciones sobre la app entera
+node e2e/aceptacion.mjs     # 122 verificaciones sobre la app entera
 node e2e/bienvenida.mjs     # 43: la portada contra el diseño aprobado
 node e2e/actualizacion.mjs  # 17: la barra de "hay una versión nueva"
 node e2e/borradores.mjs     # 28: que lo escrito no se pierda al cerrar una pantalla
 node e2e/dos-pestanas.mjs   # 8: dos pestañas a la vez, que no se pisen
 node e2e/hoy.mjs            # 30: marcar lo que pasó, desde el inicio y desde el cierre
+node e2e/recordatorios.mjs  # 28: los avisos del sistema y sus botones
 ```
 
 `e2e/actualizacion.mjs` tarda unos minutos porque vuelve a compilar dos veces con la app
@@ -161,11 +162,52 @@ y ninguna de las dos se veía leyendo el código:
 Y en `public/_headers`, `/` y `/sw.js` van sin caché. Sin la regla de `/` —que es distinta de la
 de `/index.html`, porque la app se sirve en la raíz— la cáscara vieja se sirve igual.
 
-**El aviso de turno de `src/lib/aviso.ts` solo suena con la app abierta.** No es una
-notificación del sistema: no hay servidor que las mande y un navegador en segundo plano se
-congela. El texto de Ajustes lo dice y no se suaviza: el que sí funciona con todo cerrado es
-el `.ics` que se manda al calendario del teléfono, que usa `reminderMinutes`. Son dos ajustes
-distintos y se llaman distinto a propósito.
+**Los avisos salen por el service worker, nunca con `new Notification()`.** Ese constructor
+tira una excepción en Chrome de Android —que es donde se usa la app—, así que el aviso de turno
+vivía atrapado en un `catch` vacío y en el celular no sonó nunca, sin ninguna señal. Todo pasa
+por `avisar()` de `src/lib/notificar.ts`, que usa
+`ServiceWorkerRegistration.showNotification()`: funciona en los dos lados, el aviso queda en la
+barra de notificaciones hasta que se lo toca, y admite botones.
+
+**Lo que una PWA sin servidor NO puede hacer es sonar a una hora fija con todo cerrado.** Está
+comprobado, no supuesto:
+
+- *Web Push* necesita un servidor. No hay, y la política de privacidad se apoya en que no haya.
+- *Notification Triggers* (`showTrigger` / `TimestampTrigger`) haría exactamente esto sin
+  servidor. Google la probó en un origin trial y nunca la lanzó: no existe en ningún navegador
+  publicado.
+- *Periodic Background Sync* existe solo en Chromium, solo con la app instalada, y el navegador
+  decide cuándo despertar. Además **un service worker no puede leer `localStorage`**, que es
+  donde viven los datos: aunque despertara, no tendría con qué saber qué falta. Por eso no se
+  usa.
+
+Entonces: los recordatorios de `src/lib/recordatorios.ts` salen cuando la app se abre o se
+vuelve a traer al frente después de la hora prevista. Ajustes lo dice con todas las letras y no
+se suaviza. El único aviso que funciona con todo cerrado es el `.ics` que se manda al calendario
+del teléfono, que usa `reminderMinutes`. Son ajustes distintos y se llaman distinto a propósito.
+
+**Los recordatorios tienen dos reglas que son la mitad del diseño.** Están en
+`src/lib/recordatorios.ts` y las prueba `e2e/recordatorios.mjs`:
+
+1. *No se avisa de nada.* Antes de cada aviso se mira si quedó algo de verdad. Un recordatorio
+   que llega cuando no hay nada que hacer es la forma más rápida de que se apague todo.
+2. *No se acumulan.* Abrir la app a la noche después de un día cerrada no larga los cinco avisos
+   del día: sale el último que correspondía —si todavía está dentro de la ventana— y el resto se
+   anota como vencido. Una pila de notificaciones no es un recordatorio, es un reproche.
+
+Y el texto no nombra al paciente, igual que `aviso.ts`. La hora sí: sin ella el aviso no dice de
+qué habla. Los botones de vino/faltó solo aparecen cuando hay UNA sola sesión sin marcar, porque
+con dos no se sabría de quién. Android da dos botones, no cuatro (`Notification.maxActions`):
+los otros dos quedan a un toque del cuerpo del aviso, que abre la app con esa sesión lista.
+
+**El `notificationclick` vive en `public/sw-acciones.js`**, enganchado con
+`workbox.importScripts` desde `vite.config.ts`. Va aparte y no con `injectManifest` porque esa
+estrategia obliga a escribir a mano el precacheo y la activación, que son justo las piezas de las
+que depende la barra de actualizar. Lo que contesta una notificación entra por
+`src/lib/accionDeAviso.ts` y se aplica en `src/components/AccionDeAviso.tsx`, que valida: la
+acción tiene que ser una de las cuatro conocidas y la sesión tiene que existir y seguir sin
+marcar. Un aviso puede quedar horas en la barra; aplicarlo a ciegas pisaría algo decidido
+después y con más información. Es el único lugar donde algo de afuera de la app toca los datos.
 
 **Para el movimiento usá `sinMovimiento()` de `src/lib/movimiento.ts`**, no `matchMedia` directo:
 la preferencia del sistema se puede pisar desde Ajustes y tiene que haber una sola respuesta.
@@ -187,6 +229,18 @@ de `ui.tsx` tenía `onClose` como dependencia del efecto que pone el foco: cada 
 estado del formulario, el padre volvía a dibujar, el efecto se rearmaba y el cursor saltaba al
 primer campo. Escribir un honorario de cinco cifras era imposible. Si el efecto tiene que leer una
 función que cambia, guardala en una ref y dejá las dependencias vacías.
+
+**Un botón que marca tiene que poder desmarcar.** "Vinieron todos" del cierre del día solo
+marcaba: un toque de más dejaba el día entero en "vino" y la única salida era cerrar el cuadro y
+empezar de nuevo. Lo mismo pasaba fila por fila, donde volver a tocar "Vino" no hacía nada —y en
+`SesionesDeHoy` sí lo hacía, así que el mismo gesto daba dos respuestas según la pantalla—. Si
+agregás un control de estado, probá el segundo toque.
+
+**El headless nuevo de Chrome deniega los avisos siempre.** Con el permiso concedido por CDP,
+`Notification.requestPermission()` contesta `'granted'` pero `Notification.permission` sigue
+leyendo `'denied'`, que es lo que mira la app. `e2e/recordatorios.mjs` arranca el navegador con
+`--headless=old` por eso. Y `page.clock.install()` no sirve ahí: congela también `setTimeout`, y
+React no llega a dibujar nada. Va `page.clock.setFixedTime()`, que miente solo la hora.
 
 **Verificá que una edición se aplicó.** Un `str_replace` que no encuentra su objetivo puede fallar
 en silencio: después de tocar JSX, confirmá con `grep`.

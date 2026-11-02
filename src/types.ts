@@ -13,6 +13,8 @@
  *    Ver `lib/dates.ts`.
  */
 
+import type { NivelRecordatorio } from './lib/recordatorios';
+
 /** Fecha local en formato `YYYY-MM-DD`. */
 export type DateISO = string;
 
@@ -181,6 +183,12 @@ export interface Settings {
    * y solo mientras está abierta. Ver `src/lib/aviso.ts`.
    */
   avisarAntesMin: number;
+  /**
+   * Cuánto insiste la app con lo que quedó abierto: `nula`, `baja`, `media`
+   * o `alta`. Ver `src/lib/recordatorios.ts`, que es donde están las horas de
+   * cada nivel y, sobre todo, lo que estos avisos pueden y no pueden hacer.
+   */
+  recordatorios: NivelRecordatorio;
   rateInputs: RateInputs;
 }
 

@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import type { Patient, Session } from '../types';
 import { useStore } from '../store/StoreContext';
 import { cobrosPorSesion } from '../lib/cobroDeSesion';
@@ -39,9 +39,14 @@ const DIAS_QUE_SE_PROPONEN = 7;
 export function SesionesDeHoy({
   sesiones,
   patientsById,
+  reagendar = null,
+  onReagendarAbierto,
 }: {
   sesiones: Session[];
   patientsById: Map<string, Patient>;
+  /** Una sesión cuyo cuadro de mover hay que abrir: lo pide la notificación. */
+  reagendar?: string | null;
+  onReagendarAbierto?: () => void;
 }) {
   const { data, dispatch } = useStore();
   const moneda = data.settings.currency;
@@ -53,6 +58,28 @@ export function SesionesDeHoy({
   /** Para poder decir adónde se movió un turno, no solo que se movió. */
   const porId = useMemo(() => new Map(data.sessions.map((s) => [s.id, s])), [data.sessions]);
   const cobros = useMemo(() => cobrosPorSesion(enOrden, data.payments), [enOrden, data.payments]);
+
+  /*
+   * El pedido de "reagendó" que vino de una notificación del sistema.
+   *
+   * Va en un efecto y no en el cuerpo porque llega después de montar: la app
+   * arranca, carga los datos y recién ahí sabe que había una respuesta
+   * esperando. Y tiene que estar ARRIBA del `return null`: un hook detrás de
+   * una salida temprana no corre siempre, que es lo que React no permite.
+   */
+  useEffect(() => {
+    if (!reagendar) return;
+    const s = enOrden.find((x) => x.id === reagendar);
+    if (s) {
+      setError('');
+      setMoviendo({ sesion: s, date: addDays(s.date, DIAS_QUE_SE_PROPONEN), time: s.time });
+    }
+    onReagendarAbierto?.();
+    // `onReagendarAbierto` no va en las dependencias: viene escrita en el JSX
+    // del padre y cambia en cada dibujo, así que el efecto se rearmaría solo y
+    // volvería a abrir el cuadro después de cerrarlo.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [reagendar, enOrden]);
 
   if (enOrden.length === 0) return null;
 

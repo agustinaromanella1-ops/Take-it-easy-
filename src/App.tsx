@@ -14,6 +14,8 @@ import { Footer } from './components/Footer';
 import { Deshacer } from './components/Deshacer';
 import { NoSeGuarda } from './components/NoSeGuarda';
 import { AvisoDeTurno } from './components/AvisoDeTurno';
+import { Recordatorios } from './components/Recordatorios';
+import { AccionDeAviso } from './components/AccionDeAviso';
 import { alHaberVersionNueva } from './pwa';
 import { leerTema, seguirAlSistema } from './lib/tema';
 
@@ -76,6 +78,8 @@ export default function App() {
   const [pedido, setPedido] = useState<string | null>(null);
   /** La función que aplica la versión nueva, cuando hay una esperando. */
   const [aplicarVersion, setAplicarVersion] = useState<(() => void) | null>(null);
+  /** La sesión a mover de día, cuando lo pidió una notificación del sistema. */
+  const [reagendar, setReagendar] = useState<string | null>(null);
 
   useEffect(() => {
     // El setState guarda una función, así que va envuelta: si no, React la
@@ -193,7 +197,13 @@ export default function App() {
 
         <main className="main">
           <ErrorBoundary>
-            {page === 'inicio' && <DashboardPage onGo={go} />}
+            {page === 'inicio' && (
+              <DashboardPage
+                onGo={go}
+                reagendar={reagendar}
+                onReagendarAbierto={() => setReagendar(null)}
+              />
+            )}
             {page === 'pacientes' &&
               (openPatientId ? (
                 <PatientDetailPage patientId={openPatientId} onBack={() => setOpenPatientId(null)} />
@@ -207,8 +217,19 @@ export default function App() {
           <Footer />
         </main>
 
-        {/* No dibuja nada: solo avisa cuando se viene un turno. */}
+        {/* No dibujan nada. El primero avisa cuando se viene un turno; el
+            segundo insiste con lo que quedó abierto, según el nivel elegido en
+            Ajustes; el tercero aplica lo que se contestó desde una
+            notificación del sistema. */}
         <AvisoDeTurno permiso={permisoAvisos} />
+        <Recordatorios permiso={permisoAvisos} />
+        <AccionDeAviso
+          onIrAlInicio={() => go('inicio')}
+          onReagendar={(id) => {
+            go('inicio');
+            setReagendar(id);
+          }}
+        />
 
         {/* Arriba de la barra de pestañas: queda al alcance del pulgar, que es
             donde acaba de tocarse el botón que uno quiere deshacer. */}

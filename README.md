@@ -210,9 +210,21 @@ inservible (`src/lib/pricing.ts`).
 pero el siguiente vuelve al 31 de marzo. Avanzar sumando meses sobre la fecha ya recortada correría
 la serie al día 28 para siempre (`src/lib/recurrence.ts`).
 
-**El recordatorio es un archivo `.ics`, no una notificación web.** Abrirlo en el teléfono agrega el
-turno al calendario con alarma, así el aviso llega aunque la app esté cerrada o el navegador no
-tenga permisos (`src/lib/calendar.ts`).
+**El recordatorio del calendario es un archivo `.ics`, no una notificación web.** Abrirlo en el
+teléfono agrega el turno al calendario con alarma, así el aviso llega aunque la app esté cerrada o
+el navegador no tenga permisos (`src/lib/calendar.ts`). Es el único que suena con todo cerrado.
+
+**Los avisos del sistema salen por el service worker, y no a una hora fija.** `new Notification()`
+tira una excepción en Chrome de Android, así que todo pasa por `showNotification()`
+(`src/lib/notificar.ts`): el aviso queda en la barra de notificaciones y admite botones para
+contestar. Lo que ninguna PWA sin servidor puede hacer es despertarse a una hora fija con todo
+cerrado —*Notification Triggers* nunca se lanzó, *Periodic Background Sync* ni siquiera puede leer
+`localStorage`—, así que los recordatorios salen al abrir la app o al traerla al frente pasada la
+hora, y Ajustes lo dice sin suavizarlo (`src/lib/recordatorios.ts`).
+
+**Un recordatorio que llega cuando no hay nada que hacer es el que hace que se apaguen todos.**
+Antes de cada aviso se mira si quedó algo de verdad, y abrir la app después de un día cerrada manda
+uno —el último que correspondía— y no la pila del día entero.
 
 **El teléfono se normaliza antes de armar el enlace de WhatsApp.** `wa.me` necesita formato
 internacional y solo dígitos; un número copiado de la agenda casi nunca viene así, y hay que sacarle
@@ -355,7 +367,8 @@ src/
 ├── types.ts            Modelo de datos
 ├── lib/                money, dates, storage, pricing, recurrence, calendar,
 │                       contact, palette, dayclose, billing, csv — lógica pura
-│                       ahora, pendientes, aviso — qué mostrar y cuándo
+│                       ahora, pendientes, aviso, recordatorios, notificar,
+│                       accionDeAviso — qué mostrar, cuándo y por dónde avisar
 │                       fusion, deshacer — fusionar dos copias de los datos
 │                       borrador, useBorrador, enfoque, tema, movimiento —
 │                       preferencias y lo escrito a medias

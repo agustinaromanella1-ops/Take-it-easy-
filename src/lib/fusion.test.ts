@@ -10,6 +10,7 @@ const AJUSTES: AppData['settings'] = {
   monthlyGoal: 0,
   reminderMinutes: 30,
   avisarAntesMin: 0,
+  recordatorios: 'nula' as const,
   rateInputs: {} as AppData['settings']['rateInputs'],
 };
 

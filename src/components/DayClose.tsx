@@ -227,13 +227,42 @@ export function DayClose({
     });
   }
 
-  /** Atajo para el caso más común: vinieron todos. */
-  function markAllAttended() {
+  /**
+   * Poner o sacar un estado.
+   *
+   * Volver a tocar el estado que ya está puesto lo saca: un toque de más no
+   * puede dejar marcada una sesión que no se quiso marcar, y la única salida
+   * no puede ser cerrar el cuadro y empezar de nuevo. Al sacarlo se baja
+   * también el cobro, porque un cobro sin sesión que lo justifique no se ve
+   * en ningún lado y se guardaría igual.
+   */
+  function ponerEstado(id: string, valor: Exclude<Session['status'], 'programada'>) {
+    const actual = decisions.get(id)?.status ?? null;
+    if (actual === valor) update(id, { status: null, collected: false });
+    else update(id, { status: valor });
+  }
+
+  /** Si el atajo de "vinieron todos" ya está aplicado sobre todas las pendientes. */
+  const todosVinieron = pending.length > 0 && pending.every((s) => decisions.get(s.id)?.status === 'realizada');
+
+  /**
+   * Atajo para el caso más común: vinieron todos. Y para el error más común
+   * de ese atajo, que es tocarlo sin querer: si ya están todas marcadas, el
+   * mismo botón las desmarca. Antes solo marcaba, así que volver atrás pedía
+   * tocar cuatro veces paciente por paciente —o cerrar y perder el repaso—.
+   */
+  function alternarTodos() {
+    const apagar = todosVinieron;
     setDecisions((prev) => {
       const next = new Map(prev);
       for (const s of pending) {
         const current = next.get(s.id) ?? emptyDecision(data.settings.chargeNoShowByDefault);
-        next.set(s.id, { ...current, status: 'realizada' });
+        next.set(
+          s.id,
+          apagar
+            ? { ...current, status: null, collected: false }
+            : { ...current, status: 'realizada' },
+        );
       }
       return next;
     });
@@ -326,7 +355,11 @@ export function DayClose({
       ) : (
         <>
           <div className="close-head">
-            <button className="btn small" onClick={markAllAttended}>
+            <button
+              className={`btn small${todosVinieron ? ' is-on' : ''}`}
+              onClick={alternarTodos}
+              aria-pressed={todosVinieron}
+            >
               Vinieron todos
             </button>
             <select
@@ -369,7 +402,7 @@ export function DayClose({
                       <button
                         key={a.value}
                         className={status === a.value ? 'is-on' : ''}
-                        onClick={() => update(s.id, { status: a.value })}
+                        onClick={() => ponerEstado(s.id, a.value)}
                         aria-pressed={status === a.value}
                       >
                         {a.label}

@@ -109,4 +109,17 @@ describe('parseAppData', () => {
     expect(parsed.sessions[0]!.status).toBe('programada');
     expect(parsed.payments[0]!.method).toBe('efectivo');
   });
+
+  it('un nivel de recordatorios desconocido no deja la app avisando a cualquier hora', () => {
+    expect(parseAppData({ settings: { recordatorios: 'altísima' } }).settings.recordatorios).toBe('nula');
+    expect(parseAppData({ settings: { recordatorios: 7 } }).settings.recordatorios).toBe('nula');
+  });
+
+  it('pero un nivel válido se respeta', () => {
+    expect(parseAppData({ settings: { recordatorios: 'alta' } }).settings.recordatorios).toBe('alta');
+  });
+
+  it('unos datos viejos, sin el campo, quedan en silencio y no avisando', () => {
+    expect(parseAppData({ settings: { currency: '$' } }).settings.recordatorios).toBe('nula');
+  });
 });

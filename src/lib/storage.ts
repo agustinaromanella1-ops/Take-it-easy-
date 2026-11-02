@@ -1,3 +1,4 @@
+import { NIVELES, type NivelRecordatorio } from './recordatorios';
 import type {
   AppData,
   Borrados,
@@ -41,6 +42,9 @@ export const DEFAULT_SETTINGS: Settings = {
   // Apagado por omisión: necesita permiso del navegador y nadie pidió que la
   // app avise. Se prende desde Ajustes.
   avisarAntesMin: 0,
+  // También apagados de fábrica: mandan notificaciones al sistema y eso se
+  // pide, no se asume. Se elige el nivel en Ajustes.
+  recordatorios: 'nula',
   rateInputs: {
     targetIncome: 0,
     fixedCosts: 0,
@@ -241,6 +245,11 @@ function parseSettings(raw: Record<string, unknown>): Settings {
     monthlyGoal: Math.max(0, int(raw.monthlyGoal, d.monthlyGoal)),
     reminderMinutes: clamp(raw.reminderMinutes, 0, 1440, d.reminderMinutes),
     avisarAntesMin: clamp(raw.avisarAntesMin, 0, 120, d.avisarAntesMin),
+    // Un nivel que no existe —de una versión futura, o de un dato tocado a
+    // mano— no puede dejar la app mandando avisos a una hora cualquiera.
+    recordatorios: NIVELES.includes(raw.recordatorios as NivelRecordatorio)
+      ? (raw.recordatorios as NivelRecordatorio)
+      : d.recordatorios,
     rateInputs: {
       targetIncome: Math.max(0, int(rawRate.targetIncome, d.rateInputs.targetIncome)),
       fixedCosts: Math.max(0, int(rawRate.fixedCosts, d.rateInputs.fixedCosts)),

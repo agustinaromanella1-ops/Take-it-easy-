@@ -14,8 +14,13 @@ import { guardarEnfoque, leerEnfoque } from '../lib/enfoque';
 
 export function DashboardPage({
   onGo,
+  reagendar = null,
+  onReagendarAbierto,
 }: {
   onGo: (page: 'agenda' | 'finanzas' | 'pacientes', paraPaciente?: string) => void;
+  /** Una sesión a mover de día, pedida desde una notificación del sistema. */
+  reagendar?: string | null;
+  onReagendarAbierto?: () => void;
 }) {
   const { data } = useStore();
   const currency = data.settings.currency;
@@ -100,7 +105,12 @@ export function DashboardPage({
           porque es el trabajo de hoy; lo que quedó abierto de otros días viene
           después. Se queda también en modo enfoque: es para hacer, no para
           mirar. */}
-      <SesionesDeHoy sesiones={sesionesHoy} patientsById={patientsById} />
+      <SesionesDeHoy
+        sesiones={sesionesHoy}
+        patientsById={patientsById}
+        reagendar={reagendar}
+        onReagendarAbierto={onReagendarAbierto}
+      />
 
       {/* De todo lo que quedó abierto, una cosa. Reemplaza a la vieja tarjeta
           de "sesiones sin cerrar": eso ahora es uno de los casos de la lista. */}

@@ -10,6 +10,22 @@ import { limpiarTodosLosBorradores } from '../lib/borrador';
 import { guardarAnimaciones, leerAnimaciones, type Animaciones } from '../lib/movimiento';
 import { Card, Field } from '../components/ui';
 import { plural } from '../lib/plural';
+import { avisar } from '../lib/notificar';
+import type { NivelRecordatorio } from '../lib/recordatorios';
+
+/**
+ * Qué hace cada posición del regulador, en castellano.
+ *
+ * Las horas están escritas y no son un secreto a propósito: un recordatorio
+ * sirve cuando se puede contar con él. Las de `src/lib/recordatorios.ts` son
+ * las mismas que dicen estas líneas; si cambian allá, cambian acá.
+ */
+const DESCRIPCION: Record<NivelRecordatorio, string> = {
+  nula: 'Nada. El inicio te sigue mostrando lo que quedó abierto cuando entres.',
+  baja: 'Uno solo, al terminar el día, si quedó algo sin marcar o sin cobrar.',
+  media: 'Tres: a las 16 por lo que falta cobrar, a las 18 por lo que falta marcar, y el del cierre.',
+  alta: 'Hasta seis: a las 14 y a las 18 por lo que falta marcar, a las 11, 16 y 20 por lo que falta cobrar, y el del cierre. Solo sale el que tiene algo que decir.',
+};
 
 /**
  * Los datos viven solo en este navegador. Sin exportar/importar, limpiar la
@@ -38,6 +54,7 @@ export function SettingsPage() {
   }
 
   const [avisoEstado, setAvisoEstado] = useState<string | null>(null);
+  const [recordatorioEstado, setRecordatorioEstado] = useState<string | null>(null);
   const [versionEstado, setVersionEstado] = useState<string | null>(null);
 
   /**
@@ -72,21 +89,67 @@ export function SettingsPage() {
       setAvisoEstado(null);
       return;
     }
-    if (typeof Notification === 'undefined') {
-      setAvisoEstado('Este navegador no sabe mostrar avisos.');
-      return;
-    }
-    if (Notification.permission === 'granted') {
-      setAvisoEstado(null);
-      return;
-    }
+    setAvisoEstado(await asegurarPermiso());
+  }
+
+  /**
+   * Pide el permiso del navegador si hace falta. Devuelve qué decir cuando no
+   * se consiguió, o `null` si quedó todo listo.
+   *
+   * Lo comparten el aviso de turno y los recordatorios: es el mismo permiso,
+   * así que prenderlos en cualquier orden no vuelve a preguntar.
+   */
+  async function asegurarPermiso(): Promise<string | null> {
+    if (typeof Notification === 'undefined') return 'Este navegador no sabe mostrar avisos.';
+    if (Notification.permission === 'granted') return null;
     if (Notification.permission === 'denied') {
-      setAvisoEstado('Los avisos están bloqueados para este sitio. Se habilitan desde los permisos del navegador.');
-      return;
+      return 'Los avisos están bloqueados para este sitio. Se habilitan desde los permisos del navegador.';
     }
     const respuesta = await Notification.requestPermission();
-    setAvisoEstado(
-      respuesta === 'granted' ? null : 'Sin permiso no hay aviso. Podés volver a intentarlo cuando quieras.',
+    return respuesta === 'granted'
+      ? null
+      : 'Sin permiso no hay aviso. Podés volver a intentarlo cuando quieras.';
+  }
+
+  /**
+   * Cambia el nivel de los recordatorios.
+   *
+   * Se guarda el nivel aunque el permiso se niegue, por lo mismo que arriba:
+   * el desplegable tiene que mostrar lo que la persona eligió, y el cartel
+   * explica por qué todavía no suena.
+   */
+  async function cambiarNivel(nivel: NivelRecordatorio) {
+    dispatch({ type: 'settings/update', payload: { recordatorios: nivel } });
+    if (nivel === 'nula') {
+      setRecordatorioEstado(null);
+      return;
+    }
+    setRecordatorioEstado(await asegurarPermiso());
+  }
+
+  /**
+   * Manda un aviso de prueba.
+   *
+   * "¿Está funcionando?" no debería contestarse esperando a que falte algo un
+   * martes a las seis. Con un botón se contesta en el momento, y si el aviso
+   * no aparece —permisos del sistema, modo silencioso, la app sin instalar—
+   * se descubre ahora y no el día que haga falta.
+   */
+  async function probarAviso() {
+    const problema = await asegurarPermiso();
+    if (problema) {
+      setRecordatorioEstado(problema);
+      return;
+    }
+    const salio = await avisar({
+      titulo: 'Así se ven los recordatorios',
+      cuerpo: 'Esto es una prueba. No quedó nada sin marcar.',
+      tag: 'pipicucu:prueba',
+    });
+    setRecordatorioEstado(
+      salio
+        ? 'Listo, mandé uno. Si no aparece, fijate los permisos de notificaciones del sistema para Pipí Cucú.'
+        : 'No se pudo mandar. Probá recargando la app.',
     );
   }
 
@@ -211,6 +274,43 @@ export function SettingsPage() {
         {avisoEstado && (
           <p className="small muted" role="status">
             {avisoEstado}
+          </p>
+        )}
+
+        {/* El regulador de recordatorios. Es un solo control con cuatro
+            posiciones y no cuatro interruptores: elegir cuánto quiere que la
+            app insista es una decisión; armar la grilla hora por hora es
+            tarea, y acá la app está para sacar tareas. */}
+        <Field label="Recordarme lo que quedó abierto">
+          <select
+            value={data.settings.recordatorios}
+            onChange={(e) => cambiarNivel(e.target.value as NivelRecordatorio)}
+          >
+            <option value="nula">Nunca</option>
+            <option value="baja">Baja — al final del día</option>
+            <option value="media">Media — tres por día</option>
+            <option value="alta">Alta — hasta seis por día</option>
+          </select>
+        </Field>
+        <p className="small muted" style={{ marginTop: -6 }}>
+          {DESCRIPCION[data.settings.recordatorios]}
+        </p>
+        <p className="small muted">
+          Aparecen en la barra de notificaciones del teléfono, y el de "falta marcar" trae los
+          botones para contestar sin abrir nada. Pero no son un despertador: para que suene con todo
+          cerrado a una hora fija haría falta un servidor, y acá no hay ninguno —nada de lo que
+          cargás sale de tu dispositivo—. Salen cuando abrís la app o la volvés a traer al frente
+          después de la hora. El del cierre cae media hora después de tu última sesión del día.
+          Nunca dicen el nombre de un paciente.
+        </p>
+        <div className="actions" style={{ marginBottom: 6 }}>
+          <button className="btn small" onClick={probarAviso}>
+            Probar un aviso
+          </button>
+        </div>
+        {recordatorioEstado && (
+          <p className="small muted" role="status">
+            {recordatorioEstado}
           </p>
         )}
 

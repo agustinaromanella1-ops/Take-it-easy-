@@ -213,6 +213,29 @@ await page.locator('.close-day-btn').click();
 await page.waitForTimeout(500);
 const filas = await page.locator('.close-row').count();
 check('ofrece cerrar las sesiones de hoy', filas === 2, `${filas} pendientes`);
+
+// El atajo tiene que poder deshacerse con el mismo botón. Antes solo marcaba:
+// tocarlo sin querer dejaba el día entero en "vino" y la única salida era
+// cerrar el cuadro y volver a empezar.
+const marcadas = () => page.locator('.close-row .seg button[aria-pressed="true"]').count();
+await page.locator('.close-head .btn', { hasText: 'Vinieron todos' }).click();
+await page.waitForTimeout(250);
+const todas = await marcadas();
+check('"Vinieron todos" marca las dos', todas === 2, `${todas} marcadas`);
+check('y el botón queda prendido', (await page.locator('.close-head .btn.is-on').count()) === 1);
+await page.locator('.close-head .btn', { hasText: 'Vinieron todos' }).click();
+await page.waitForTimeout(250);
+const ninguna = await marcadas();
+check('volver a tocarlo las desmarca', ninguna === 0, `${ninguna} siguen marcadas`);
+
+// Y lo mismo fila por fila, que es la misma asimetría entrando por otra puerta.
+const primeraVino = page.locator('.close-row').first().locator('.seg button', { hasText: 'Vino' });
+await primeraVino.click();
+await page.waitForTimeout(200);
+await primeraVino.click();
+await page.waitForTimeout(200);
+check('volver a tocar "Vino" en una fila también la desmarca', (await marcadas()) === 0);
+
 await page.locator('.close-row').first().locator('.seg button', { hasText: 'Vino' }).click();
 await page.locator('.close-row').first().locator('input[type=checkbox]').check();
 await page.locator('.close-row').nth(1).locator('.seg button', { hasText: 'Faltó' }).click();

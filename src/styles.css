@@ -1122,6 +1122,14 @@ a.btn {
 .close-head { display: flex; gap: 10px; align-items: center; margin-bottom: 14px; }
 .close-head select { width: auto; flex: 1; min-width: 0; font-size: 0.88rem; padding: 8px 10px; }
 .close-head .btn.small { white-space: nowrap; }
+/* Prendido se ve prendido: el mismo botón desmarca, y sin esta señal la única
+   forma de saber si está aplicado era contar los "Vino" de abajo. Tinta oscura
+   sobre el lila por lo mismo que en `.seg`: el blanco da 2,41:1. */
+.close-head .btn.small.is-on {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: var(--sobre-claro);
+}
 
 /* ---------- Gráficos ---------- */
 .chart-row {

@@ -1,6 +1,7 @@
 import { useEffect, useRef } from 'react';
 import { useStore } from '../store/StoreContext';
 import { sesionesPorAvisar, textoAviso } from '../lib/aviso';
+import { avisar, sePuedeAvisar } from '../lib/notificar';
 import { timeToMinutes, today } from '../lib/dates';
 
 /**
@@ -51,7 +52,7 @@ export function AvisoDeTurno({ permiso }: { permiso: string }) {
 
   useEffect(() => {
     if (antes <= 0) return;
-    if (typeof Notification === 'undefined' || Notification.permission !== 'granted') return;
+    if (!sePuedeAvisar()) return;
 
     const mirar = () => {
       const hoy = today();
@@ -63,16 +64,19 @@ export function AvisoDeTurno({ permiso }: { permiso: string }) {
 
       for (const s of pendientes) {
         const { titulo, cuerpo } = textoAviso(timeToMinutes(s.time) - minutos);
-        try {
-          // El ícono es el de la app: el aviso tiene que verse como Pipí Cucú y
-          // no como "una página web".
-          new Notification(titulo, { body: cuerpo, icon: '/icon-192.png', tag: s.id });
-          avisadas.add(s.id);
-        } catch {
-          /* Algunos navegadores solo permiten avisos desde el service worker.
-             Si este camino falla, se deja pasar: es una ayuda, no una función
-             de la que dependa nada. */
-        }
+        /*
+         * Sale por el service worker y no por `new Notification()`.
+         *
+         * Ese constructor tira una excepción en Chrome de Android, que es
+         * justo donde se usa la app: el aviso quedaba atrapado en un `catch`
+         * vacío y nunca sonaba en el celular, sin ninguna señal de que no
+         * estaba funcionando.
+         *
+         * Sin sesión en el aviso no van botones: "Vino" no tiene sentido en
+         * un turno que todavía no empezó.
+         */
+        void avisar({ titulo, cuerpo, tag: s.id });
+        avisadas.add(s.id);
       }
       guardarAvisadas(hoy, avisadas);
     };
