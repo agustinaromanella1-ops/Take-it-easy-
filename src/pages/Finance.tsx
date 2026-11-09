@@ -202,7 +202,10 @@ export function FinancePage({
         ))}
       </div>
 
-      {view === 'monitoreo' && <Monitoring />}
+      {/* Desde el monitoreo se puede cobrar sin volver al resumen: el cuadro
+          de registrar pago vive fuera del selector de vista, así que se abre
+          encima y al cerrarlo la barra de esa persona ya quedó actualizada. */}
+      {view === 'monitoreo' && <Monitoring onCobrar={openAdd} />}
       {view === 'facturacion' && <Billing />}
 
       {view === 'resumen' && (

@@ -82,27 +82,40 @@ export function StackedBar({
   );
 }
 
-/** Una fila del gráfico: nombre a la izquierda, barra y valor a la derecha. */
-export function ChartRow({
-  name,
-  swatch,
-  children,
-  value,
-}: {
+/**
+ * Una fila del gráfico: nombre a la izquierda, barra y valor a la derecha.
+ *
+ * Con `onClick` la fila entera se vuelve un botón, no solo el nombre: en el
+ * celular un blanco de 84 px de ancho es una invitación a errarle, y lo que se
+ * quiere tocar es la persona, que es toda la fila. Ahí `accion` es obligatorio
+ * —TypeScript lo exige— porque sin él un lector de pantalla anunciaría la
+ * etiqueta de la barra, que describe el gráfico y no lo que pasa al tocar.
+ */
+type ChartRowProps = {
   name: string;
   swatch?: string;
   children: ReactNode;
   value?: ReactNode;
-}) {
-  return (
-    <div className="chart-row">
+} & ({ onClick: () => void; accion: string } | { onClick?: undefined; accion?: undefined });
+
+export function ChartRow({ name, swatch, children, value, onClick, accion }: ChartRowProps) {
+  const adentro = (
+    <>
       <div className="chart-name">
         {swatch && <span className="dot" style={{ background: swatch }} />}
         <span className="chart-name-text">{name}</span>
       </div>
       <div className="chart-bar">{children}</div>
       {value !== undefined && <div className="chart-value">{value}</div>}
-    </div>
+    </>
+  );
+
+  if (!onClick) return <div className="chart-row">{adentro}</div>;
+
+  return (
+    <button type="button" className="chart-row chart-row-btn" onClick={onClick} aria-label={accion}>
+      {adentro}
+    </button>
   );
 }
 

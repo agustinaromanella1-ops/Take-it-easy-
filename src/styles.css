@@ -1155,6 +1155,30 @@ a.btn {
   white-space: nowrap;
 }
 
+/* Una fila que se puede tocar para cobrarle a esa persona.
+   El `width: 100%` y el `text-align` son por ser un <button>: sin eso se
+   encoge al contenido y rompe la grilla de tres columnas. El mínimo de 44 px
+   es el mismo criterio que el de los botones chicos: lo que se toca con el
+   pulgar sin errarle. Y como en el celular no hay hover, el borde a la
+   izquierda es lo que dice que la fila es tocable sin robarle ancho al
+   nombre, que ya se corta. */
+button.chart-row-btn {
+  width: 100%;
+  text-align: left;
+  font: inherit;
+  cursor: pointer;
+  border: 0;
+  border-left: 3px solid var(--accent-soft);
+  background: transparent;
+  min-height: 44px;
+  padding: 7px 8px 7px 9px;
+  margin-left: -12px;
+  border-radius: 0 8px 8px 0;
+  transition: background 0.12s;
+}
+button.chart-row-btn:hover { background: var(--surface-soft); }
+button.chart-row-btn:active { background: var(--accent-soft); }
+
 /* Marca fina: la barra informa, no decora. */
 .sbar { display: flex; gap: 2px; height: 18px; align-items: stretch; }
 .sbar-seg {
@@ -1785,7 +1809,9 @@ a.btn {
   white-space: nowrap;
 }
 .hoy-estado { flex-shrink: 0; }
-.hoy-estado button { min-height: 44px; padding: 8px 11px; }
+/* Con cuatro respuestas el relleno de a 11 px no entra en una pantalla
+   angosta. El alto no se toca: 44 px es lo que se toca sin errarle. */
+.hoy-estado button { min-height: 44px; padding: 8px 9px; }
 .hoy-cobro {
   border: var(--borde) solid var(--border);
   background: var(--surface);
@@ -1812,16 +1838,26 @@ a.btn {
   font-size: 0.86rem;
 }
 
-/* En celular las cuatro columnas no entran: el nombre pasa a ocupar su propia
-   línea y las respuestas quedan abajo, alineadas a la derecha. */
+/* En celular todo en una línea no entra.
+   Arriba queda la fila de siempre —hora, nombre y "Pagó"—, y las cuatro
+   respuestas pasan a una línea propia a lo ancho. Antes compartían línea con
+   "Pagó" y, con cuatro botones, la fila se iba del borde de la pantalla: el
+   nombre quedaba cortado y "Pagó" medio afuera. A lo ancho, además, los cuatro
+   miden lo mismo, que es lo que hace que se lean como cuatro respuestas a la
+   misma pregunta.
+   Las filas y columnas van puestas a mano: con colocación automática, un
+   elemento de columna fija que viene después de uno que ocupa la fila entera
+   se va a una fila nueva en vez de volver a la de arriba. */
 @media (max-width: 560px) {
   .hoy-fila {
-    grid-template-columns: auto 1fr;
+    grid-template-columns: auto 1fr auto;
     row-gap: 8px;
   }
-  .hoy-estado { grid-column: 1 / 2; }
-  .hoy-cobro { grid-column: 2 / 3; justify-self: end; }
-  .hoy-movida { grid-column: 1 / -1; justify-self: start; text-align: left; }
+  .hoy-hora { grid-row: 1; grid-column: 1; }
+  .hoy-nombre { grid-row: 1; grid-column: 2; }
+  .hoy-cobro { grid-row: 1; grid-column: 3; justify-self: end; }
+  .hoy-estado { grid-row: 2; grid-column: 1 / -1; }
+  .hoy-movida { grid-row: 2; grid-column: 1 / -1; justify-self: start; text-align: left; }
 }
 
 /* ---------- Lo que quedó abierto ---------- */

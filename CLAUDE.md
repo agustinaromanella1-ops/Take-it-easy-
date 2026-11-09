@@ -19,12 +19,12 @@ Las pruebas de punta a punta necesitan la app compilada y servida:
 
 ```bash
 npx vite build && npx vite preview --port 4173 &
-node e2e/aceptacion.mjs     # 122 verificaciones sobre la app entera
+node e2e/aceptacion.mjs     # 130 verificaciones sobre la app entera
 node e2e/bienvenida.mjs     # 43: la portada contra el diseño aprobado
 node e2e/actualizacion.mjs  # 17: la barra de "hay una versión nueva"
 node e2e/borradores.mjs     # 28: que lo escrito no se pierda al cerrar una pantalla
 node e2e/dos-pestanas.mjs   # 8: dos pestañas a la vez, que no se pisen
-node e2e/hoy.mjs            # 30: marcar lo que pasó, desde el inicio y desde el cierre
+node e2e/hoy.mjs            # 33: marcar lo que pasó, desde el inicio y desde el cierre
 node e2e/recordatorios.mjs  # 28: los avisos del sistema y sus botones
 ```
 
@@ -84,6 +84,25 @@ dejarían dos entradas de deshacer, y deshacer una sola partiría la mudanza al 
 es decorativa: `fueReagendada()` la usa para que el "% se cae" de la ficha y el gráfico de
 asistencia no cuenten una mudanza como una caída. Si agregás algo que mire sesiones canceladas,
 preguntate de qué lado va.
+
+**"Faltó" y "Canceló" no son lo mismo y los dos tienen que estar a mano.** Una ausencia sin
+aviso factura si esa es la política del consultorio (`chargeable`); una cancelación no factura
+nunca. Donde se marque asistencia van las cuatro respuestas —vino, faltó, canceló, reagendó—, no
+tres: en el inicio faltaba "Canceló", así que avisar con tiempo se cargaba como ausencia y le
+aparecía una deuda a alguien que hizo las cosas bien. Con cuatro botones la fila ya no entra al
+lado de "Pagó" en una pantalla angosta: abajo de 560 px pasan a una línea propia a lo ancho, con
+las filas y columnas de la grilla puestas a mano —con colocación automática, un elemento de
+columna fija que viene después de uno que ocupa la fila entera se va a una fila nueva en vez de
+volver a la de arriba—.
+
+**Donde se ve un saldo se tiene que poder cobrar.** Las filas de "Quién pagó y quién debe" del
+monitoreo abren el cobro con esa persona puesta (`ChartRow` con `onClick`). Era el único lugar
+donde ver quién debe no servía para nada: había que acordarse del nombre, volver a Resumen, abrir
+"Registrar pago" y buscarlo en una lista larga. El importe NO se completa solo —se toca
+justamente porque alguien pagó algo, que casi nunca es el saldo entero—; para eso el formulario
+ya tiene "Usar saldo total". `ChartRow` exige `accion` junto con `onClick` por tipo: sin eso un
+lector de pantalla anunciaría la etiqueta de la barra, que describe el gráfico y no lo que pasa
+al tocar.
 
 **Un cobro puede estar atado a su sesión.** `Payment.sessionId` es opcional —un cobro puede ser
 del mes entero, o una seña, y los viejos no lo tienen—, pero cuando está, es lo que permite decir

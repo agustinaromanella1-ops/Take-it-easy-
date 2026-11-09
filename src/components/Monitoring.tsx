@@ -7,7 +7,7 @@ import { Card, Empty } from './ui';
 import { CHART_COLORS, ChartRow, Legend, StackedBar } from './charts';
 
 /** Monitoreo general: cobranza, asistencia y comparación de honorarios. */
-export function Monitoring() {
+export function Monitoring({ onCobrar }: { onCobrar?: (patientId: string) => void }) {
   const { data } = useStore();
   const currency = data.settings.currency;
 
@@ -68,10 +68,34 @@ export function Monitoring() {
                 const pending = Math.max(0, b.balance);
                 // Un pago de más no agranda la barra: el tope es lo facturado.
                 const paid = Math.min(b.billed, b.paid);
+                /*
+                 * Tocar la fila abre el cobro con esa persona puesta.
+                 *
+                 * Esta pantalla es donde se ve quién debe, y hasta ahora era el
+                 * único lugar donde verlo no servía para nada: había que
+                 * acordarse del nombre, ir a Resumen, abrir "Registrar pago" y
+                 * buscarlo en una lista de treinta. Tres pasos para no perder
+                 * un dato que ya estaba en pantalla.
+                 *
+                 * El importe NO se completa solo: se toca justamente porque
+                 * alguien pagó "algún monto", que casi nunca es el saldo
+                 * entero. Para ese caso el formulario ya tiene su botón de
+                 * "usar saldo total", que es un toque y no hay que borrar nada.
+                 */
+                const cobrar = onCobrar
+                  ? {
+                      onClick: () => onCobrar(b.patient.id),
+                      accion:
+                        pending > 0
+                          ? `Registrar un cobro de ${b.patient.name}, que debe ${formatMoney(pending, currency)}`
+                          : `Registrar un cobro de ${b.patient.name}, que está al día`,
+                    }
+                  : {};
                 return (
                   <ChartRow
                     key={b.patient.id}
                     name={b.patient.name}
+                    {...cobrar}
                     value={
                       pending > 0 ? (
                         <span className="money debt">{formatMoney(pending, currency)}</span>
@@ -92,6 +116,9 @@ export function Monitoring() {
                 );
               })}
             </div>
+            {onCobrar && (
+              <p className="ref-note">Tocá a alguien para registrarle un cobro.</p>
+            )}
           </>
         )}
       </Card>

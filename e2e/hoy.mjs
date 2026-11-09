@@ -80,6 +80,32 @@ await p.waitForTimeout(600);
 check('"Faltó" la deja como ausente',
   (await disco()).sessions.find((s) => s.id === 's2')?.status === 'ausente');
 
+// "Canceló" no es un "faltó" más suave: la ausencia factura si esa es la
+// política del consultorio, la cancelación no factura nunca. Sin este botón,
+// avisar con tiempo se cargaba como ausencia y le aparecía una deuda a alguien
+// que hizo las cosas bien.
+await fila(1).getByRole('button', { name: 'Canceló' }).click();
+await p.waitForTimeout(600);
+check('"Canceló" la deja cancelada, que es distinto de ausente',
+  (await disco()).sessions.find((s) => s.id === 's2')?.status === 'cancelada');
+await fila(1).getByRole('button', { name: 'Canceló' }).click();
+await p.waitForTimeout(600);
+check('y también se corrige volviéndolo a tocar',
+  (await disco()).sessions.find((s) => s.id === 's2')?.status === 'programada');
+// Se la deja de nuevo como ausente: lo que sigue cuenta con eso.
+await fila(1).getByRole('button', { name: 'Faltó' }).click();
+await p.waitForTimeout(600);
+
+// La fila entera tiene que entrar en la pantalla: con cuatro respuestas en la
+// misma línea que "Pagó" se iba del borde, el nombre quedaba cortado y el
+// botón de cobro medio afuera.
+const desborde = await p.evaluate(() => ({
+  pagina: document.documentElement.scrollWidth - document.documentElement.clientWidth,
+  fila: Math.max(...[...document.querySelectorAll('.hoy-fila')].map((f) => f.scrollWidth - f.clientWidth)),
+}));
+check('nada se va del borde de la pantalla',
+  desborde.pagina <= 0 && desborde.fila <= 0, JSON.stringify(desborde));
+
 titulo('3. ¿Pagó?');
 await fila(0).locator('.hoy-cobro').click();
 await p.waitForTimeout(600);

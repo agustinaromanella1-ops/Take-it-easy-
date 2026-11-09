@@ -348,6 +348,33 @@ await page.locator('.tabs button', { hasText: 'Monitoreo' }).click();
 await page.waitForTimeout(600);
 check('el monitoreo dibuja las barras', (await page.locator('.sbar-seg').count()) > 0);
 
+// Desde acá se tiene que poder cobrar. Era el único lugar donde ver quién debe
+// no servía para nada: había que acordarse del nombre, volver a Resumen, abrir
+// "Registrar pago" y buscarlo en la lista.
+const fila = page.locator('.chart-row-btn').first();
+check('las filas de "quién pagó y quién debe" se pueden tocar',
+  (await page.locator('.chart-row-btn').count()) > 0);
+const etiqueta = await fila.getAttribute('aria-label');
+check('y dicen qué pasa al tocarlas, no qué dibuja la barra',
+  etiqueta?.startsWith('Registrar un cobro de'), etiqueta);
+const alto = (await fila.boundingBox())?.height ?? 0;
+check('con alto de dedo', alto >= 44, `${alto} px`);
+await fila.click();
+await page.waitForTimeout(500);
+check('tocarla abre el cuadro de registrar pago', (await page.locator('.modal').count()) === 1);
+const elegido = await page.locator('.modal select').first().inputValue();
+check('con esa persona ya elegida', elegido !== '', elegido);
+// El importe queda vacío a propósito: se toca porque alguien pagó "algo", que
+// casi nunca es el saldo entero. Para eso está el botón de saldo total.
+const importe = await page.locator('.modal input[inputmode=decimal]').inputValue();
+check('y el importe en blanco, porque casi nunca se paga el saldo entero', importe === '', importe);
+check('con el saldo total a un toque',
+  (await page.locator('.modal .btn', { hasText: 'Usar saldo total' }).count()) === 1);
+await page.locator('.modal-head button, .modal .btn', { hasText: 'Cancelar' }).first().click();
+await page.waitForTimeout(400);
+check('y las filas que no son de cobro no se pueden tocar',
+  (await page.locator('.chart-row:not(.chart-row-btn)').count()) > 0);
+
 await page.locator('.tabs button', { hasText: 'Facturación' }).click();
 await page.waitForTimeout(600);
 await page.locator('.bill-item').first().click();

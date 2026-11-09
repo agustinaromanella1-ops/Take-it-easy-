@@ -196,6 +196,19 @@ export function SesionesDeHoy({
                 >
                   Faltó
                 </button>
+                {/* "Canceló" no es un "faltó" más suave: una ausencia sin aviso
+                    factura si así está la política del consultorio, y una
+                    cancelación no factura nunca. Sin este botón, avisar con
+                    tiempo se cargaba como ausencia y le aparecía una deuda a
+                    alguien que hizo las cosas bien. */}
+                <button
+                  type="button"
+                  aria-pressed={s.status === 'cancelada'}
+                  onClick={() => marcar(s, 'cancelada')}
+                  title={`${nombre} canceló`}
+                >
+                  Canceló
+                </button>
                 {/* No es un estado más: abre el cuadro para elegir cuándo. Un
                     turno movido sin fecha nueva es un turno perdido. */}
                 <button
