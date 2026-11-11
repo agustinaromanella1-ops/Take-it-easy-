@@ -1066,10 +1066,18 @@ a.btn {
 .close-who strong { color: var(--text); font-weight: 700; }
 .close-who span { color: var(--muted); font-size: 0.85rem; font-variant-numeric: tabular-nums; }
 
-/* Selector de asistencia: tres opciones, una sola elegida. */
+/* Selector de asistencia: una sola elegida. */
 .seg { display: flex; gap: 0; background: var(--surface); border: var(--borde) solid var(--border); border-radius: 999px; padding: 3px; }
 .seg button {
-  flex: 1;
+  /*
+   * `auto` y no `0`: con base cero los botones quedan todos del mismo ANCHO, y
+   * como las palabras no miden lo mismo, lo que se ve disparejo son los
+   * espacios. "Vino" nadaba en el medio de su cuarto y "Reagendó" rozaba el
+   * borde. Con base automática el espacio sobrante se reparte en partes
+   * iguales ENCIMA de cada palabra, así todas quedan con el mismo aire y los
+   * huecos se leen parejos, que es lo que el ojo mide.
+   */
+  flex: 1 1 auto;
   border: 0;
   background: transparent;
   font: inherit;
@@ -1879,6 +1887,23 @@ button.chart-row-btn:active { background: var(--accent-soft); }
 .pendientes-texto { margin: 8px 0 4px; font-size: 1.08rem; font-weight: 700; color: var(--text); }
 .pendientes-nota { margin: 0; color: var(--muted); font-size: 0.9rem; }
 .pendientes-acciones { margin-top: 14px; }
+/* Los campos de mover el turno. Van acá abajo y no en otro cuadro encima: un
+   modal sobre el inicio para elegir dos campos deja una trampa de foco de más
+   por una decisión de dos toques. Es la misma forma que usa el cierre del día. */
+.pendientes-mudanza {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: 10px;
+  margin-top: 12px;
+  padding-top: 12px;
+  border-top: 1px solid var(--border);
+}
+.pendientes-mudanza label { display: flex; flex-direction: column; gap: 5px; }
+.pendientes-mudanza input { padding: 9px 11px; }
+.pendientes-mudanza .btn { min-height: 44px; }
+.pendientes-mudanza .error-text { flex-basis: 100%; margin: 0; }
+
 .pendientes-resto { margin: 12px 0 0; color: var(--muted); font-size: 0.86rem; }
 /* Cuando no queda nada, una línea y no una tarjeta vacía. */
 .pendientes-vacio { margin: 0 0 18px; color: var(--muted); font-size: 0.92rem; }

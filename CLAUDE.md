@@ -10,7 +10,7 @@ Seguí en ese idioma.
 ```bash
 npm run dev                          # desarrollo
 npm run build                        # tsc --noEmit && vite build
-npm test                             # toda la batería unitaria (378 al escribir esto)
+npm test                             # toda la batería unitaria (382 al escribir esto)
 npx vitest run src/lib/money.test.ts # una sola
 npm run typecheck
 ```
@@ -24,7 +24,7 @@ node e2e/bienvenida.mjs     # 43: la portada contra el diseño aprobado
 node e2e/actualizacion.mjs  # 17: la barra de "hay una versión nueva"
 node e2e/borradores.mjs     # 28: que lo escrito no se pierda al cerrar una pantalla
 node e2e/dos-pestanas.mjs   # 8: dos pestañas a la vez, que no se pisen
-node e2e/hoy.mjs            # 33: marcar lo que pasó, desde el inicio y desde el cierre
+node e2e/hoy.mjs            # 42: marcar lo que pasó, desde el inicio y desde el cierre
 node e2e/recordatorios.mjs  # 28: los avisos del sistema y sus botones
 ```
 
@@ -85,6 +85,15 @@ es decorativa: `fueReagendada()` la usa para que el "% se cae" de la ficha y el 
 asistencia no cuenten una mudanza como una caída. Si agregás algo que mire sesiones canceladas,
 preguntate de qué lado va.
 
+**Las cuatro respuestas van en los TRES lugares donde se marca asistencia**: las sesiones de hoy
+del inicio, el cierre del día y la tarjeta de "lo que quedó abierto". Si falta "Reagendó" en
+alguno, desde ahí un turno que se pasó para otro día hay que marcarlo cancelado y agendar el
+nuevo a mano: dos pasos, y la mudanza queda contada como una caída en el "% se cae" del
+paciente, que es justo lo que `rescheduledTo` existe para evitar. La fecha que se propone sale de
+`siguienteSemanal()` de `dates.ts` y no de `addDays(fecha, 7)`: las sesiones de la tarjeta de
+pendientes ya pasaron —puede hacer un mes—, y sumarle siete a secas propondría otra fecha
+pasada. Avanzando de a semanas se conserva el día y la hora.
+
 **"Faltó" y "Canceló" no son lo mismo y los dos tienen que estar a mano.** Una ausencia sin
 aviso factura si esa es la política del consultorio (`chargeable`); una cancelación no factura
 nunca. Donde se marque asistencia van las cuatro respuestas —vino, faltó, canceló, reagendó—, no
@@ -133,6 +142,12 @@ envuelve al control: es lo que le da nombre para un lector de pantalla sin inven
 por campo. Con la etiqueta como hermana, los cuatro campos de Ajustes se anunciaban como
 "cuadro combinado", sin decir de qué. Si agregás un control suelto fuera de `Field`, atalo
 con `htmlFor` y ponele `className="field-label"` a su etiqueta.
+
+**En un selector de opciones, lo que el ojo mide son los espacios, no los anchos.** `.seg button`
+va con `flex: 1 1 auto` y no `flex: 1`: con base cero los botones quedan todos del mismo ancho y,
+como las palabras no miden lo mismo, "Vino" nadaba en el medio de su cuarto y "Reagendó" rozaba
+el borde. Con base automática el sobrante se reparte en partes iguales encima de cada palabra y
+los huecos se leen parejos.
 
 **Todo par de texto y fondo está medido contra WCAG AA (4,5:1).** Si agregás un color, medilo. El
 caso que ya se resolvió: blanco sobre el naranja del botón da 2,7:1 y no pasa, por eso el botón

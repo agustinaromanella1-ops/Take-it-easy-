@@ -9,6 +9,7 @@ import {
   minutesToTime,
   monthKey,
   overlaps,
+  siguienteSemanal,
   startOfWeek,
   timeToMinutes,
   toISODate,
@@ -136,5 +137,28 @@ describe('grilla mensual', () => {
     expect(cells[0]).toBe('2026-02-01');
     expect(cells[27]).toBe('2026-02-28');
     expect(new Set(cells).size).toBe(28);
+  });
+});
+
+describe('siguienteSemanal', () => {
+  it('con un turno de hoy propone el de la semana que viene', () => {
+    // El 11 de noviembre de 2026 cae miércoles.
+    expect(siguienteSemanal('2026-11-11', '2026-11-11')).toBe('2026-11-18');
+  });
+
+  it('con un turno viejo no propone una fecha que ya pasó', () => {
+    // Sumar siete a secas daría el 17 de septiembre, que ya pasó: no se puede
+    // mover un turno al pasado.
+    const propuesta = siguienteSemanal('2026-09-10', '2026-11-11');
+    expect(propuesta > '2026-11-11').toBe(true);
+  });
+
+  it('y conserva el día de la semana, que es lo que se elige casi siempre', () => {
+    // El 10 de septiembre de 2026 cae jueves; la propuesta también.
+    expect(siguienteSemanal('2026-09-10', '2026-11-11')).toBe('2026-11-12');
+  });
+
+  it('nunca devuelve el mismo día, ni cuando el turno es de ayer', () => {
+    expect(siguienteSemanal('2026-11-10', '2026-11-11')).toBe('2026-11-17');
   });
 });

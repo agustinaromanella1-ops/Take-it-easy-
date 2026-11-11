@@ -33,6 +33,7 @@ const pasar = async () => {
   await p.locator('.tour-saltar').click().catch(() => {});
 };
 
+const HOY_ISO = new Date().toISOString().slice(0, 10);
 const disco = () => p.evaluate(() => JSON.parse(localStorage.getItem('pipicucu:data') ?? '{}'));
 const fila = (i) => p.locator('.hoy-fila').nth(i);
 
@@ -202,6 +203,61 @@ check('crea la sesión nueva', trasCierre.sessions.length === antesDelCierre + 1
 check('y la movida sale de las pendientes del cierre',
   (await p.locator('.close-row').count()) < 2,
   `quedan ${await p.locator('.close-row').count()}`);
+
+titulo('8. Reagendar desde "lo que quedó abierto"');
+// La tercera puerta. Las tres tienen que ofrecer las cuatro respuestas: sin
+// "Reagendó" acá, un turno que se pasó para otro día había que marcarlo
+// cancelado y agendar el nuevo a mano, y la mudanza quedaba contada como una
+// caída en el "% se cae" del paciente.
+await p.locator('.modal-foot .btn.primary').click().catch(() => {});
+await p.waitForTimeout(400);
+await p.evaluate(() => {
+  const d = JSON.parse(localStorage.getItem('pipicucu:data'));
+  const sello = new Date().toISOString();
+  // Una sesión vieja sin marcar: es lo que hace aparecer la tarjeta.
+  const hace40 = new Date(Date.now() - 40 * 86400000).toISOString().slice(0, 10);
+  d.sessions.push({ id:'pend', patientId:'p1', updatedAt:sello, date:hace40, time:'16:00',
+    durationMin:50, status:'programada', fee:3500000, chargeable:true, notes:'' });
+  localStorage.setItem('pipicucu:data', JSON.stringify(d));
+});
+await p.reload();
+await pasar();
+await p.waitForTimeout(700);
+
+const tarjeta = p.locator('.pendientes');
+check('la tarjeta ofrece las cuatro respuestas',
+  (await tarjeta.locator('.btn').allInnerTexts()).filter((t) =>
+    ['Vino', 'Faltó', 'Se canceló', 'Reagendó'].includes(t.trim())).length === 4);
+
+await tarjeta.locator('.btn', { hasText: 'Reagendó' }).click();
+await p.waitForTimeout(400);
+const mudanza = p.locator('.pendientes-mudanza');
+check('abre los campos abajo, sin ningún cuadro encima',
+  (await mudanza.count()) === 1 && (await p.locator('.modal-backdrop').count()) === 0);
+
+// La sesión es de hace 40 días: sumarle siete a secas daría una fecha que ya
+// pasó, y mover un turno al pasado no es mover nada.
+const propuestaPend = await mudanza.locator('input[type=date]').inputValue();
+check('propone una fecha futura y no una que ya pasó', propuestaPend > HOY_ISO, propuestaPend);
+check('y la misma hora, que es lo que se elige casi siempre',
+  (await mudanza.locator('input[type=time]').inputValue()) === '16:00');
+
+const antesDePend = (await disco()).sessions.length;
+// Lo que la tarjeta pide AHORA: después de mover tiene que pedir otra cosa.
+// No alcanza con buscar "quedó sin marcar": la de atrás también lo dice.
+const pedidoAntes = await tarjeta.innerText();
+await mudanza.getByRole('button', { name: 'Mover' }).click();
+await p.waitForTimeout(800);
+const movidaPend = await disco();
+check('crea la sesión nueva', movidaPend.sessions.length === antesDePend + 1);
+const viejaPend = movidaPend.sessions.find((s) => s.id === 'pend');
+check('la vieja queda cancelada', viejaPend?.status === 'cancelada');
+check('y apunta a la nueva, que es lo que la distingue de una caída',
+  typeof viejaPend?.rescheduledTo === 'string');
+const pedidoDespues = await p.locator('.pendientes, .pendientes-vacio').first().innerText();
+check('la tarjeta deja de pedirla y pasa a otra cosa',
+  pedidoDespues !== pedidoAntes, pedidoDespues.split('\n')[1] ?? pedidoDespues);
+check('y se puede deshacer', (await p.locator('.deshacer').count()) === 1);
 
 console.log(`\n═══ ${ok} verificaciones pasaron, ${fail} fallaron ═══`);
 console.log('Errores de JavaScript:', errores.length ? errores.join(' | ') : 'ninguno');

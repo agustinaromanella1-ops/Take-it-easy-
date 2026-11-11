@@ -1,7 +1,7 @@
 import { useMemo, useRef, useState } from 'react';
 import { useStore } from '../store/StoreContext';
 import { pendientes, type Pendiente } from '../lib/pendientes';
-import { formatDateLong, today } from '../lib/dates';
+import { formatDateLong, isValidISODate, isValidTime, siguienteSemanal, today } from '../lib/dates';
 import { formatMoney } from '../lib/money';
 
 /**
@@ -25,6 +25,17 @@ export function Pendientes({
   const hoy = today();
   const [saltadas, setSaltadas] = useState<string[]>([]);
   const caja = useRef<HTMLElement>(null);
+  /**
+   * El turno que se está moviendo de día, con la fecha y hora propuestas.
+   *
+   * Lleva la clave de la tarjeta adentro: al resolver una, la tarjeta pasa a
+   * la cosa siguiente, y unos campos abiertos que quedaran de la anterior
+   * estarían ofreciendo mover un turno que ya no es el que se está mirando.
+   */
+  const [moviendo, setMoviendo] = useState<
+    { clave: string; sesionId: string; date: string; time: string } | null
+  >(null);
+  const [errorMudanza, setErrorMudanza] = useState('');
 
   /**
    * Resuelve la tarjeta sin tirar el foco.
@@ -70,6 +81,32 @@ export function Pendientes({
     );
   }
 
+  /** Si los campos de mover el turno están abiertos para ESTA tarjeta. */
+  const abierta = moviendo?.clave === primera.clave;
+
+  /**
+   * Aplica la mudanza.
+   *
+   * Va por `session/reschedule`, que es UNA acción: deja la original cancelada
+   * apuntando a la nueva. Esa marca es lo que hace que mover un turno no
+   * cuente como una sesión caída en la ficha del paciente.
+   */
+  function confirmarMudanza() {
+    if (!moviendo) return;
+    if (!isValidISODate(moviendo.date)) {
+      setErrorMudanza('Esa fecha no existe.');
+      return;
+    }
+    if (!isValidTime(moviendo.time)) {
+      setErrorMudanza('Esa hora no existe.');
+      return;
+    }
+    const { sesionId: id, date, time } = moviendo;
+    setMoviendo(null);
+    setErrorMudanza('');
+    resolver(() => dispatch({ type: 'session/reschedule', payload: { id, date, time } }));
+  }
+
   return (
     <section className="pendientes" aria-label="Lo que quedó abierto" ref={caja} tabIndex={-1}>
       <div className="pendientes-rotulo">Lo que quedó abierto</div>
@@ -109,6 +146,39 @@ export function Pendientes({
             >
               Se canceló
             </button>
+            {/* No es un estado más: abre los campos de abajo. Un turno movido
+                sin fecha nueva es un turno perdido. Faltaba acá, así que la
+                única forma de contestar "se pasó para otro día" desde el
+                inicio era marcarlo cancelado y agendar el nuevo a mano —dos
+                pasos, y la mudanza quedaba contada como una caída en el
+                "% se cae" del paciente—. */}
+            <button
+              // Sin `primary` aunque esté abierto: el naranja de esta tarjeta
+              // es el de "Vino", que es la respuesta más probable. Dos
+              // naranjas al mismo tiempo dejan de señalar nada. Que los campos
+              // aparezcan abajo ya se ve; `aria-expanded` lo dice para quien
+              // no los ve.
+              className="btn small"
+              aria-expanded={abierta}
+              onClick={() => {
+                setErrorMudanza('');
+                setMoviendo(
+                  abierta
+                    ? null
+                    : {
+                        clave: primera.clave,
+                        sesionId: primera.sesion.id,
+                        // No alcanza con sumarle siete días: esta sesión ya
+                        // pasó, y si quedó sin marcar hace un mes la propuesta
+                        // caería también en el pasado.
+                        date: siguienteSemanal(primera.sesion.date, hoy),
+                        time: primera.sesion.time,
+                      },
+                );
+              }}
+            >
+              Reagendó
+            </button>
           </>
         )}
         {primera.tipo === 'agendar' && (
@@ -128,6 +198,31 @@ export function Pendientes({
           Más tarde
         </button>
       </div>
+
+      {abierta && moviendo && (
+        <div className="pendientes-mudanza">
+          <label>
+            <span className="field-label">Nueva fecha</span>
+            <input
+              type="date"
+              value={moviendo.date}
+              onChange={(e) => setMoviendo({ ...moviendo, date: e.target.value })}
+            />
+          </label>
+          <label>
+            <span className="field-label">Hora</span>
+            <input
+              type="time"
+              value={moviendo.time}
+              onChange={(e) => setMoviendo({ ...moviendo, time: e.target.value })}
+            />
+          </label>
+          <button className="btn small primary" onClick={confirmarMudanza}>
+            Mover
+          </button>
+          {errorMudanza && <p className="error-text">{errorMudanza}</p>}
+        </div>
+      )}
 
       {restan > 0 && (
         <p className="pendientes-resto">

@@ -54,6 +54,28 @@ export function addDays(iso: DateISO, days: number): DateISO {
   return toISODate(d);
 }
 
+/**
+ * El mismo día de la semana que `iso`, pero después de `despuesDe`.
+ *
+ * Sirve para proponer adónde mover un turno. Sumar siete días a secas alcanza
+ * cuando el turno es de hoy, pero no cuando quedó sin marcar hace un mes: ahí
+ * la propuesta caería en una fecha que ya pasó, y mover un turno al pasado no
+ * es mover nada. Avanzando de a semanas se conserva el día y la hora, que en
+ * un consultorio semanal es lo que se elige casi siempre.
+ *
+ * El tope existe para que un dato roto no deje el bucle dando vueltas: cien
+ * semanas son casi dos años, mucho más de lo que cualquier turno viejo pide.
+ */
+const TOPE_SEMANAS = 100;
+
+export function siguienteSemanal(iso: DateISO, despuesDe: DateISO): DateISO {
+  let fecha = addDays(iso, 7);
+  for (let i = 0; i < TOPE_SEMANAS && fecha <= despuesDe; i++) {
+    fecha = addDays(fecha, 7);
+  }
+  return fecha;
+}
+
 /** Lunes de la semana que contiene `iso`. La semana laboral arranca el lunes. */
 export function startOfWeek(iso: DateISO): DateISO {
   const d = fromISODate(iso);
