@@ -238,7 +238,12 @@ export interface Attendance {
  * todavía están programadas bajaría el porcentaje de quien tiene turnos futuros
  * cargados, que no faltó a nada.
  */
-export function patientAttendance(data: AppData): Map<string, Attendance> {
+/**
+ * `mes` ("YYYY-MM") limita la cuenta a ese mes. Sin él se mira todo el
+ * historial, que es lo que sirve para conocer a alguien; con él, lo que sirve
+ * para mirar un mes puntual sin que el pasado lo tape.
+ */
+export function patientAttendance(data: AppData, mes?: string): Map<string, Attendance> {
   const result = new Map<string, Attendance>();
   for (const patient of data.patients) {
     result.set(patient.id, { patient, held: 0, absent: 0, cancelled: 0, closed: 0, rate: null });
@@ -247,6 +252,7 @@ export function patientAttendance(data: AppData): Map<string, Attendance> {
   for (const s of data.sessions) {
     const entry = result.get(s.patientId);
     if (!entry || s.status === 'programada') continue;
+    if (mes !== undefined && monthKey(s.date) !== mes) continue;
     // Una sesión movida de día no entra en la cuenta: no se dio, pero tampoco
     // se cayó. La que cuenta es la nueva, cuando se resuelva.
     if (fueReagendada(s)) continue;

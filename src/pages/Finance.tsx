@@ -3,6 +3,7 @@ import type { Payment } from '../types';
 import { useStore } from '../store/StoreContext';
 import { emptyMonthSummary, monthlySummaries, patientBalances } from '../store/selectors';
 import { formatMoney, parseMoney } from '../lib/money';
+import { cobranzaDelMes, totalesDelMes } from '../lib/cobranza';
 import { addMonths, formatDateShort, formatMonthKey, isValidISODate, monthKey, today } from '../lib/dates';
 import { Card, ConfirmButton, Empty, Field, Modal, SinPacientes, Stat } from '../components/ui';
 import { MonthlyGoal } from '../components/MonthlyGoal';
@@ -152,7 +153,23 @@ export function FinancePage({
     setAdding(false);
   }
 
-  const pendingThisMonth = summary.billed - summary.collected;
+  /*
+   * Lo que falta cobrar DE ESTE MES.
+   *
+   * Era `summary.billed - summary.collected`, y esa resta mezclaba dos cosas
+   * que no se pueden restar: lo facturado cuenta sesiones del mes, lo cobrado
+   * cuenta plata que entró en el mes. Quien cobra el mes vencido —que es lo
+   * normal— veía el pago de octubre bajándole lo pendiente de noviembre, y
+   * octubre quedaba impago para siempre. Ahora cada pago se imputa a las
+   * sesiones que salda; el porqué largo está en `src/lib/cobranza.ts`.
+   *
+   * "Cobrado del mes" sigue siendo la plata que entró en el mes, que es otra
+   * pregunta —cuánto entró— y por sí sola está bien.
+   */
+  const pendingThisMonth = useMemo(
+    () => totalesDelMes(cobranzaDelMes(data, month)).pendiente,
+    [data, month],
+  );
 
   /** Si se intentó registrar un pago sin tener pacientes todavía. */
   const [faltanPacientes, setFaltanPacientes] = useState(false);
@@ -231,7 +248,7 @@ export function FinancePage({
             summary.billed === 0
               ? 'Todavía sin sesiones este mes'
               : pendingThisMonth > 0
-                ? 'Facturado y todavía sin cobrar'
+                ? 'De las sesiones de este mes'
                 : 'No te queda nada pendiente'
           }
         />

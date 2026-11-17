@@ -10,7 +10,7 @@ Seguí en ese idioma.
 ```bash
 npm run dev                          # desarrollo
 npm run build                        # tsc --noEmit && vite build
-npm test                             # toda la batería unitaria (382 al escribir esto)
+npm test                             # toda la batería unitaria (397 al escribir esto)
 npx vitest run src/lib/money.test.ts # una sola
 npm run typecheck
 ```
@@ -25,6 +25,7 @@ node e2e/actualizacion.mjs  # 17: la barra de "hay una versión nueva"
 node e2e/borradores.mjs     # 28: que lo escrito no se pierda al cerrar una pantalla
 node e2e/dos-pestanas.mjs   # 8: dos pestañas a la vez, que no se pisen
 node e2e/hoy.mjs            # 42: marcar lo que pasó, desde el inicio y desde el cierre
+node e2e/meses.mjs          # 15: que cada mes muestre lo suyo, cobrando el mes vencido
 node e2e/recordatorios.mjs  # 28: los avisos del sistema y sus botones
 ```
 
@@ -112,6 +113,22 @@ justamente porque alguien pagó algo, que casi nunca es el saldo entero—; para
 ya tiene "Usar saldo total". `ChartRow` exige `accion` junto con `onClick` por tipo: sin eso un
 lector de pantalla anunciaría la etiqueta de la barra, que describe el gráfico y no lo que pasa
 al tocar.
+
+**"Facturado del mes" y "cobrado del mes" no se pueden restar.** Uno cuenta sesiones del mes, el
+otro plata que entró en el mes: son dos bases distintas. Restarlos —que es lo que hacía "por
+cobrar del mes"— hacía que el pago de octubre, cobrado en noviembre, le bajara lo pendiente a
+NOVIEMBRE y dejara octubre impago para siempre. Cobrar el mes vencido es lo normal en un
+consultorio, así que el número estaba mal casi siempre. Lo que falta cobrar de un mes sale de
+`cobranzaDelMes()` de `src/lib/cobranza.ts`, que imputa cada pago a las sesiones que salda:
+primero el que lleva `sessionId` a SU sesión, y lo que queda de la más vieja a la más nueva, como
+una cuenta corriente —la misma regla que usa `pendientes.ts`—. "Cobrado del mes" se queda como
+está: cuánto entró es otra pregunta y por sí sola está bien respondida.
+
+El monitoreo tiene su propio navegador de mes, uno solo para las dos tarjetas que dependen del
+mes. La deuda acumulada se sigue mostrando aparte: dividir por mes sin ese número escondería una
+deuda vieja en un mes que nadie va a volver a mirar. La comparación de honorarios NO lleva mes
+—es la tarifa vigente— y lo dice en su nota, porque abajo de un navegador de mes todo parece del
+mes.
 
 **Un cobro puede estar atado a su sesión.** `Payment.sessionId` es opcional —un cobro puede ser
 del mes entero, o una seña, y los viejos no lo tienen—, pero cuando está, es lo que permite decir

@@ -1126,6 +1126,18 @@ a.btn {
 }
 .close-summary strong { color: var(--text); }
 
+/* El navegador de mes del monitoreo. Centrado y con las flechas al alcance
+   del pulgar: es lo primero que se toca al entrar, porque decide de qué mes
+   habla todo lo de abajo. */
+.mes-nav {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  margin-bottom: 14px;
+}
+.mes-nav strong { min-width: 150px; text-align: center; }
+
 /* Encabezado del cierre: el atajo y el medio de pago, en una sola línea. */
 .close-head { display: flex; gap: 10px; align-items: center; margin-bottom: 14px; }
 .close-head select { width: auto; flex: 1; min-width: 0; font-size: 0.88rem; padding: 8px 10px; }

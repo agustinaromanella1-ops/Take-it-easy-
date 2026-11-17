@@ -1,25 +1,49 @@
-import { useMemo } from 'react';
+import { useMemo, useState } from 'react';
 import { useStore } from '../store/StoreContext';
 import { patientAttendance, patientBalances } from '../store/selectors';
+import { cobranzaDelMes, totalesDelMes } from '../lib/cobranza';
+import { addMonths, formatMonthKey, monthKey, today } from '../lib/dates';
 import { suggestedRate } from '../lib/pricing';
 import { formatMoney } from '../lib/money';
 import { Card, Empty } from './ui';
 import { CHART_COLORS, ChartRow, Legend, StackedBar } from './charts';
 
-/** Monitoreo general: cobranza, asistencia y comparación de honorarios. */
+/**
+ * Monitoreo: cobranza, asistencia y comparación de honorarios.
+ *
+ * **La cobranza y la asistencia van mes por mes.** Antes sumaban todo el
+ * historial en un solo gráfico, y cobrar el mes vencido —que es lo normal—
+ * hacía que las sesiones de octubre aparecieran como deuda mientras se miraba
+ * noviembre. Con el mes elegido arriba, cada renglón habla solo de ese mes:
+ * `cobranzaDelMes` imputa cada pago a las sesiones que salda, así el pago de
+ * noviembre por la sesión de octubre salda octubre y no le baja lo pendiente a
+ * noviembre. El porqué largo está en `src/lib/cobranza.ts`.
+ *
+ * La comparación de honorarios no lleva mes: es la tarifa vigente de cada
+ * paciente, que no es un dato del pasado.
+ */
 export function Monitoring({ onCobrar }: { onCobrar?: (patientId: string) => void }) {
   const { data } = useStore();
   const currency = data.settings.currency;
+  const [mes, setMes] = useState(() => monthKey(today()));
 
   const balances = useMemo(() => patientBalances(data), [data]);
-  const attendance = useMemo(() => patientAttendance(data), [data]);
+  const attendance = useMemo(() => patientAttendance(data, mes), [data, mes]);
 
-  /** Quién pagó y quién debe, del que más debe al que menos. */
-  const collection = useMemo(
-    () =>
-      [...balances.values()]
-        .filter((b) => b.billed > 0)
-        .sort((a, b) => b.balance - a.balance || b.billed - a.billed),
+  /** Quién pagó y quién debe de ESE mes, del que más debe al que menos. */
+  const collection = useMemo(() => cobranzaDelMes(data, mes), [data, mes]);
+  const totales = useMemo(() => totalesDelMes(collection), [collection]);
+
+  /**
+   * La deuda acumulada de todos los meses.
+   *
+   * Va aparte y no adentro del gráfico: el gráfico contesta "cómo viene este
+   * mes" y el total contesta "cuánto me deben en total", que son dos preguntas
+   * y mezclarlas es lo que estaba mal. Sin este número, dividir por mes
+   * escondería una deuda vieja en un mes que nadie va a volver a mirar.
+   */
+  const deudaTotal = useMemo(
+    () => [...balances.values()].reduce((n, b) => n + Math.max(0, b.balance), 0),
     [balances],
   );
 
@@ -52,9 +76,22 @@ export function Monitoring({ onCobrar }: { onCobrar?: (patientId: string) => voi
 
   return (
     <>
+      {/* El mes que se está mirando. Va una sola vez arriba y manda sobre la
+          cobranza y la asistencia: dos navegadores separados dejarían las dos
+          tarjetas hablando de meses distintos sin que se note. */}
+      <div className="mes-nav" role="group" aria-label="Mes del monitoreo">
+        <button className="btn small" onClick={() => setMes(addMonths(mes, -1))} aria-label="Mes anterior">
+          ←
+        </button>
+        <strong className="cap-first">{formatMonthKey(mes)}</strong>
+        <button className="btn small" onClick={() => setMes(addMonths(mes, 1))} aria-label="Mes siguiente">
+          →
+        </button>
+      </div>
+
       <Card title="Quién pagó y quién debe">
         {collection.length === 0 ? (
-          <Empty>Todavía no hay sesiones facturadas.</Empty>
+          <Empty>No hubo sesiones facturadas en {formatMonthKey(mes).toLowerCase()}.</Empty>
         ) : (
           <>
             <Legend
@@ -65,9 +102,9 @@ export function Monitoring({ onCobrar }: { onCobrar?: (patientId: string) => voi
             />
             <div style={{ marginTop: 12 }}>
               {collection.map((b) => {
-                const pending = Math.max(0, b.balance);
+                const pending = b.pendiente;
                 // Un pago de más no agranda la barra: el tope es lo facturado.
-                const paid = Math.min(b.billed, b.paid);
+                const paid = Math.min(b.facturado, b.cobrado);
                 /*
                  * Tocar la fila abre el cobro con esa persona puesta.
                  *
@@ -105,8 +142,8 @@ export function Monitoring({ onCobrar }: { onCobrar?: (patientId: string) => voi
                     }
                   >
                     <StackedBar
-                      total={b.billed}
-                      title={`${b.patient.name}: cobrado ${formatMoney(paid, currency)} de ${formatMoney(b.billed, currency)}`}
+                      total={b.facturado}
+                      title={`${b.patient.name}: cobrado ${formatMoney(paid, currency)} de ${formatMoney(b.facturado, currency)} de ${formatMonthKey(mes).toLowerCase()}`}
                       segments={[
                         { label: 'Cobrado', value: paid, color: CHART_COLORS.primary },
                         { label: 'Pendiente', value: pending, color: CHART_COLORS.attention },
@@ -116,6 +153,18 @@ export function Monitoring({ onCobrar }: { onCobrar?: (patientId: string) => voi
                 );
               })}
             </div>
+            <p className="ref-note">
+              De {formatMonthKey(mes).toLowerCase()} facturaste{' '}
+              <strong>{formatMoney(totales.facturado, currency)}</strong> y ya cobraste{' '}
+              <strong>{formatMoney(totales.cobrado, currency)}</strong>. Un pago cuenta en el mes de la
+              sesión que salda, no en el mes en que entró.
+            </p>
+            {deudaTotal > totales.pendiente && (
+              <p className="ref-note">
+                Sumando todos los meses, te deben{' '}
+                <strong className="money debt">{formatMoney(deudaTotal, currency)}</strong>.
+              </p>
+            )}
             {onCobrar && (
               <p className="ref-note">Tocá a alguien para registrarle un cobro.</p>
             )}
@@ -125,7 +174,7 @@ export function Monitoring({ onCobrar }: { onCobrar?: (patientId: string) => voi
 
       <Card title="Asistencia">
         {attendanceRows.length === 0 ? (
-          <Empty>Todavía no hay sesiones cerradas para medir asistencia.</Empty>
+          <Empty>No hay sesiones cerradas en {formatMonthKey(mes).toLowerCase()}.</Empty>
         ) : (
           <>
             <Legend
@@ -155,13 +204,17 @@ export function Monitoring({ onCobrar }: { onCobrar?: (patientId: string) => voi
               ))}
             </div>
             <p className="ref-note">
-              El porcentaje cuenta solo sesiones que ya ocurrieron. Las todavía programadas no bajan la
-              asistencia de nadie.
+              De {formatMonthKey(mes).toLowerCase()}. El porcentaje cuenta solo sesiones que ya
+              ocurrieron: las todavía programadas no bajan la asistencia de nadie, y un turno movido de
+              día tampoco.
             </p>
           </>
         )}
       </Card>
 
+      {/* Sin mes a propósito: es la tarifa que cobra hoy cada paciente, no lo
+          que cobró en un mes. El texto de abajo lo dice para que no se lea
+          como si fuera del mes elegido arriba. */}
       <Card title="Comparación de honorarios">
         {fees.length === 0 ? (
           <Empty>Ningún paciente activo tiene honorario cargado.</Empty>
@@ -195,12 +248,14 @@ export function Monitoring({ onCobrar }: { onCobrar?: (patientId: string) => voi
             ))}
             {reference > 0 ? (
               <p className="ref-note">
-                La línea gris marca los {formatMoney(reference, currency)} que sugiere la calculadora. En
-                ámbar, los honorarios que quedaron por debajo.
+                Es el honorario vigente de cada paciente, no el del mes elegido arriba. La línea gris
+                marca los {formatMoney(reference, currency)} que sugiere la calculadora; en ámbar, los
+                que quedaron por debajo.
               </p>
             ) : (
               <p className="ref-note">
-                Completá la calculadora de tarifa para comparar estos valores contra lo que deberías cobrar.
+                Es el honorario vigente de cada paciente, no el del mes elegido arriba. Completá la
+                calculadora de tarifa para compararlos con lo que deberías cobrar.
               </p>
             )}
           </>
