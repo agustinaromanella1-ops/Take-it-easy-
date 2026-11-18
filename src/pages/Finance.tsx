@@ -9,6 +9,7 @@ import { Card, ConfirmButton, Empty, Field, Modal, SinPacientes, Stat } from '..
 import { MonthlyGoal } from '../components/MonthlyGoal';
 import { RateCalculator } from '../components/RateCalculator';
 import { Monitoring } from '../components/Monitoring';
+import { Cuentas } from '../components/Cuentas';
 import { Billing } from '../components/Billing';
 import { plural } from '../lib/plural';
 import { useBorrador } from '../lib/useBorrador';
@@ -49,7 +50,7 @@ export function FinancePage({
 }) {
   const { data, dispatch } = useStore();
   const [month, setMonth] = useState(() => monthKey(today()));
-  const [view, setView] = useState<'resumen' | 'monitoreo' | 'facturacion'>('resumen');
+  const [view, setView] = useState<'resumen' | 'monitoreo' | 'cuentas' | 'facturacion'>('resumen');
   const [adding, setAdding] = useState(false);
   const [form, setForm] = useState<FormCobro>(() => enBlanco());
   /**
@@ -212,9 +213,18 @@ export function FinancePage({
       </div>
 
       <div className="tabs" role="tablist" aria-label="Vista de finanzas">
-        {(['resumen', 'monitoreo', 'facturacion'] as const).map((v) => (
+        {/* "Cuentas" va entre el monitoreo y la facturación: las tres primeras
+            son para mirar plata —el mes, los meses de cada uno, el total— y la
+            última es para emitir. */}
+        {(['resumen', 'monitoreo', 'cuentas', 'facturacion'] as const).map((v) => (
           <button key={v} role="tab" aria-selected={view === v} onClick={() => setView(v)}>
-            {v === 'resumen' ? 'Resumen' : v === 'monitoreo' ? 'Monitoreo' : 'Facturación'}
+            {v === 'resumen'
+              ? 'Resumen'
+              : v === 'monitoreo'
+                ? 'Monitoreo'
+                : v === 'cuentas'
+                  ? 'Cuentas'
+                  : 'Facturación'}
           </button>
         ))}
       </div>
@@ -223,6 +233,9 @@ export function FinancePage({
           de registrar pago vive fuera del selector de vista, así que se abre
           encima y al cerrarlo la barra de esa persona ya quedó actualizada. */}
       {view === 'monitoreo' && <Monitoring onCobrar={openAdd} />}
+      {/* Mismo atajo que el monitoreo: donde se ve un saldo se tiene que poder
+          cobrar, sin volver al resumen a buscar a la persona en una lista. */}
+      {view === 'cuentas' && <Cuentas onCobrar={openAdd} />}
       {view === 'facturacion' && <Billing />}
 
       {view === 'resumen' && (

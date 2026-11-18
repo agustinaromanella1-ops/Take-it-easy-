@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { cobranzaDelMes, imputarPagos, totalesDelMes } from './cobranza';
+import { cobranzaDelMes, cuentasPorPaciente, imputarPagos, sobranteNoImputado, totalesDelMes } from './cobranza';
 import type { AppData, Patient, Payment, Session } from '../types';
 
 const paciente = (id: string): Patient => ({
@@ -172,5 +172,84 @@ describe('la cobranza de un mes', () => {
       cobrado: 5000000,
       pendiente: 5000000,
     });
+  });
+});
+
+describe('la cuenta de cada paciente, mes por mes', () => {
+  it('arma un renglón por mes con sesiones, del más nuevo al más viejo', () => {
+    const d = datos([sesion('a', '2026-10-07'), sesion('b', '2026-10-14'), sesion('c', '2026-11-04')]);
+    const cuenta = cuentasPorPaciente(d)[0]!;
+    expect(cuenta.meses.map((m) => m.mes)).toEqual(['2026-11', '2026-10']);
+    expect(cuenta.meses[1]!.sesiones).toBe(2);
+    expect(cuenta.meses[1]!.facturado).toBe(10000000);
+  });
+
+  it('un mes sin sesiones no es un renglón vacío', () => {
+    const d = datos([sesion('a', '2026-09-07'), sesion('b', '2026-11-04')]);
+    expect(cuentasPorPaciente(d)[0]!.meses.map((m) => m.mes)).toEqual(['2026-11', '2026-09']);
+  });
+
+  it('el depósito de noviembre se ve saldando octubre, que es la pregunta', () => {
+    const d = datos(
+      [sesion('oct', '2026-10-07'), sesion('nov', '2026-11-04')],
+      [pago('g1', '2026-11-10', 5000000)],
+    );
+    const meses = cuentasPorPaciente(d)[0]!.meses;
+    expect(meses.find((m) => m.mes === '2026-10')?.cobrado).toBe(5000000);
+    expect(meses.find((m) => m.mes === '2026-11')?.cobrado).toBe(0);
+  });
+
+  it('los totales son la suma de los meses', () => {
+    const d = datos(
+      [sesion('a', '2026-10-07'), sesion('b', '2026-11-04')],
+      [pago('g1', '2026-11-10', 5000000)],
+    );
+    const cuenta = cuentasPorPaciente(d)[0]!;
+    expect(cuenta.facturado).toBe(10000000);
+    expect(cuenta.cobrado).toBe(5000000);
+    expect(cuenta.debe).toBe(5000000);
+  });
+
+  it('lo pagado de más queda como saldo a favor y no se pierde', () => {
+    const d = datos([sesion('a', '2026-11-04')], [pago('g1', '2026-11-04', 8000000)]);
+    const cuenta = cuentasPorPaciente(d)[0]!;
+    expect(cuenta.debe).toBe(0);
+    expect(cuenta.aFavor).toBe(3000000);
+  });
+
+  it('sin deuda ni pagos de más, no hay saldo a favor', () => {
+    const d = datos([sesion('a', '2026-11-04')], [pago('g1', '2026-11-04', 5000000)]);
+    expect(cuentasPorPaciente(d)[0]!.aFavor).toBe(0);
+  });
+
+  it('primero quien más debe, porque es una lista para reclamar', () => {
+    const d = datos(
+      [sesion('a', '2026-11-04', { fee: 1000000 }), sesion('b', '2026-11-05', { patientId: 'p2', fee: 9000000 })],
+      [],
+      [paciente('p1'), paciente('p2')],
+    );
+    expect(cuentasPorPaciente(d).map((c) => c.patient.id)).toEqual(['p2', 'p1']);
+  });
+
+  it('un paciente sin sesiones ni pagos no ocupa lugar', () => {
+    const d = datos([sesion('a', '2026-11-04')], [], [paciente('p1'), paciente('p2')]);
+    expect(cuentasPorPaciente(d).map((c) => c.patient.id)).toEqual(['p1']);
+  });
+
+  it('pero uno que solo pagó sí aparece, con su saldo a favor', () => {
+    const d = datos([], [pago('g1', '2026-11-04', 5000000)]);
+    const cuenta = cuentasPorPaciente(d)[0]!;
+    expect(cuenta.meses).toEqual([]);
+    expect(cuenta.aFavor).toBe(5000000);
+  });
+});
+
+describe('el sobrante sin imputar', () => {
+  it('es lo que entró menos lo que se pudo asignar', () => {
+    expect(sobranteNoImputado([sesion('a', '2026-11-04')], [pago('g1', '2026-11-04', 8000000)])).toBe(3000000);
+  });
+
+  it('nunca es negativo', () => {
+    expect(sobranteNoImputado([sesion('a', '2026-11-04')], [])).toBe(0);
   });
 });

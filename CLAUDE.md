@@ -10,7 +10,7 @@ Seguí en ese idioma.
 ```bash
 npm run dev                          # desarrollo
 npm run build                        # tsc --noEmit && vite build
-npm test                             # toda la batería unitaria (397 al escribir esto)
+npm test                             # toda la batería unitaria (408 al escribir esto)
 npx vitest run src/lib/money.test.ts # una sola
 npm run typecheck
 ```
@@ -25,7 +25,7 @@ node e2e/actualizacion.mjs  # 17: la barra de "hay una versión nueva"
 node e2e/borradores.mjs     # 28: que lo escrito no se pierda al cerrar una pantalla
 node e2e/dos-pestanas.mjs   # 8: dos pestañas a la vez, que no se pisen
 node e2e/hoy.mjs            # 42: marcar lo que pasó, desde el inicio y desde el cierre
-node e2e/meses.mjs          # 15: que cada mes muestre lo suyo, cobrando el mes vencido
+node e2e/meses.mjs          # 26: cada mes muestra lo suyo, y la cuenta de cada paciente
 node e2e/recordatorios.mjs  # 28: los avisos del sistema y sus botones
 ```
 
@@ -130,6 +130,13 @@ deuda vieja en un mes que nadie va a volver a mirar. La comparación de honorari
 —es la tarifa vigente— y lo dice en su nota, porque abajo de un navegador de mes todo parece del
 mes.
 
+La pestaña **Cuentas** (`src/components/Cuentas.tsx`) contesta la otra mitad: entró un depósito,
+de qué mes era. Es la misma imputación, pero mirando una persona y sus meses en fila. Cada
+paciente viene plegado y con el saldo en el título: lo que se busca es una sola persona —la que
+acaba de depositar—, y veinte tablas abiertas son el mismo problema que la pantalla no tener
+nada. Lo pagado de más va como "a favor" y no se descarta: si no se dijera, un pago adelantado
+parecería no haberse registrado.
+
 **Un cobro puede estar atado a su sesión.** `Payment.sessionId` es opcional —un cobro puede ser
 del mes entero, o una seña, y los viejos no lo tienen—, pero cuando está, es lo que permite decir
 si una sesión está paga y desmarcarla sacando ese cobro y no otro del mismo día.
@@ -168,7 +175,9 @@ los huecos se leen parejos.
 
 **Todo par de texto y fondo está medido contra WCAG AA (4,5:1).** Si agregás un color, medilo. El
 caso que ya se resolvió: blanco sobre el naranja del botón da 2,7:1 y no pasa, por eso el botón
-principal lleva tinta oscura (`--sobre-claro`, 5,9:1) en los dos temas.
+principal lleva tinta oscura (`--sobre-claro`, 5,9:1) en los dos temas. **El blanco sobre el lila
+`--accent` da 2,41:1 y ya se coló tres veces**: en `.seg`, en el atajo del cierre y en la pestaña
+elegida de Finanzas. Sobre lila va `--sobre-claro`, que da 6,53:1.
 
 **Dos temas.** Todo color va como token en `:root` y, si cambia, también en
 `[data-tema='oscuro']`. Un color fijo en una regla deja letra clara sobre fondo claro en oscuro.

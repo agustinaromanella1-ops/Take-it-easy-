@@ -878,8 +878,13 @@ a.btn {
 .section-head h2 { font-size: 1.5rem; }
 
 /* ---------- Pestañas de la agenda ---------- */
+/* Con cuatro pestañas el `inline-flex` de antes se iba del borde en un
+   celular. Ahora ocupa el ancho y los botones se reparten el sobrante con
+   `auto`, por lo mismo que `.seg`: con base cero quedarían todos igual de
+   anchos y las palabras, que no miden lo mismo, se verían disparejas. */
 .tabs {
-  display: inline-flex;
+  display: flex;
+  width: 100%;
   background: var(--velo);
   border-radius: 999px;
   padding: 4px;
@@ -887,16 +892,22 @@ a.btn {
   margin-bottom: 18px;
 }
 .tabs button {
+  flex: 1 1 auto;
+  min-width: 0;
+  white-space: nowrap;
   border: 0;
   background: transparent;
   font: inherit;
   font-weight: 700;
   color: var(--muted);
-  padding: 8px 20px;
+  padding: 8px 8px;
   border-radius: 999px;
   cursor: pointer;
 }
-.tabs button[aria-selected='true'] { background: var(--accent); color: #fff; }
+/* Tinta oscura y no blanco: el blanco sobre este lila da 2,41:1 y no pasa
+   WCAG AA. Es el mismo caso que ya se resolvió en `.seg` y en el botón
+   principal; a esta pestaña se le había escapado. La tinta da 6,53:1. */
+.tabs button[aria-selected='true'] { background: var(--accent); color: var(--sobre-claro); }
 
 /* ---------- Calendario mensual ---------- */
 .month-cal { width: 100%; }
@@ -1297,6 +1308,40 @@ button.chart-row-btn:active { background: var(--accent-soft); }
 .plegable > summary:hover { background: var(--accent-soft); border-radius: 11px; }
 .plegable > *:not(summary) { padding: 0 16px; }
 .plegable > *:last-child { padding-bottom: 14px; }
+
+/* La cuenta de un paciente: el nombre ocupa lo que haya y el saldo queda
+   pegado a la derecha, en la misma columna en todas las filas, para poder
+   bajar la vista en línea recta buscando a quién le falta pagar. */
+.cuenta > summary { gap: 8px; }
+.cuenta-nombre { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; color: var(--text); }
+.cuenta-saldo { flex-shrink: 0; font-size: 0.88rem; font-weight: 700; }
+.plegable-cuerpo { padding-top: 2px; }
+/* La cantidad de sesiones va abajo del mes, chica: es contexto del renglón,
+   no una columna más —una quinta columna no entra en un celular—. */
+.cuenta-sesiones { display: block; font-size: 0.78rem; color: var(--muted); font-weight: 400; }
+.cuenta tfoot td { border-top: var(--borde) solid var(--border); border-bottom: 0; }
+/* Cuatro columnas con plata adentro de un plegable adentro de una tarjeta: con
+   el relleno de tabla de siempre no entraban en un celular y "$ 50.000" se
+   partía en dos renglones. El `nowrap` es lo que impide partir un importe, que
+   es justo lo que no se puede leer mal. */
+.cuenta table { font-size: 0.84rem; }
+.cuenta th,
+.cuenta td { padding: 9px 5px; }
+.cuenta th:first-child,
+.cuenta td:first-child { padding-left: 0; }
+.cuenta th:last-child,
+.cuenta td:last-child { padding-right: 0; }
+.cuenta td.num,
+.cuenta th.num { white-space: nowrap; }
+.cuenta td:first-child { line-height: 1.3; }
+/* En las pantallas más angostas los cuatro importes siguen sin entrar. Antes
+   de dejar que la tabla se arrastre de costado —que esconde justo la columna
+   de lo que debe, que es la que se vino a mirar— se achica la letra. */
+@media (max-width: 380px) {
+  .cuenta table { font-size: 0.79rem; }
+  .cuenta th,
+  .cuenta td { padding: 8px 3px; }
+}
 /* Separador dentro de un formulario largo. */
 .form-section {
   margin: 22px 0 12px;

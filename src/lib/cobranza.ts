@@ -142,3 +142,118 @@ export function totalesDelMes(filas: CobranzaDePaciente[]): {
   }
   return { facturado, cobrado, pendiente };
 }
+
+/**
+ * Lo que un paciente pagó de más y no está imputado a ninguna sesión.
+ *
+ * Es la diferencia entre lo que entró y lo que se pudo asignar. Sale de la
+ * misma imputación, así que no puede contradecirla.
+ */
+export function sobranteNoImputado(sesiones: Session[], pagos: Payment[]): Cents {
+  const imputado = imputarPagos(sesiones, pagos);
+  let asignado = 0;
+  for (const monto of imputado.values()) asignado += monto;
+  let entró = 0;
+  for (const p of pagos) entró += p.amount;
+  return Math.max(0, entró - asignado);
+}
+
+/** Un mes en la cuenta de alguien. */
+export interface MesDeCuenta {
+  /** "YYYY-MM". */
+  mes: string;
+  /** Sesiones facturables de ese mes. */
+  sesiones: number;
+  facturado: Cents;
+  cobrado: Cents;
+  pendiente: Cents;
+}
+
+export interface CuentaDePaciente {
+  patient: Patient;
+  /** Del mes más nuevo al más viejo: lo último es lo que se está mirando. */
+  meses: MesDeCuenta[];
+  facturado: Cents;
+  cobrado: Cents;
+  /** Lo que debe en total. Nunca negativo: lo pagado de más va en `aFavor`. */
+  debe: Cents;
+  /** Plata que entró y todavía no tiene sesión que saldar. */
+  aFavor: Cents;
+}
+
+/**
+ * La cuenta de cada paciente, mes por mes.
+ *
+ * Contesta la pregunta que el monitoreo no contesta: cuando entra un depósito,
+ * de qué mes era. Mirando una sola persona y sus meses en fila se ve de dónde
+ * viene lo que pagó y qué le quedó abierto, que es lo que hay que saber para
+ * reclamar sin equivocarse de mes.
+ *
+ * Un mes aparece si tuvo sesiones facturables. Un mes sin sesiones no es un
+ * renglón vacío: es un mes en que no se atendió, y escribirlo sería ruido.
+ */
+export function cuentasPorPaciente(data: AppData): CuentaDePaciente[] {
+  const pagosPorPaciente = new Map<string, Payment[]>();
+  for (const p of data.payments) {
+    const suyos = pagosPorPaciente.get(p.patientId);
+    if (suyos) suyos.push(p);
+    else pagosPorPaciente.set(p.patientId, [p]);
+  }
+
+  const sesionesPorPaciente = new Map<string, Session[]>();
+  for (const s of data.sessions) {
+    const suyas = sesionesPorPaciente.get(s.patientId);
+    if (suyas) suyas.push(s);
+    else sesionesPorPaciente.set(s.patientId, [s]);
+  }
+
+  const cuentas: CuentaDePaciente[] = [];
+  for (const patient of data.patients) {
+    const suyas = sesionesPorPaciente.get(patient.id) ?? [];
+    const pagos = pagosPorPaciente.get(patient.id) ?? [];
+    const imputado = imputarPagos(suyas, pagos);
+
+    const porMes = new Map<string, MesDeCuenta>();
+    for (const s of suyas) {
+      if (!isBillable(s)) continue;
+      const clave = monthKey(s.date);
+      let m = porMes.get(clave);
+      if (!m) {
+        m = { mes: clave, sesiones: 0, facturado: 0, cobrado: 0, pendiente: 0 };
+        porMes.set(clave, m);
+      }
+      m.sesiones += 1;
+      m.facturado += s.fee;
+      m.cobrado += imputado.get(s.id) ?? 0;
+    }
+
+    const meses = [...porMes.values()].sort((a, b) => b.mes.localeCompare(a.mes));
+    let facturado = 0;
+    let cobrado = 0;
+    for (const m of meses) {
+      m.pendiente = Math.max(0, m.facturado - m.cobrado);
+      facturado += m.facturado;
+      cobrado += m.cobrado;
+    }
+
+    if (meses.length === 0 && pagos.length === 0) continue;
+
+    cuentas.push({
+      patient,
+      meses,
+      facturado,
+      cobrado,
+      debe: Math.max(0, facturado - cobrado),
+      aFavor: sobranteNoImputado(suyas, pagos),
+    });
+  }
+
+  /*
+   * Primero quien más debe.
+   *
+   * Es una lista para reclamar, no un padrón: ordenarla por nombre obligaría a
+   * recorrerla entera para encontrar a quién hay que escribirle. A igual deuda
+   * va el nombre, para que el orden no dependa de cómo vinieron los datos.
+   */
+  return cuentas.sort((a, b) => b.debe - a.debe || a.patient.name.localeCompare(b.patient.name, 'es'));
+}
