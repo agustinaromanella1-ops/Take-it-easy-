@@ -77,6 +77,19 @@ export interface Patient {
   memberNumber: string;
   /** Nombre de la obra social o prepaga, si corresponde. */
   insurer: string;
+  /**
+   * Qué porcentaje del honorario se queda la institución (0 a 99).
+   *
+   * **No toca lo que el paciente debe.** La sesión factura lo que factura y
+   * el saldo del paciente es ese: esto solo sirve para saber cuánto de eso
+   * termina siendo de ella. Descontarlo del `fee` arruinaría la cuenta
+   * corriente —se le estaría cobrando de menos a quien paga— y además el
+   * porcentaje puede cambiar, mientras que lo facturado no se reescribe.
+   *
+   * Va por paciente y no por tipo: el mismo consultorio puede atender para
+   * dos instituciones que se quedan con porcentajes distintos.
+   */
+  institutionPercent: number;
   /** Fecha del último cambio de honorario. Se actualiza sola al editar la
    *  tarifa, para saber cuándo toca revisarla sin llevar la cuenta a mano. */
   lastRaise: DateISO | null;

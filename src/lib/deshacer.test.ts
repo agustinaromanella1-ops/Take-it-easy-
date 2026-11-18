@@ -18,7 +18,7 @@ const AJUSTES = {
 const pac = (id: string, name: string, updatedAt: string): Patient => ({
   id, updatedAt, name, email: '', phone: '', defaultFee: 3500000, status: 'activo',
   colorIndex: 0, frequency: 'semanal', kind: 'particular', legalName: '', document: '',
-  taxId: '', taxCondition: 'consumidor_final', memberNumber: '', insurer: '', lastRaise: null,
+  taxId: '', taxCondition: 'consumidor_final', memberNumber: '', insurer: '', institutionPercent: 0, lastRaise: null,
   notes: '', createdAt: '2026-01-01',
 });
 

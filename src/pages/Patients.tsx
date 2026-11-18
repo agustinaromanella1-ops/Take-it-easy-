@@ -20,6 +20,8 @@ interface FormState {
   colorIndex: number;
   frequency: Frequency;
   kind: PatientKind;
+  /** El porcentaje que retiene la institución, como texto del campo. */
+  institutionPercent: string;
   legalName: string;
   document: string;
   taxId: string;
@@ -52,6 +54,7 @@ function toForm(p: Patient): FormState {
     colorIndex: p.colorIndex,
     frequency: p.frequency,
     kind: p.kind,
+    institutionPercent: p.institutionPercent > 0 ? String(p.institutionPercent) : '',
     legalName: p.legalName,
     document: p.document,
     taxId: p.taxId,
@@ -75,6 +78,7 @@ const EN_BLANCO: FormState = {
   colorIndex: 0,
   frequency: 'semanal',
   kind: 'particular',
+  institutionPercent: '',
   legalName: '',
   document: '',
   taxId: '',
@@ -155,7 +159,12 @@ export function PatientsPage({ onOpenPatient }: { onOpenPatient: (id: string) =>
     // Se abre lo que esa persona ya tiene cargado: esconder justo lo que se
     // vino a cambiar sería peor que mostrarlo de más.
     setAbiertos({
-      mas: p.email.trim() !== '' || p.notes.trim() !== '' || p.kind !== EN_BLANCO.kind || p.status !== EN_BLANCO.status,
+      mas:
+        p.email.trim() !== '' ||
+        p.notes.trim() !== '' ||
+        p.kind !== EN_BLANCO.kind ||
+        p.status !== EN_BLANCO.status ||
+        p.institutionPercent > 0,
       factura:
         [p.legalName, p.document, p.taxId, p.insurer, p.memberNumber].some((v) => v.trim() !== '') ||
         p.taxCondition !== EN_BLANCO.taxCondition,
@@ -185,11 +194,23 @@ export function PatientsPage({ onOpenPatient }: { onOpenPatient: (id: string) =>
     if (fee === null) next.fee = 'Importe inválido.';
     else if (fee < 0) next.fee = 'El honorario no puede ser negativo.';
 
+    // Vacío es cero: no retiene nada. El 100 se rechaza porque dejaría el
+    // honorario entero del lado de la institución, que no es un dato sino un
+    // error de tipeo.
+    const crudo = form.institutionPercent.trim();
+    const porcentaje = crudo === '' ? 0 : Number(crudo.replace(',', '.'));
+    if (!Number.isFinite(porcentaje) || !Number.isInteger(porcentaje)) {
+      next.institutionPercent = 'Poné un número entero, sin el signo %.';
+    } else if (porcentaje < 0 || porcentaje > 99) {
+      next.institutionPercent = 'Tiene que estar entre 0 y 99.';
+    }
+
     setErrors(next);
     if (Object.keys(next).length > 0) {
-      // El email vive adentro de "Más datos". Si está plegado, su error queda
-      // escondido y Guardar parece no hacer nada: se abre para que se vea.
-      if (next.email) setAbiertos((a) => ({ ...a, mas: true }));
+      // El email y el porcentaje viven adentro de "Más datos". Si está
+      // plegado, su error queda escondido y Guardar parece no hacer nada: se
+      // abre para que se vea.
+      if (next.email || next.institutionPercent) setAbiertos((a) => ({ ...a, mas: true }));
       return;
     }
 
@@ -202,6 +223,7 @@ export function PatientsPage({ onOpenPatient }: { onOpenPatient: (id: string) =>
       colorIndex: form.colorIndex,
       frequency: form.frequency,
       kind: form.kind,
+      institutionPercent: porcentaje,
       legalName: form.legalName.trim(),
       document: form.document.trim(),
       taxId: form.taxId.trim(),
@@ -450,6 +472,17 @@ export function PatientsPage({ onOpenPatient }: { onOpenPatient: (id: string) =>
                   ))}
                 </select>
               </Field>
+              <Field
+                label="Se queda la institución (%)"
+                error={errors.institutionPercent}
+              >
+                <input
+                  inputMode="numeric"
+                  value={form.institutionPercent}
+                  onChange={(e) => setForm({ ...form, institutionPercent: e.target.value })}
+                  placeholder="0"
+                />
+              </Field>
               <Field label="Estado">
                 <select
                   value={form.status}
@@ -460,6 +493,13 @@ export function PatientsPage({ onOpenPatient }: { onOpenPatient: (id: string) =>
                 </select>
               </Field>
             </div>
+            {/* Lo único del campo que no se adivina: no cambia la deuda. Sin
+                decirlo, cargar un 30% parecería estar perdonándole plata al
+                paciente. */}
+            <p className="small muted" style={{ marginTop: -6 }}>
+              No cambia lo que te debe: la sesión sigue facturando el honorario entero. Sirve para
+              que Finanzas te muestre cuánto te queda a vos.
+            </p>
 
             <div className="field">
               <label className="field-label" id="color-label">Color</label>

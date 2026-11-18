@@ -4,6 +4,7 @@ import { useStore } from '../store/StoreContext';
 import { emptyMonthSummary, monthlySummaries, patientBalances } from '../store/selectors';
 import { formatMoney, parseMoney } from '../lib/money';
 import { cobranzaDelMes, totalesDelMes } from '../lib/cobranza';
+import { hayRetenciones, repartoDelMes } from '../lib/neto';
 import { addMonths, formatDateShort, formatMonthKey, isValidISODate, monthKey, today } from '../lib/dates';
 import { Card, ConfirmButton, Empty, Field, Modal, SinPacientes, Stat } from '../components/ui';
 import { MonthlyGoal } from '../components/MonthlyGoal';
@@ -172,6 +173,16 @@ export function FinancePage({
     [data, month],
   );
 
+  /**
+   * Lo que queda después de lo que retienen las instituciones.
+   *
+   * Solo aparece si alguien tiene porcentaje cargado: en un consultorio
+   * enteramente particular sería una cifra repetida al lado de la otra, y una
+   * tarjeta de más en la pantalla que se mira todos los días.
+   */
+  const reparto = useMemo(() => repartoDelMes(data, month), [data, month]);
+  const conRetenciones = useMemo(() => hayRetenciones(data), [data]);
+
   /** Si se intentó registrar un pago sin tener pacientes todavía. */
   const [faltanPacientes, setFaltanPacientes] = useState(false);
 
@@ -242,6 +253,17 @@ export function FinancePage({
       <>
       <div className="stat-grid">
         <Stat label="Facturado del mes" value={formatMoney(summary.billed, currency)} hint={`${plural(summary.sessionsHeld, 'sesión realizada', 'sesiones realizadas')}`} />
+        {/* Va pegado a "Facturado": es la misma plata vista después de lo que
+            retienen las instituciones, y la pregunta que contesta —de lo que
+            facturé, cuánto es mío— se lee de corrido al lado. */}
+        {conRetenciones && (
+          <Stat
+            label="Te queda del mes"
+            value={formatMoney(reparto.neto, currency)}
+            tone="ok"
+            hint={`Las instituciones se quedan ${formatMoney(reparto.retenido, currency)}`}
+          />
+        )}
         <Stat label="Cobrado del mes" value={formatMoney(summary.collected, currency)} tone="ok" hint={plural(monthPayments.length, 'pago', 'pagos')} />
         {/* Decía "Diferencia del mes" y mostraba $ 0 justo cuando estaba todo
             cobrado, que es la mejor noticia posible: se leía como si no hubiera

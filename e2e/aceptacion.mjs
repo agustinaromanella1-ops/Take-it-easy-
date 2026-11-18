@@ -135,7 +135,7 @@ await page.waitForTimeout(300);
 
 const P1 = {
   nombre: 'Ana Gómez', email: 'ana@ejemplo.com', tel: '011 15 4444-5555', honorario: '42500.50',
-  tipo: 'institucion', frecuencia: 'quincenal', estado: 'activo',
+  tipo: 'institucion', frecuencia: 'quincenal', estado: 'activo', porcentaje: '30',
   completo: 'Ana Laura Gómez Sosa', dni: '30111222', cuit: '27301112223',
   iva: 'monotributo', os: 'Swiss Medical', afiliado: 'SM-99/04', notas: 'Prefiere los martes.',
 };
@@ -152,6 +152,7 @@ await campo('Email').fill(P1.email);
 await campo('Teléfono').fill(P1.tel);
 await campo('Honorario por sesión').fill(P1.honorario);
 await campo('Tipo').selectOption(P1.tipo);
+await campo('Se queda la institución (%)').fill(P1.porcentaje);
 await campo('Frecuencia').selectOption(P1.frecuencia);
 await page.locator('.modal .swatch').nth(4).click();
 await campo('Nombre completo').fill(P1.completo);
@@ -283,6 +284,7 @@ const leido = {
   tel: await campo('Teléfono').inputValue(),
   honorario: await campo('Honorario por sesión').inputValue(),
   tipo: await campo('Tipo').inputValue(),
+  porcentaje: await campo('Se queda la institución (%)').inputValue(),
   frecuencia: await campo('Frecuencia').inputValue(),
   completo: await campo('Nombre completo').inputValue(),
   dni: await campo('DNI').inputValue(),
@@ -390,6 +392,22 @@ await page.waitForTimeout(500);
 const porCobrar = await page.locator('.stat').filter({ hasText: 'Por cobrar del mes' }).innerText();
 check('lo que queda por cobrar se dice con palabras, no con un cero',
   !porCobrar.includes('$ 0'), porCobrar.replace(/\n/g, ' | '));
+
+// Ana trabaja para una institución que se queda el 30%: lo facturado sigue
+// siendo lo facturado, y al lado aparece lo que realmente le queda.
+// El mes tiene dos sesiones: la de Ana por 42.500,50 y otra por 30.000.
+const facturado = await page.locator('.stat').filter({ hasText: 'Facturado del mes' }).innerText();
+check('lo facturado NO le descuenta el porcentaje de la institución',
+  facturado.includes('72.500,50'), facturado.replace(/\n/g, ' | '));
+const teQueda = await page.locator('.stat').filter({ hasText: 'Te queda del mes' });
+check('y aparece lo que queda después de la institución', (await teQueda.count()) === 1);
+// El 30% se aplica solo a la sesión de Ana: 12.750,15 de 42.500,50. La otra
+// sesión es particular y queda entera, así que sobreviven 59.750,35. Las dos
+// partes suman el total: lo neto se calcula restando justamente para que no se
+// pierda un centavo.
+const neto = await teQueda.innerText();
+check('solo sobre el paciente que tiene porcentaje, y al centavo',
+  neto.includes('59.750,35') && neto.includes('12.750,15'), neto.replace(/\n/g, ' | '));
 
 titulo('10. La ficha del paciente dice qué es cada número');
 await page.locator('.tabbar button', { hasText: 'Pacientes' }).click();

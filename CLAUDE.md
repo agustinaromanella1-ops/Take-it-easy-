@@ -10,7 +10,7 @@ Seguí en ese idioma.
 ```bash
 npm run dev                          # desarrollo
 npm run build                        # tsc --noEmit && vite build
-npm test                             # toda la batería unitaria (408 al escribir esto)
+npm test                             # toda la batería unitaria (430 al escribir esto)
 npx vitest run src/lib/money.test.ts # una sola
 npm run typecheck
 ```
@@ -19,7 +19,7 @@ Las pruebas de punta a punta necesitan la app compilada y servida:
 
 ```bash
 npx vite build && npx vite preview --port 4173 &
-node e2e/aceptacion.mjs     # 130 verificaciones sobre la app entera
+node e2e/aceptacion.mjs     # 134 verificaciones sobre la app entera
 node e2e/bienvenida.mjs     # 43: la portada contra el diseño aprobado
 node e2e/actualizacion.mjs  # 17: la barra de "hay una versión nueva"
 node e2e/borradores.mjs     # 28: que lo escrito no se pierda al cerrar una pantalla
@@ -136,6 +136,25 @@ paciente viene plegado y con el saldo en el título: lo que se busca es una sola
 acaba de depositar—, y veinte tablas abiertas son el mismo problema que la pantalla no tener
 nada. Lo pagado de más va como "a favor" y no se descarta: si no se dijera, un pago adelantado
 parecería no haberse registrado.
+
+**El porcentaje que se queda la institución NO toca lo que el paciente debe.**
+`Patient.institutionPercent` (0 a 99) es siempre una cuenta derivada, al lado de la otra: la
+sesión factura lo que factura y el saldo del paciente es ese. Descontarlo del `fee` sería
+cobrarle de menos a quien paga, y además el porcentaje puede cambiar mientras que lo ya
+facturado no se reescribe. Va por paciente y no por tipo: el mismo consultorio puede atender
+para dos instituciones con porcentajes distintos. `src/lib/neto.ts` hace el reparto; lo neto se
+calcula RESTANDO lo retenido, nunca redondeando las dos puntas por separado, porque si no las
+partes podrían no sumar el total y un centavo que no cierra en una pantalla de plata es una
+pregunta que nadie puede contestar.
+
+**Y la calculadora de tarifa tiene que contarlo.** Sin eso proponía una tarifa corta: quien
+atiende para una institución que se queda el 30% y cobra lo sugerido se lleva un 30% menos de lo
+que pidió, sin ninguna señal. `suggestedRate` toma un segundo argumento con la retención
+promedio, que sale de `retencionPromedio()` —pesada por plata y no por cabezas, sobre los
+últimos tres meses— y no de un campo nuevo que habría que mantener a mano. La tarifa se DIVIDE
+por lo que llega, no se le suma un recargo: para llevarse el 100% cobrando el 70% hay que subir
+un 43%, no un 30%. Los dos lugares que llaman a `suggestedRate` —la calculadora y la línea de
+referencia del monitoreo— pasan la misma retención, o marcarían números distintos.
 
 **Un cobro puede estar atado a su sesión.** `Payment.sessionId` es opcional —un cobro puede ser
 del mes entero, o una seña, y los viejos no lo tienen—, pero cuando está, es lo que permite decir

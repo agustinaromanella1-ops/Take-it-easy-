@@ -4,6 +4,7 @@ import { cuentasPorPaciente } from '../lib/cobranza';
 import { formatMonthKey } from '../lib/dates';
 import { formatMoney } from '../lib/money';
 import { patientColor } from '../lib/palette';
+import { repartoDePaciente } from '../lib/neto';
 import { plural } from '../lib/plural';
 import { Card, Empty } from './ui';
 
@@ -143,6 +144,21 @@ export function Cuentas({ onCobrar }: { onCobrar?: (patientId: string) => void }
                     </tfoot>
                   </table>
                 </div>
+              )}
+
+              {/* Lo que se queda la institución. Va acá abajo y no como una
+                  quinta columna: cinco importes por renglón no entran en un
+                  celular, y esto es una sola cuenta sobre el total, no un dato
+                  de cada mes. El porcentaje es el de hoy, así que se aplica a
+                  todo el historial; si cambia, cambia esta línea entera. */}
+              {c.patient.institutionPercent > 0 && c.facturado > 0 && (
+                <p className="small muted" style={{ marginBottom: 0 }}>
+                  La institución se queda el {c.patient.institutionPercent}%: de los{' '}
+                  {formatMoney(c.facturado, moneda)} facturados te quedan{' '}
+                  <strong>{formatMoney(repartoDePaciente(c.patient, c.facturado).neto, moneda)}</strong>,
+                  y de los {formatMoney(c.cobrado, moneda)} que ya entraron,{' '}
+                  <strong>{formatMoney(repartoDePaciente(c.patient, c.cobrado).neto, moneda)}</strong>.
+                </p>
               )}
 
               {/* La plata que entró y todavía no tiene sesión que saldar. Si no

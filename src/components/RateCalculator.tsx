@@ -3,6 +3,8 @@ import type { RateInputs } from '../types';
 import { useStore } from '../store/StoreContext';
 import { suggestedRate, WEEKS_PER_MONTH } from '../lib/pricing';
 import { centsToInput, formatMoney, parseMoney } from '../lib/money';
+import { retencionPromedio } from '../lib/neto';
+import { addMonths, monthKey, today } from '../lib/dates';
 import { Card, Field } from './ui';
 
 /**
@@ -32,13 +34,24 @@ export function RateCalculator() {
     [target, costs, perWeek, tax, noShow],
   );
 
-  const result = useMemo(() => suggestedRate(inputs), [inputs]);
+  /*
+   * Cuánto se quedan las instituciones, según los pacientes ya cargados.
+   *
+   * No se pregunta en un campo: el dato ya está, paciente por paciente, y un
+   * campo más sería otro número que mantener a mano y que se desactualiza. La
+   * ventana son los últimos tres meses porque lo que importa es la mezcla de
+   * pacientes de ahora; un convenio que se cortó el año pasado no tiene que
+   * seguir encareciendo la tarifa de hoy.
+   */
+  const retencion = useMemo(() => retencionPromedio(data, `${addMonths(monthKey(today()), -2)}-01`), [data]);
+  const result = useMemo(() => suggestedRate(inputs, retencion), [inputs, retencion]);
 
   return (
     <Card title="¿Cuánto deberías cobrar?">
       <p className="small muted" style={{ marginTop: 0 }}>
         Poné lo que querés llevarte por mes y la calculadora te dice qué tarifa lo sostiene, contando
         gastos, impuestos y las sesiones que se caen.
+        {retencion > 0 && ' También lo que se quedan las instituciones, según lo que cargaste en cada paciente.'}
       </p>
 
       <div className="field-row">
@@ -78,6 +91,17 @@ export function RateCalculator() {
               {WEEKS_PER_MONTH.toFixed(2)} semanas promedio), de las que esperás cobrar{' '}
               <strong>{result.paidSessions}</strong>.
             </li>
+            {/* Sin decirlo, la tarifa sube y no se entiende por qué. Y es una
+                cuenta que sorprende: para llevarse todo cobrando el 70% hay
+                que subir un 43%, no un 30%. */}
+            {retencion > 0 && (
+              <li>
+                Las instituciones se quedan en promedio{' '}
+                <strong>{retencion.toFixed(retencion < 10 ? 1 : 0)}%</strong> de lo que facturás, así
+                que la tarifa sube para compensarlo. Si lo cobrás todo particular, te alcanza con
+                menos.
+              </li>
+            )}
           </ul>
           <div className="actions">
             <button

@@ -32,6 +32,7 @@ function patient(id: string, over: Partial<Patient> = {}): Patient {
     taxCondition: 'consumidor_final',
     memberNumber: '',
     insurer: '',
+    institutionPercent: 0,
     lastRaise: null,
     notes: '',
     createdAt: '2026-01-01T00:00:00.000Z',

@@ -21,6 +21,7 @@ const paciente = (id: string, extra: Partial<Patient> = {}): Patient => ({
   taxCondition: 'consumidor_final',
   memberNumber: '',
   insurer: '',
+  institutionPercent: 0,
   lastRaise: null,
   notes: '',
   createdAt: '2026-01-01',

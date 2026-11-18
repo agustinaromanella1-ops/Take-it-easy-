@@ -5,6 +5,7 @@ import { formatMoney } from '../lib/money';
 import { formatDateShort, timeToMinutes } from '../lib/dates';
 import { Card, Empty, Stat } from '../components/ui';
 import { patientColor } from '../lib/palette';
+import { repartoDePaciente } from '../lib/neto';
 import { whatsappLink } from '../lib/contact';
 import { ESTADO } from '../lib/etiquetas';
 
@@ -86,6 +87,16 @@ export function PatientDetailPage({ patientId, onBack }: { patientId: string; on
         <Stat label="Honorario habitual" value={formatMoney(patient.defaultFee, currency)} />
         <Stat label="Sesiones facturables" value={String(balance?.sessionsHeld ?? 0)} />
         <Stat label="Total facturado" value={formatMoney(balance?.billed ?? 0, currency)} />
+        {/* Solo si retiene algo: en un paciente particular sería la misma
+            cifra de al lado, repetida. */}
+        {patient.institutionPercent > 0 && (
+          <Stat
+            label="De eso, te queda"
+            value={formatMoney(repartoDePaciente(patient, balance?.billed ?? 0).neto, currency)}
+            tone="ok"
+            hint={`La institución se queda el ${patient.institutionPercent}%`}
+          />
+        )}
         <Stat
           label={saldo >= 0 ? 'Saldo pendiente' : 'Saldo a favor'}
           value={formatMoney(Math.abs(saldo), currency)}

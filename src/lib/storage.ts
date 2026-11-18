@@ -152,6 +152,9 @@ function parsePatient(raw: unknown): Patient | null {
       : 'consumidor_final',
     memberNumber: str(raw.memberNumber),
     insurer: str(raw.insurer),
+    // Un 100 dejaría al profesional trabajando gratis y un negativo le haría
+    // "ganar" de más: ninguno de los dos es un dato, es un dato roto.
+    institutionPercent: clamp(raw.institutionPercent, 0, 99, 0),
     lastRaise: isValidISODate(str(raw.lastRaise)) ? str(raw.lastRaise) : null,
     notes: str(raw.notes),
     createdAt: str(raw.createdAt, new Date().toISOString()),

@@ -20,6 +20,7 @@ function patient(over: Partial<Patient> = {}): Patient {
     taxCondition: 'consumidor_final',
     memberNumber: '',
     insurer: '',
+    institutionPercent: 0,
     lastRaise: null,
     notes: '',
     createdAt: '2026-01-01T00:00:00.000Z',
@@ -189,7 +190,7 @@ describe('invoiceName', () => {
 describe('invoiceFields', () => {
   it('arma las filas para transcribir a la factura', () => {
     const p = patient({ legalName: 'María Elena Gómez', document: '30123456', taxId: '27301234568',
-      taxCondition: 'monotributo', insurer: 'OSDE', memberNumber: '999/01' });
+      taxCondition: 'monotributo', insurer: 'OSDE', institutionPercent: 0, memberNumber: '999/01' });
     expect(invoiceFields(p)).toEqual([
       { label: 'Nombre completo', value: 'María Elena Gómez' },
       { label: 'DNI', value: '30123456' },

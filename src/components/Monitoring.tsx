@@ -2,6 +2,7 @@ import { useMemo, useState } from 'react';
 import { useStore } from '../store/StoreContext';
 import { patientAttendance, patientBalances } from '../store/selectors';
 import { cobranzaDelMes, totalesDelMes } from '../lib/cobranza';
+import { retencionPromedio } from '../lib/neto';
 import { addMonths, formatMonthKey, monthKey, today } from '../lib/dates';
 import { suggestedRate } from '../lib/pricing';
 import { formatMoney } from '../lib/money';
@@ -63,7 +64,14 @@ export function Monitoring({ onCobrar }: { onCobrar?: (patientId: string) => voi
   const maxFee = fees[0]?.defaultFee ?? 0;
 
   // La tarifa sugerida sirve de vara: muestra qué pacientes quedaron atrás.
-  const suggested = useMemo(() => suggestedRate(data.settings.rateInputs), [data.settings.rateInputs]);
+  // Con la misma retención que usa la calculadora: si no, la línea de
+  // referencia del gráfico marcaría un número distinto del que propone la
+  // calculadora dos pantallas más abajo.
+  const retencion = useMemo(() => retencionPromedio(data, `${addMonths(monthKey(today()), -2)}-01`), [data]);
+  const suggested = useMemo(
+    () => suggestedRate(data.settings.rateInputs, retencion),
+    [data.settings.rateInputs, retencion],
+  );
   const reference = suggested?.suggestedFee ?? 0;
 
   if (data.patients.length === 0) {
